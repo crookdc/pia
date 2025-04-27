@@ -51,6 +51,12 @@ func (pl *PeekingLexer) Peek() (token.Token, error) {
 	return n, nil
 }
 
+// Discard clears the peeked token and discards it entirely. Subsequent calls to Peek or Next will return the next token
+// as according to the underlying Lexer.
+func (pl *PeekingLexer) Discard() {
+	pl.ptr = nil
+}
+
 // Next either returns the latest peeked token and then marks it as read or reads directly from the underlying
 // [squeak.Lexer].
 func (pl *PeekingLexer) Next() (token.Token, error) {
@@ -134,6 +140,9 @@ func (lx *Lexer) Next() (token.Token, error) {
 			return token.Nil, err
 		}
 	}
+	if c == '"' {
+		return lx.string()
+	}
 	if unicode.IsDigit(rune(c)) {
 		// Identifiers and keywords cannot start with a digit, hence whenever there is a digit at this stage it should
 		// always be parsed as a numerical token.
@@ -154,13 +163,16 @@ func (lx *Lexer) number() (token.Token, error) {
 }
 
 func (lx *Lexer) string() (token.Token, error) {
-	if _, err := lx.read(always); err != nil {
+	if err := lx.skip(amount(1)); err != nil {
 		return token.Nil, err
 	}
 	literal, err := lx.next(func(r rune) bool {
 		return r != '"'
 	})
 	if err != nil {
+		return token.Nil, err
+	}
+	if err := lx.skip(amount(1)); err != nil {
 		return token.Nil, err
 	}
 	return token.New(token.String, token.Literal(string(literal)))
@@ -173,82 +185,82 @@ func (lx *Lexer) symbol() (token.Token, error) {
 	}
 	switch c {
 	case ';':
-		if _, err := lx.read(always); err != nil {
+		if err := lx.skip(amount(1)); err != nil {
 			return token.Nil, err
 		}
 		return token.New(token.Semicolon)
 	case '<':
-		if _, err := lx.read(always); err != nil {
+		if err := lx.skip(amount(1)); err != nil {
 			return token.Nil, err
 		}
 		return token.New(token.LessThan)
 	case '>':
-		if _, err := lx.read(always); err != nil {
+		if err := lx.skip(amount(1)); err != nil {
 			return token.Nil, err
 		}
 		return token.New(token.GreaterThan)
 	case '+':
-		if _, err := lx.read(always); err != nil {
+		if err := lx.skip(amount(1)); err != nil {
 			return token.Nil, err
 		}
 		return token.New(token.Plus)
 	case '-':
-		if _, err := lx.read(always); err != nil {
+		if err := lx.skip(amount(1)); err != nil {
 			return token.Nil, err
 		}
 		return token.New(token.Minus)
 	case '*':
-		if _, err := lx.read(always); err != nil {
+		if err := lx.skip(amount(1)); err != nil {
 			return token.Nil, err
 		}
 		return token.New(token.Asterisk)
 	case '/':
-		if _, err := lx.read(always); err != nil {
+		if err := lx.skip(amount(1)); err != nil {
 			return token.Nil, err
 		}
 		return token.New(token.Slash)
 	case ',':
-		if _, err := lx.read(always); err != nil {
+		if err := lx.skip(amount(1)); err != nil {
 			return token.Nil, err
 		}
 		return token.New(token.Comma)
 	case '.':
-		if _, err := lx.read(always); err != nil {
+		if err := lx.skip(amount(1)); err != nil {
 			return token.Nil, err
 		}
 		return token.New(token.FullStop)
 	case '(':
-		if _, err := lx.read(always); err != nil {
+		if err := lx.skip(amount(1)); err != nil {
 			return token.Nil, err
 		}
 		return token.New(token.LeftParenthesis)
 	case ')':
-		if _, err := lx.read(always); err != nil {
+		if err := lx.skip(amount(1)); err != nil {
 			return token.Nil, err
 		}
 		return token.New(token.RightParenthesis)
 	case '{':
-		if _, err := lx.read(always); err != nil {
+		if err := lx.skip(amount(1)); err != nil {
 			return token.Nil, err
 		}
 		return token.New(token.LeftCurlyBrace)
 	case '}':
-		if _, err := lx.read(always); err != nil {
+		if err := lx.skip(amount(1)); err != nil {
 			return token.Nil, err
 		}
 		return token.New(token.RightCurlyBrace)
 	case '[':
-		if _, err := lx.read(always); err != nil {
+		if err := lx.skip(amount(1)); err != nil {
 			return token.Nil, err
 		}
 		return token.New(token.LeftBracket)
 	case ']':
-		if _, err := lx.read(always); err != nil {
+		if err := lx.skip(amount(1)); err != nil {
 			return token.Nil, err
 		}
 		return token.New(token.RightBracket)
 	case '=':
-		if _, err := lx.read(always); err != nil {
+		if err := lx.skip(amount(1)); err != nil {
 			return token.Nil, err
 		}
 		nxt, err := lx.read(never)
@@ -258,12 +270,12 @@ func (lx *Lexer) symbol() (token.Token, error) {
 		if nxt != '=' {
 			return token.New(token.Assign)
 		}
-		if _, err := lx.read(always); err != nil {
+		if err := lx.skip(amount(1)); err != nil {
 			return token.Nil, err
 		}
 		return token.New(token.Equals)
 	case '!':
-		if _, err := lx.read(always); err != nil {
+		if err := lx.skip(amount(1)); err != nil {
 			return token.Nil, err
 		}
 		nxt, err := lx.read(never)
@@ -273,12 +285,12 @@ func (lx *Lexer) symbol() (token.Token, error) {
 		if nxt != '=' {
 			return token.New(token.Bang)
 		}
-		if _, err := lx.read(always); err != nil {
+		if err := lx.skip(amount(1)); err != nil {
 			return token.Nil, err
 		}
 		return token.New(token.NotEquals)
 	case '&':
-		if _, err := lx.read(always); err != nil {
+		if err := lx.skip(amount(1)); err != nil {
 			return token.Nil, err
 		}
 		nxt, err := lx.read(always)
@@ -290,7 +302,7 @@ func (lx *Lexer) symbol() (token.Token, error) {
 		}
 		return token.New(token.And)
 	case '|':
-		if _, err := lx.read(always); err != nil {
+		if err := lx.skip(amount(1)); err != nil {
 			return token.Nil, err
 		}
 		nxt, err := lx.read(always)
@@ -301,8 +313,6 @@ func (lx *Lexer) symbol() (token.Token, error) {
 			return token.New(token.Illegal, token.Literal(string([]byte{c, nxt})))
 		}
 		return token.New(token.Or)
-	case '"':
-		return lx.string()
 	default:
 		return token.New(token.Illegal, token.Literal(string(c)))
 	}
@@ -388,6 +398,17 @@ func (lx *Lexer) next(fn func(rune) bool) ([]byte, error) {
 		}
 	}
 	return word, nil
+}
+
+func amount(n int) func(rune) bool {
+	var c int
+	return func(r rune) bool {
+		if c == n {
+			return false
+		}
+		c += 1
+		return true
+	}
 }
 
 func (lx *Lexer) skip(fn func(rune) bool) error {

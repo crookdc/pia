@@ -320,6 +320,28 @@ func TestLexer_Next(t *testing.T) {
 			},
 		},
 		{
+			src: "name + \"is a good developer\";",
+			bl:  LexerBufferLength,
+			expected: []token.Token{
+				{
+					Type:    token.Identifier,
+					Literal: "name",
+				},
+				{
+					Type:    token.Plus,
+					Literal: "+",
+				},
+				{
+					Type:    token.String,
+					Literal: "is a good developer",
+				},
+				{
+					Type:    token.Semicolon,
+					Literal: ";",
+				},
+			},
+		},
+		{
 			src: `
 			# This function reports whether both a and b are positive
 			let pos = func(a, b) {
