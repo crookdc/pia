@@ -1,82 +1,20 @@
-# pia 
-
-* Configurations 
-  * YAML files for structured data
-  * Simple Pipsqueak scripting capabilities for hooks (before request, after request)
-  * Project, environment, session, and runtime variables.
-    * Project variables are persisted to disk. 
-    * Environment variables are persisted in a human-editable format and can be hot-swapped between files acting as 
-      different environments for the same project.
-    * Session variables exists in memory for as long as the TUI application is running.
-    * Runtime variables are either provided in the run command or prompted for at runtime
-* TUI application
-  * VIM-like command execution (for quitting application and run configurations)
-  * Status output for Pipsqueak as well as HTTP output (unless call is configured as quiet)
-
-## Configuration
-The configuration will always go through a substitution pass before being parsed. This means that a user can use 
-variables freely anywhere in the configuration. 
-```yml
-version: 1.0
-name: Authenticate
-request:
-    url: ${environment.base}/auth
-    method: POST
-    headers:
-      Authorization: Bearer ${session.token}
-      Content-Type: application/json
-    query:
-      version: ${project.version}
-    body:
-      text: >
-        {
-          "username": "${environment.username}",
-          "password": "${environment.password}"
-        }
-hooks:
-  post: save-token.sqk
+# Pia 
+*/pɪæ/*
+1. The open-source Postman alternative for technical people.
 ---
-version: 1.0
-name: Get Students
-request:
-  url: ${environment.base}/schools/${runtime.school}/students
-  method: POST
-  headers:
-    Authorization: Bearer ${session.token}
-    Content-Type: application/json
-  query:
-    version: ${project.version}
-    class: ${runtime.class}
-```
 
-save-token.sqk:
-```
-let session = import "session";
+## Disclaimer
+Even though this project presents itself as a Postman alternative it offers no guarantee to implement all features found 
+in Postman. Though Postman has been the inspiration of user experience in several areas, Pia aims to be a tool that 
+offers a user experience that can stand on its own two feet. Anyone is welcome to suggest the implementation of their 
+favourite Postman features, but do not assume that just because Postman offers some feature that its in the roadmap for 
+this project.
 
-// assert causes the script execution to halt and prints an error message to the pia output 
-assert(response["code"] == 200, "bad status code: " + response["code"]);
+## State of Pia
+The Pia project is still in **very** early development. There are no milestones or deadlines defined as there likely 
+will never be any of the sort. Hopefully there will be alpha releases of Pia once development has reached a point where 
+it can be used by the public in exchange for some feedback (not mandatory). You can of course clone and build Pia from 
+source whenever you want but the quality of your experience cannot be guaranteed until an official release is created.
 
-let token = response["body"]["token"]
-assert(token != "", "no token in response");
-
-let expires = response["body"]["_expires"]
-assert(expires != "", "no expiry in response");
-
-session.save("token", token);
-session.save("expires", expires):
-```
-
-## Scratchpad
-* Automatic generation of project from SOAP WSDL
-```
-project/
-  .pia/
-  authenticate/
-    spec.yml
-    post.sqk
-  students/
-    create/
-      spec.yml
-    delete/
-      spec.yml
-```
+---
+*This readme is still under construction.*
