@@ -64,6 +64,17 @@ type LetStatement struct {
 	Assignment ExpressionNode
 }
 
+// IfStatement represents a statement that allows the user to choose one of several branched statements to execute
+// exclusively.
+type IfStatement struct {
+	Statement
+	Condition   ExpressionNode
+	Consequence StatementNode
+	// Alternative represents any number of if-else pairs chained together or a single else statement which is
+	// represented as an alternative statement with a Condition that always resolves to true.
+	Alternative *IfStatement
+}
+
 // ExpressionStatement represents an expression that exists in isolation within a Squeak script, meaning that it is not
 // defined as part of a statement and will thus be considered a statement by itself.
 type ExpressionStatement struct {

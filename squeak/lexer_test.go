@@ -137,6 +137,7 @@ func TestLexer_Next(t *testing.T) {
 			src: `
 			import "math";
 			# This makes no sense but it does not have to since this is a test
+			# Will this work with two comments?
 			while (true) {
 				return a[0];
 			}

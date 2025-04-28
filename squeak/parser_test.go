@@ -222,64 +222,141 @@ func TestParser_Next(t *testing.T) {
 			},
 		},
 		{
-			src: "if a < b && b > a;",
-			expected: ast.ExpressionStatement{
-				Expression: ast.PrefixExpression{
+			src: "if (a < b && b > a) a;",
+			expected: ast.IfStatement{
+				Condition: ast.InfixExpression{
 					Operator: token.Token{
-						Type:    token.If,
-						Literal: "if",
+						Type:    token.And,
+						Literal: "&&",
+					},
+					LHS: ast.InfixExpression{
+						Operator: token.Token{
+							Type:    token.LessThan,
+							Literal: "<",
+						},
+						LHS: ast.IdentifierExpression{
+							Identifier: "a",
+						},
+						RHS: ast.IdentifierExpression{
+							Identifier: "b",
+						},
 					},
 					RHS: ast.InfixExpression{
 						Operator: token.Token{
-							Type:    token.And,
-							Literal: "&&",
+							Type:    token.GreaterThan,
+							Literal: ">",
 						},
-						LHS: ast.InfixExpression{
-							Operator: token.Token{
-								Type:    token.LessThan,
-								Literal: "<",
-							},
-							LHS: ast.IdentifierExpression{
-								Identifier: "a",
-							},
-							RHS: ast.IdentifierExpression{
-								Identifier: "b",
+						LHS: ast.IdentifierExpression{
+							Identifier: "b",
+						},
+						RHS: ast.IdentifierExpression{
+							Identifier: "a",
+						},
+					},
+				},
+				Consequence: ast.ExpressionStatement{
+					Expression: ast.IdentifierExpression{
+						Expression: ast.Expression{},
+						Identifier: "a",
+					},
+				},
+				Alternative: nil,
+			},
+		},
+		{
+			src: "if (true || (false)) a - b;",
+			expected: ast.IfStatement{
+				Condition: ast.InfixExpression{
+					Operator: token.Token{
+						Type:    token.Or,
+						Literal: "||",
+					},
+					LHS: ast.BooleanExpression{
+						Boolean: true,
+					},
+					RHS: ast.BooleanExpression{
+						Boolean: false,
+					},
+				},
+				Consequence: ast.ExpressionStatement{
+					Statement: ast.Statement{},
+					Expression: ast.InfixExpression{
+						Operator: token.Token{
+							Type:    token.Minus,
+							Literal: "-",
+						},
+						LHS: ast.IdentifierExpression{
+							Identifier: "a",
+						},
+						RHS: ast.IdentifierExpression{
+							Identifier: "b",
+						},
+					},
+				},
+				Alternative: nil,
+			},
+		},
+		{
+			src: "if (true) a; else if (false) b; else c;",
+			expected: ast.IfStatement{
+				Condition: ast.BooleanExpression{
+					Boolean: true,
+				},
+				Consequence: ast.ExpressionStatement{
+					Expression: ast.IdentifierExpression{
+						Identifier: "a",
+					},
+				},
+				Alternative: &ast.IfStatement{
+					Condition: ast.BooleanExpression{
+						Boolean: false,
+					},
+					Consequence: ast.ExpressionStatement{
+						Expression: ast.IdentifierExpression{
+							Identifier: "b",
+						},
+					},
+					Alternative: &ast.IfStatement{
+						Condition: ast.BooleanExpression{
+							Boolean: true,
+						},
+						Consequence: ast.ExpressionStatement{
+							Expression: ast.IdentifierExpression{
+								Identifier: "c",
 							},
 						},
-						RHS: ast.InfixExpression{
-							Operator: token.Token{
-								Type:    token.GreaterThan,
-								Literal: ">",
-							},
-							LHS: ast.IdentifierExpression{
-								Identifier: "b",
-							},
-							RHS: ast.IdentifierExpression{
-								Identifier: "a",
-							},
-						},
+						Alternative: nil,
 					},
 				},
 			},
 		},
 		{
-			src: "if true || (false);",
-			expected: ast.ExpressionStatement{
-				Expression: ast.PrefixExpression{
+			src: "let a = -a + a;",
+			expected: ast.LetStatement{
+				Assignment: ast.InfixExpression{
 					Operator: token.Token{
-						Type:    token.If,
-						Literal: "if",
+						Type:    token.Assign,
+						Literal: "=",
+					},
+					LHS: ast.IdentifierExpression{
+						Identifier: "a",
 					},
 					RHS: ast.InfixExpression{
 						Operator: token.Token{
-							Type:    token.Or,
-							Literal: "||",
+							Type:    token.Plus,
+							Literal: "+",
 						},
-						LHS: ast.BooleanExpression{
-							Boolean: true,
+						LHS: ast.PrefixExpression{
+							Operator: token.Token{
+								Type:    token.Minus,
+								Literal: "-",
+							},
+							RHS: ast.IdentifierExpression{
+								Identifier: "a",
+							},
 						},
-						RHS: ast.BooleanExpression{
-							Boolean: false,
+						RHS: ast.IdentifierExpression{
+							Identifier: "a",
 						},
 					},
 				},

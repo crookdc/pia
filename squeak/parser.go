@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/crookdc/pia/squeak/internal/ast"
 	"github.com/crookdc/pia/squeak/internal/token"
+	"io"
 	"strconv"
 )
 
@@ -43,7 +44,12 @@ type Parser struct {
 	lx *PeekingLexer
 }
 
+// Next constructs and returns the next node in the abstract syntax tree for the targeted Lexer.
 func (ps *Parser) Next() (ast.Node, error) {
+	return ps.statement()
+}
+
+func (ps *Parser) statement() (s ast.StatementNode, err error) {
 	peek, err := ps.lx.Peek()
 	if err != nil {
 		return nil, err
@@ -51,9 +57,14 @@ func (ps *Parser) Next() (ast.Node, error) {
 	switch peek.Type {
 	case token.Let:
 		return ps.let()
+	case token.If:
+		return ps.ifs()
 	default:
 		e, err := ps.expression(PrecedenceLowest)
 		if err != nil {
+			return nil, err
+		}
+		if _, err := ps.expect(token.Semicolon); err != nil {
 			return nil, err
 		}
 		return ast.ExpressionStatement{
@@ -70,9 +81,75 @@ func (ps *Parser) let() (ast.LetStatement, error) {
 	if err != nil {
 		return ast.LetStatement{}, err
 	}
+	if _, err := ps.expect(token.Semicolon); err != nil {
+		return ast.LetStatement{}, err
+	}
 	return ast.LetStatement{
 		Assignment: asn,
 	}, nil
+}
+
+func (ps *Parser) ifs() (ast.IfStatement, error) {
+	if _, err := ps.expect(token.If); err != nil {
+		return ast.IfStatement{}, err
+	}
+	cnd, err := ps.expression(PrecedenceLowest)
+	if err != nil {
+		return ast.IfStatement{}, err
+	}
+	csq, err := ps.statement()
+	if err != nil {
+		return ast.IfStatement{}, err
+	}
+	nxt, err := ps.lx.Peek()
+	if errors.Is(err, io.EOF) {
+		err = nil
+	}
+	if err != nil {
+		return ast.IfStatement{}, err
+	}
+	var alt *ast.IfStatement
+	if nxt.Type == token.Else {
+		alt, err = ps.alt()
+		if err != nil {
+			return ast.IfStatement{}, err
+		}
+	}
+	return ast.IfStatement{
+		Condition:   cnd,
+		Consequence: csq,
+		Alternative: alt,
+	}, nil
+}
+
+func (ps *Parser) alt() (*ast.IfStatement, error) {
+	if _, err := ps.expect(token.Else); err != nil {
+		return nil, err
+	}
+	peek, err := ps.lx.Peek()
+	if err != nil {
+		return nil, err
+	}
+	switch peek.Type {
+	case token.If:
+		// An else-if branch can be processed like any other if-statement. This recursive behavior causes the parser to
+		// build a chain of ast.IfStatement.
+		alt, err := ps.ifs()
+		if err != nil {
+			return nil, err
+		}
+		return &alt, nil
+	default:
+		// A regular else block can be parsed as an alternative if-statement that always resolves to true.
+		csq, err := ps.statement()
+		if err != nil {
+			return nil, err
+		}
+		return &ast.IfStatement{
+			Condition:   ast.BooleanExpression{Boolean: true},
+			Consequence: csq,
+		}, nil
+	}
 }
 
 func (ps *Parser) expression(precedence int) (ast.ExpressionNode, error) {
@@ -99,7 +176,7 @@ func (ps *Parser) expression(precedence int) (ast.ExpressionNode, error) {
 		e = ast.BooleanExpression{
 			Boolean: t.Literal == "true",
 		}
-	case token.If:
+	case token.Minus:
 		e, err = ps.prefix(t)
 		if err != nil {
 			return nil, err
@@ -131,14 +208,9 @@ func (ps *Parser) expression(precedence int) (ast.ExpressionNode, error) {
 				break
 			}
 			ps.lx.Discard()
-			rhs, err := ps.expression(op)
+			e, err = ps.infix(e, peek)
 			if err != nil {
 				return nil, err
-			}
-			e = ast.InfixExpression{
-				Operator: peek,
-				LHS:      e,
-				RHS:      rhs,
 			}
 		}
 	}
@@ -155,8 +227,20 @@ func (ps *Parser) integer(t token.Token) (ast.IntegerExpression, error) {
 	}, nil
 }
 
+func (ps *Parser) infix(lhs ast.ExpressionNode, op token.Token) (ast.InfixExpression, error) {
+	rhs, err := ps.expression(Precedences[op.Type])
+	if err != nil {
+		return ast.InfixExpression{}, err
+	}
+	return ast.InfixExpression{
+		Operator: op,
+		LHS:      lhs,
+		RHS:      rhs,
+	}, nil
+}
+
 func (ps *Parser) prefix(op token.Token) (ast.PrefixExpression, error) {
-	rhs, err := ps.expression(PrecedenceLowest)
+	rhs, err := ps.expression(PrecedencePrefix)
 	if err != nil {
 		return ast.PrefixExpression{}, err
 	}
