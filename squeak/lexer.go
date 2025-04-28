@@ -118,24 +118,37 @@ type Lexer struct {
 }
 
 // Next returns the next available token from the source code reader. If the source code contains an illegal token then
-// a token of type [token.Illegal] is returned with a nil error. An [io.EOF] error is returned once the underlying
+// a token of type [token.Illegal] is returned with a nil error. A [token.EOF] token is returned once the underlying
 // source code reader has been exhausted. Any errors originating from the underlying source code reader is propagated to
 // the caller.
 func (lx *Lexer) Next() (token.Token, error) {
-	if err := lx.skip(unicode.IsSpace); err != nil {
+	err := lx.skip(unicode.IsSpace)
+	if errors.Is(err, io.EOF) {
+		return token.New(token.EOF)
+	}
+	if err != nil {
 		return token.Nil, err
 	}
 	c, err := lx.read(never)
 	if err != nil {
 		return token.Nil, err
 	}
-	if c == '#' {
-		if err := lx.skip(func(r rune) bool {
-			return r != '\n' || unicode.IsSpace(r)
-		}); err != nil {
+	for c == '#' {
+		err := lx.seek('\n')
+		if err != nil {
+			return token.Nil, err
+		}
+		err = lx.skip(unicode.IsSpace)
+		if errors.Is(err, io.EOF) {
+			return token.New(token.EOF)
+		}
+		if err != nil {
 			return token.Nil, err
 		}
 		c, err = lx.read(never)
+		if errors.Is(err, io.EOF) {
+			return token.New(token.EOF)
+		}
 		if err != nil {
 			return token.Nil, err
 		}
@@ -390,6 +403,9 @@ func (lx *Lexer) next(fn func(rune) bool) ([]byte, error) {
 	word := []byte{c}
 	for fn(rune(c)) {
 		c, err = lx.read(proceed)
+		if errors.Is(err, io.EOF) {
+			break
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -409,6 +425,12 @@ func amount(n int) func(rune) bool {
 		c += 1
 		return true
 	}
+}
+
+func (lx *Lexer) seek(c byte) error {
+	return lx.skip(func(r rune) bool {
+		return r != rune(c)
+	})
 }
 
 func (lx *Lexer) skip(fn func(rune) bool) error {

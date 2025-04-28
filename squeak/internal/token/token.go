@@ -11,6 +11,7 @@ var (
 
 const (
 	_ Type = iota
+	EOF
 	Illegal
 	Identifier
 	Integer
@@ -47,6 +48,7 @@ const (
 )
 
 var literals = map[Type]string{
+	EOF:              "EOF",
 	And:              "&&",
 	Or:               "||",
 	If:               "if",

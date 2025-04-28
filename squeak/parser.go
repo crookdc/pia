@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/crookdc/pia/squeak/internal/ast"
 	"github.com/crookdc/pia/squeak/internal/token"
-	"io"
 	"strconv"
 )
 
@@ -102,9 +101,6 @@ func (ps *Parser) ifs() (ast.IfStatement, error) {
 		return ast.IfStatement{}, err
 	}
 	nxt, err := ps.lx.Peek()
-	if errors.Is(err, io.EOF) {
-		err = nil
-	}
 	if err != nil {
 		return ast.IfStatement{}, err
 	}

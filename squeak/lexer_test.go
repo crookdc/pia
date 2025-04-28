@@ -4,7 +4,6 @@ import (
 	"errors"
 	"github.com/crookdc/pia/squeak/internal/token"
 	"github.com/stretchr/testify/assert"
-	"io"
 	"strings"
 	"testing"
 )
@@ -46,6 +45,10 @@ func TestLexer_Next(t *testing.T) {
 				{
 					Type:    token.Semicolon,
 					Literal: ";",
+				},
+				{
+					Type:    token.EOF,
+					Literal: "EOF",
 				},
 			},
 		},
@@ -105,6 +108,10 @@ func TestLexer_Next(t *testing.T) {
 					Type:    token.FullStop,
 					Literal: ".",
 				},
+				{
+					Type:    token.EOF,
+					Literal: "EOF",
+				},
 			},
 		},
 		{
@@ -131,13 +138,17 @@ func TestLexer_Next(t *testing.T) {
 					Type:    token.Boolean,
 					Literal: "false",
 				},
+				{
+					Type:    token.EOF,
+					Literal: "EOF",
+				},
 			},
 		},
 		{
 			src: `
 			import "math";
 			# This makes no sense but it does not have to since this is a test
-			# Will this work with two comments?
+			# Will this work with two lines of comments?
 			while (true) {
 				return a[0];
 			}
@@ -204,6 +215,10 @@ func TestLexer_Next(t *testing.T) {
 					Type:    token.RightCurlyBrace,
 					Literal: "}",
 				},
+				{
+					Type:    token.EOF,
+					Literal: "EOF",
+				},
 			},
 		},
 		{
@@ -229,6 +244,10 @@ func TestLexer_Next(t *testing.T) {
 				{
 					Type:    token.Semicolon,
 					Literal: ";",
+				},
+				{
+					Type:    token.EOF,
+					Literal: "EOF",
 				},
 			},
 		},
@@ -292,6 +311,10 @@ func TestLexer_Next(t *testing.T) {
 					Type:    token.RightCurlyBrace,
 					Literal: "}",
 				},
+				{
+					Type:    token.EOF,
+					Literal: "EOF",
+				},
 			},
 		},
 		{
@@ -318,6 +341,10 @@ func TestLexer_Next(t *testing.T) {
 					Type:    token.Semicolon,
 					Literal: ";",
 				},
+				{
+					Type:    token.EOF,
+					Literal: "EOF",
+				},
 			},
 		},
 		{
@@ -339,6 +366,10 @@ func TestLexer_Next(t *testing.T) {
 				{
 					Type:    token.Semicolon,
 					Literal: ";",
+				},
+				{
+					Type:    token.EOF,
+					Literal: "EOF",
 				},
 			},
 		},
@@ -436,6 +467,10 @@ func TestLexer_Next(t *testing.T) {
 					Type:    token.Semicolon,
 					Literal: ";",
 				},
+				{
+					Type:    token.EOF,
+					Literal: "EOF",
+				},
 			},
 		},
 	}
@@ -446,12 +481,12 @@ func TestLexer_Next(t *testing.T) {
 			var i int
 			for {
 				actual, err := lx.Next()
-				if errors.Is(err, io.EOF) {
+				assert.Nil(t, err)
+				assert.Equal(t, test.expected[i], actual, "token index %d", i)
+				i++
+				if actual.Type == token.EOF {
 					break
 				}
-				assert.Nil(t, err)
-				assert.Equal(t, test.expected[i], actual)
-				i++
 			}
 		})
 	}
