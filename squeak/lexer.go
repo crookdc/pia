@@ -135,6 +135,9 @@ func (lx *Lexer) Next() (token.Token, error) {
 	}
 	for c == '#' {
 		err := lx.seek('\n')
+		if errors.Is(err, io.EOF) {
+			return token.New(token.EOF)
+		}
 		if err != nil {
 			return token.Nil, err
 		}
