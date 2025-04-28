@@ -380,6 +380,8 @@ func TestLexer_Next(t *testing.T) {
 				# Holy cow, this is a comment isn't it!
 				return a > 0 && b > 0;
 			};
+			# Sometimes there are comments at the very end of the source code!
+			# It's important that we cover those as well.
 			`,
 			bl: LexerBufferLength,
 			expected: []token.Token{
