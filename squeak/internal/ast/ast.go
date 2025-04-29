@@ -75,6 +75,14 @@ type IfStatement struct {
 	Alternative *IfStatement
 }
 
+// ReturnStatement represents a statement that gives control flow back to the caller of the currently executing
+// function. A ReturnStatement can optionally include a value represented by an ExpressionNode that should be given to
+// the caller.
+type ReturnStatement struct {
+	Statement
+	Expression ExpressionNode
+}
+
 // ExpressionStatement represents an expression that exists in isolation within a Squeak script, meaning that it is not
 // defined as part of a statement and will thus be considered a statement by itself.
 type ExpressionStatement struct {

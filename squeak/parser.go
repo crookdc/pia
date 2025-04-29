@@ -58,6 +58,8 @@ func (ps *Parser) statement() (s ast.StatementNode, err error) {
 		return ps.let()
 	case token.If:
 		return ps.ifs()
+	case token.Return:
+		return ps.ret()
 	default:
 		e, err := ps.expression(PrecedenceLowest)
 		if err != nil {
@@ -146,6 +148,36 @@ func (ps *Parser) alt() (*ast.IfStatement, error) {
 			Consequence: csq,
 		}, nil
 	}
+}
+
+func (ps *Parser) ret() (stmt ast.ReturnStatement, err error) {
+	defer func() {
+		if err != nil {
+			return
+		}
+		// This deferred function might be refactored away for the sake of clearer control flow. The reason for it was
+		// that there are two possible flavors of the return statement; one with an expression and one without, and both
+		// should assert the existence of a semicolon at the end of parsing.
+		_, err = ps.expect(token.Semicolon)
+	}()
+	if _, err := ps.expect(token.Return); err != nil {
+		return ast.ReturnStatement{}, nil
+	}
+	pk, err := ps.lx.Peek()
+	if err != nil {
+		return ast.ReturnStatement{}, err
+	}
+	if pk.Type == token.Semicolon {
+		return ast.ReturnStatement{}, nil
+
+	}
+	e, err := ps.expression(PrecedenceLowest)
+	if err != nil {
+		return ast.ReturnStatement{}, err
+	}
+	return ast.ReturnStatement{
+		Expression: e,
+	}, nil
 }
 
 func (ps *Parser) expression(precedence int) (ast.ExpressionNode, error) {

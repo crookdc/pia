@@ -362,6 +362,35 @@ func TestParser_Next(t *testing.T) {
 				},
 			},
 		},
+		{
+			src: "if (1 == 1) return; else return false;",
+			expected: ast.IfStatement{
+				Condition: ast.InfixExpression{
+					Operator: token.Token{
+						Type:    token.Equals,
+						Literal: "==",
+					},
+					LHS: ast.IntegerExpression{
+						Integer: 1,
+					},
+					RHS: ast.IntegerExpression{
+						Integer: 1,
+					},
+				},
+				Consequence: ast.ReturnStatement{},
+				Alternative: &ast.IfStatement{
+					Condition: ast.BooleanExpression{
+						Boolean: true,
+					},
+					Consequence: ast.ReturnStatement{
+						Expression: ast.BooleanExpression{
+							Boolean: false,
+						},
+					},
+					Alternative: nil,
+				},
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.src, func(t *testing.T) {
