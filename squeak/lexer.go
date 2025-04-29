@@ -122,7 +122,7 @@ type Lexer struct {
 // source code reader has been exhausted. Any errors originating from the underlying source code reader is propagated to
 // the caller.
 func (lx *Lexer) Next() (token.Token, error) {
-	err := lx.skip(unicode.IsSpace)
+	err := lx.skip(ignored())
 	if errors.Is(err, io.EOF) {
 		return token.New(token.EOF)
 	}
@@ -133,35 +133,7 @@ func (lx *Lexer) Next() (token.Token, error) {
 	if err != nil {
 		return token.Nil, err
 	}
-	for c == '#' {
-		err := lx.seek('\n')
-		if errors.Is(err, io.EOF) {
-			return token.New(token.EOF)
-		}
-		if err != nil {
-			return token.Nil, err
-		}
-		err = lx.skip(unicode.IsSpace)
-		if errors.Is(err, io.EOF) {
-			return token.New(token.EOF)
-		}
-		if err != nil {
-			return token.Nil, err
-		}
-		c, err = lx.read(never)
-		if errors.Is(err, io.EOF) {
-			return token.New(token.EOF)
-		}
-		if err != nil {
-			return token.Nil, err
-		}
-	}
-	if c == '"' {
-		return lx.string()
-	}
 	if unicode.IsDigit(rune(c)) {
-		// Identifiers and keywords cannot start with a digit, hence whenever there is a digit at this stage it should
-		// always be parsed as a numerical token.
 		return lx.number()
 	}
 	if unicode.IsLetter(rune(c)) {
@@ -329,6 +301,20 @@ func (lx *Lexer) symbol() (token.Token, error) {
 			return token.New(token.Illegal, token.Literal(string([]byte{c, nxt})))
 		}
 		return token.New(token.Or)
+	case '"':
+		if err := lx.skip(amount(1)); err != nil {
+			return token.Nil, err
+		}
+		literal, err := lx.next(func(r rune) bool {
+			return r != '"'
+		})
+		if err != nil {
+			return token.Nil, err
+		}
+		if err := lx.skip(amount(1)); err != nil {
+			return token.Nil, err
+		}
+		return token.New(token.String, token.Literal(string(literal)))
 	default:
 		return token.New(token.Illegal, token.Literal(string(c)))
 	}
@@ -434,6 +420,36 @@ func (lx *Lexer) seek(c byte) error {
 	return lx.skip(func(r rune) bool {
 		return r != rune(c)
 	})
+}
+
+func ignored() func(rune) bool {
+	var delegate = unicode.IsSpace
+	return func(r rune) bool {
+		if r == '#' {
+			delegate = comment()
+		}
+		n := delegate(r)
+		if !n {
+			delegate = unicode.IsSpace
+		}
+		return n
+	}
+}
+
+func comment() func(rune) bool {
+	var lf bool
+	return func(r rune) bool {
+		if lf {
+			return unicode.IsSpace(r)
+		}
+		switch r {
+		case '\n':
+			lf = true
+			return false
+		default:
+			return true
+		}
+	}
 }
 
 func (lx *Lexer) skip(fn func(rune) bool) error {
