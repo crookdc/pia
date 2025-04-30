@@ -209,6 +209,11 @@ func (ps *Parser) expression(precedence int) (ast.ExpressionNode, error) {
 		if err != nil {
 			return nil, err
 		}
+	case token.Import:
+		e, err = ps.prefix(t)
+		if err != nil {
+			return nil, err
+		}
 	case token.LeftParenthesis:
 		e, err = ps.expression(PrecedenceLowest)
 		if err != nil {

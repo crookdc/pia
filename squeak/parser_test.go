@@ -391,6 +391,29 @@ func TestParser_Next(t *testing.T) {
 				},
 			},
 		},
+		{
+			src: "let b64 = import \"core/base64\";",
+			expected: ast.LetStatement{
+				Assignment: ast.InfixExpression{
+					Operator: token.Token{
+						Type:    token.Assign,
+						Literal: "=",
+					},
+					LHS: ast.IdentifierExpression{
+						Identifier: "b64",
+					},
+					RHS: ast.PrefixExpression{
+						Operator: token.Token{
+							Type:    token.Import,
+							Literal: "import",
+						},
+						RHS: ast.StringExpression{
+							String: "core/base64",
+						},
+					},
+				},
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.src, func(t *testing.T) {
