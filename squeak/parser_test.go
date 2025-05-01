@@ -414,6 +414,67 @@ func TestParser_Next(t *testing.T) {
 				},
 			},
 		},
+		{
+			src: "let a = !b;",
+			expected: ast.LetStatement{
+				Assignment: ast.InfixExpression{
+					Operator: token.Token{
+						Type:    token.Assign,
+						Literal: "=",
+					},
+					LHS: ast.IdentifierExpression{
+						Identifier: "a",
+					},
+					RHS: ast.PrefixExpression{
+						Operator: token.Token{
+							Type:    token.Bang,
+							Literal: "!",
+						},
+						RHS: ast.IdentifierExpression{
+							Identifier: "b",
+						},
+					},
+				},
+			},
+		},
+		{
+			src: "{ let a = 0; }",
+			expected: ast.BlockStatement{
+				Statements: []ast.StatementNode{
+					ast.LetStatement{
+						Assignment: ast.InfixExpression{
+							Operator: token.Token{
+								Type:    token.Assign,
+								Literal: "=",
+							},
+							LHS: ast.IdentifierExpression{
+								Identifier: "a",
+							},
+							RHS: ast.IntegerExpression{
+								Integer: 0,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			src: "if (a) { a; }",
+			expected: ast.IfStatement{
+				Condition: ast.IdentifierExpression{
+					Identifier: "a",
+				},
+				Consequence: ast.BlockStatement{
+					Statements: []ast.StatementNode{
+						ast.ExpressionStatement{
+							Expression: ast.IdentifierExpression{
+								Identifier: "a",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.src, func(t *testing.T) {

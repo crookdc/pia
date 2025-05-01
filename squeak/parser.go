@@ -60,6 +60,8 @@ func (ps *Parser) statement() (s ast.StatementNode, err error) {
 		return ps.ifs()
 	case token.Return:
 		return ps.ret()
+	case token.LeftCurlyBrace:
+		return ps.block()
 	default:
 		e, err := ps.expression(PrecedenceLowest)
 		if err != nil {
@@ -180,6 +182,34 @@ func (ps *Parser) ret() (stmt ast.ReturnStatement, err error) {
 	}, nil
 }
 
+func (ps *Parser) block() (ast.BlockStatement, error) {
+	if _, err := ps.expect(token.LeftCurlyBrace); err != nil {
+		return ast.BlockStatement{}, err
+	}
+	peek, err := ps.lx.Peek()
+	if err != nil {
+		return ast.BlockStatement{}, err
+	}
+	block := make([]ast.StatementNode, 0)
+	for peek.Type != token.RightCurlyBrace {
+		s, err := ps.statement()
+		if err != nil {
+			return ast.BlockStatement{}, err
+		}
+		block = append(block, s)
+		peek, err = ps.lx.Peek()
+		if err != nil {
+			return ast.BlockStatement{}, err
+		}
+	}
+	if _, err := ps.expect(token.RightCurlyBrace); err != nil {
+		return ast.BlockStatement{}, err
+	}
+	return ast.BlockStatement{
+		Statements: block,
+	}, nil
+}
+
 func (ps *Parser) expression(precedence int) (ast.ExpressionNode, error) {
 	t, err := ps.lx.Next()
 	if err != nil {
@@ -210,6 +240,11 @@ func (ps *Parser) expression(precedence int) (ast.ExpressionNode, error) {
 			return nil, err
 		}
 	case token.Import:
+		e, err = ps.prefix(t)
+		if err != nil {
+			return nil, err
+		}
+	case token.Bang:
 		e, err = ps.prefix(t)
 		if err != nil {
 			return nil, err
@@ -289,7 +324,7 @@ func (ps *Parser) expect(v token.Type) (token.Token, error) {
 		return token.Token{}, err
 	}
 	if t.Type != v {
-		return token.Token{}, ErrUnrecognizedToken
+		return token.Token{}, fmt.Errorf("%w: %s", ErrUnrecognizedToken, t.Literal)
 	}
 	return t, nil
 }

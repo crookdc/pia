@@ -83,6 +83,12 @@ type ReturnStatement struct {
 	Expression ExpressionNode
 }
 
+// BlockStatement holds many statements but is treated as a single statement by the Squeak evaluator. This allows if statements and other control structures to branch into multi-statement code.
+type BlockStatement struct {
+	Statement
+	Statements []StatementNode
+}
+
 // ExpressionStatement represents an expression that exists in isolation within a Squeak script, meaning that it is not
 // defined as part of a statement and will thus be considered a statement by itself.
 type ExpressionStatement struct {
