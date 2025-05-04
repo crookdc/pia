@@ -502,6 +502,35 @@ func TestParser_Next(t *testing.T) {
 				},
 			},
 		},
+		{
+			src: "greet(\"crookdc\", 5);",
+			expected: ast.ExpressionStatement{
+				Expression: ast.CallExpression{
+					Identifier: ast.IdentifierExpression{
+						Identifier: "greet",
+					},
+					Arguments: []ast.ExpressionNode{
+						ast.StringExpression{
+							String: "crookdc",
+						},
+						ast.IntegerExpression{
+							Integer: 5,
+						},
+					},
+				},
+			},
+		},
+		{
+			src: "noargs();",
+			expected: ast.ExpressionStatement{
+				Expression: ast.CallExpression{
+					Identifier: ast.IdentifierExpression{
+						Identifier: "noargs",
+					},
+					Arguments: []ast.ExpressionNode{},
+				},
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.src, func(t *testing.T) {

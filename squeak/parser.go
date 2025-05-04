@@ -306,6 +306,15 @@ func (ps *Parser) expression(precedence int) (ast.ExpressionNode, error) {
 		switch peek.Type {
 		case token.Semicolon:
 			done = true
+		case token.LeftParenthesis:
+			args, err := ps.list(token.LeftParenthesis, token.RightParenthesis)
+			if err != nil {
+				return nil, err
+			}
+			e = ast.CallExpression{
+				Identifier: e,
+				Arguments:  args,
+			}
 		default:
 			op := Precedences[peek.Type]
 			if precedence >= op {

@@ -128,6 +128,13 @@ type FunctionExpression struct {
 	Body       StatementNode
 }
 
+// CallExpression represents a function invocation. The Identifier field should resolve to the function name.
+type CallExpression struct {
+	Expression
+	Identifier ExpressionNode
+	Arguments  []ExpressionNode
+}
+
 // PrefixExpression represents an expression with a single operand where the operator is located before the operand.
 type PrefixExpression struct {
 	Expression
