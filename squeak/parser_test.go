@@ -425,6 +425,23 @@ func TestParser_Next(t *testing.T) {
 				Identifier: "crookdc",
 			},
 		},
+		{
+			src: "a.b;",
+			expected: ast.ExpressionStatement{
+				Expression: ast.InfixExpression{
+					Operator: token.Token{
+						Type:    token.FullStop,
+						Literal: ".",
+					},
+					LHS: ast.IdentifierExpression{
+						Identifier: "a",
+					},
+					RHS: ast.IdentifierExpression{
+						Identifier: "b",
+					},
+				},
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.src, func(t *testing.T) {

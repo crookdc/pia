@@ -3,9 +3,10 @@ package squeak
 import (
 	"errors"
 	"fmt"
+	"strconv"
+
 	"github.com/crookdc/pia/squeak/internal/ast"
 	"github.com/crookdc/pia/squeak/internal/token"
-	"strconv"
 )
 
 var (
@@ -25,6 +26,7 @@ var (
 		token.Asterisk:         PrecedenceProduct,
 		token.Slash:            PrecedenceProduct,
 		token.If:               PrecedencePrefix,
+		token.FullStop:         PrecedenceCall,
 	}
 )
 
@@ -36,6 +38,7 @@ const (
 	PrecedenceSum
 	PrecedenceProduct
 	PrecedencePrefix
+	PrecedenceCall
 )
 
 // Parser builds an abstract syntax tree from the tokens yielded by a Lexer.
