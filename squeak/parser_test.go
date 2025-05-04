@@ -442,6 +442,66 @@ func TestParser_Next(t *testing.T) {
 				},
 			},
 		},
+		{
+			src: `
+			let add = func(a, b) {
+				return a + b;
+			};
+			`,
+			expected: ast.LetStatement{
+				Identifier: "add",
+				Value: ast.FunctionExpression{
+					Parameters: []ast.ExpressionNode{
+						ast.IdentifierExpression{
+							Identifier: "a",
+						},
+						ast.IdentifierExpression{
+							Identifier: "b",
+						},
+					},
+					Body: ast.BlockStatement{
+						Statements: []ast.StatementNode{
+							ast.ReturnStatement{
+								Expression: ast.InfixExpression{
+									Operator: token.Token{
+										Type:    token.Plus,
+										Literal: "+",
+									},
+									LHS: ast.IdentifierExpression{
+										Identifier: "a",
+									},
+									RHS: ast.IdentifierExpression{
+										Identifier: "b",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			src: `
+			let one = func() {
+				return 1;
+			};
+			`,
+			expected: ast.LetStatement{
+				Identifier: "one",
+				Value: ast.FunctionExpression{
+					Parameters: []ast.ExpressionNode{},
+					Body: ast.BlockStatement{
+						Statements: []ast.StatementNode{
+							ast.ReturnStatement{
+								Expression: ast.IntegerExpression{
+									Integer: 1,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.src, func(t *testing.T) {

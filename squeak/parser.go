@@ -273,6 +273,19 @@ func (ps *Parser) expression(precedence int) (ast.ExpressionNode, error) {
 		if err != nil {
 			return nil, err
 		}
+	case token.Function:
+		params, err := ps.list(token.LeftParenthesis, token.RightParenthesis)
+		if err != nil {
+			return nil, err
+		}
+		body, err := ps.statement()
+		if err != nil {
+			return nil, err
+		}
+		e = ast.FunctionExpression{
+			Parameters: params,
+			Body:       body,
+		}
 	case token.LeftParenthesis:
 		e, err = ps.expression(PrecedenceLowest)
 		if err != nil {
@@ -307,6 +320,46 @@ func (ps *Parser) expression(precedence int) (ast.ExpressionNode, error) {
 		}
 	}
 	return e, nil
+}
+
+func (ps *Parser) list(prefix, suffix token.Type) ([]ast.ExpressionNode, error) {
+	if _, err := ps.expect(prefix); err != nil {
+		return nil, err
+	}
+	t, err := ps.lx.Peek()
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]ast.ExpressionNode, 0)
+	for t.Type != suffix {
+		e, err := ps.expression(PrecedenceLowest)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, e)
+
+		t, err = ps.lx.Peek()
+		if err != nil {
+			return nil, err
+		}
+		switch t.Type {
+		case token.Comma:
+			ps.lx.Discard()
+			t, err = ps.lx.Peek()
+			if err != nil {
+				return nil, err
+			}
+		case suffix:
+			// Ignore
+		default:
+			return nil, ErrUnrecognizedToken
+		}
+	}
+	if _, err := ps.expect(suffix); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 func (ps *Parser) integer(t token.Token) (ast.IntegerExpression, error) {

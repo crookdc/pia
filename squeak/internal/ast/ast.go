@@ -121,6 +121,13 @@ type BooleanExpression struct {
 	Boolean bool
 }
 
+// FunctionExpression represents a function declaration.
+type FunctionExpression struct {
+	Expression
+	Parameters []ExpressionNode
+	Body       StatementNode
+}
+
 // PrefixExpression represents an expression with a single operand where the operator is located before the operand.
 type PrefixExpression struct {
 	Expression
