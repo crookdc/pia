@@ -80,16 +80,37 @@ func (ps *Parser) let() (ast.LetStatement, error) {
 	if _, err := ps.expect(token.Let); err != nil {
 		return ast.LetStatement{}, err
 	}
-	asn, err := ps.expression(PrecedenceLowest)
+	id, err := ps.expect(token.Identifier)
 	if err != nil {
 		return ast.LetStatement{}, err
 	}
+	pk, err := ps.lx.Peek()
+	if err != nil {
+		return ast.LetStatement{}, err
+	}
+	stmt := ast.LetStatement{
+		Identifier: id.Literal,
+	}
+	// Let statements can include an initializer expression but does not have to.
+	switch pk.Type {
+	case token.Assign:
+		if _, err := ps.expect(token.Assign); err != nil {
+			return ast.LetStatement{}, err
+		}
+		val, err := ps.expression(PrecedenceLowest)
+		if err != nil {
+			return ast.LetStatement{}, err
+		}
+		stmt.Value = val
+	case token.Semicolon:
+	default:
+		return ast.LetStatement{}, ErrUnrecognizedToken
+	}
+
 	if _, err := ps.expect(token.Semicolon); err != nil {
 		return ast.LetStatement{}, err
 	}
-	return ast.LetStatement{
-		Assignment: asn,
-	}, nil
+	return stmt, nil
 }
 
 func (ps *Parser) ifs() (ast.IfStatement, error) {

@@ -136,10 +136,48 @@ func TestParser_Next(t *testing.T) {
 		{
 			src: "let a = (a + b) * c;",
 			expected: ast.LetStatement{
-				Assignment: ast.InfixExpression{
+				Identifier: "a",
+				Value: ast.InfixExpression{
+
 					Operator: token.Token{
-						Type:    token.Assign,
-						Literal: "=",
+						Type:    token.Asterisk,
+						Literal: "*",
+					},
+					LHS: ast.InfixExpression{
+						Operator: token.Token{
+							Type:    token.Plus,
+							Literal: "+",
+						},
+						LHS: ast.IdentifierExpression{
+							Identifier: "a",
+						},
+						RHS: ast.IdentifierExpression{
+							Identifier: "b",
+						},
+					},
+					RHS: ast.IdentifierExpression{
+						Identifier: "c",
+					},
+				},
+			},
+		},
+		{
+			src: "let a = \"crookdc\";",
+			expected: ast.LetStatement{
+				Identifier: "a",
+				Value: ast.StringExpression{
+					String: "crookdc",
+				},
+			},
+		},
+		{
+			src: "let crookdc = a + b * c;",
+			expected: ast.LetStatement{
+				Identifier: "crookdc",
+				Value: ast.InfixExpression{
+					Operator: token.Token{
+						Type:    token.Plus,
+						Literal: "+",
 					},
 					LHS: ast.IdentifierExpression{
 						Identifier: "a",
@@ -149,73 +187,11 @@ func TestParser_Next(t *testing.T) {
 							Type:    token.Asterisk,
 							Literal: "*",
 						},
-						LHS: ast.InfixExpression{
-							Operator: token.Token{
-								Type:    token.Plus,
-								Literal: "+",
-							},
-							LHS: ast.IdentifierExpression{
-								Identifier: "a",
-							},
-							RHS: ast.IdentifierExpression{
-								Identifier: "b",
-							},
+						LHS: ast.IdentifierExpression{
+							Identifier: "b",
 						},
 						RHS: ast.IdentifierExpression{
 							Identifier: "c",
-						},
-					},
-				},
-			},
-		},
-		{
-			src: "let a = \"crookdc\";",
-			expected: ast.LetStatement{
-				Assignment: ast.InfixExpression{
-					Operator: token.Token{
-						Type:    token.Assign,
-						Literal: "=",
-					},
-					LHS: ast.IdentifierExpression{
-						Identifier: "a",
-					},
-					RHS: ast.StringExpression{
-						String: "crookdc",
-					},
-				},
-			},
-		},
-		{
-			src: "let crookdc = a + b * c;",
-			expected: ast.LetStatement{
-				Assignment: ast.InfixExpression{
-					Expression: ast.Expression{},
-					Operator: token.Token{
-						Type:    token.Assign,
-						Literal: "=",
-					},
-					LHS: ast.IdentifierExpression{
-						Identifier: "crookdc",
-					},
-					RHS: ast.InfixExpression{
-						Operator: token.Token{
-							Type:    token.Plus,
-							Literal: "+",
-						},
-						LHS: ast.IdentifierExpression{
-							Identifier: "a",
-						},
-						RHS: ast.InfixExpression{
-							Operator: token.Token{
-								Type:    token.Asterisk,
-								Literal: "*",
-							},
-							LHS: ast.IdentifierExpression{
-								Identifier: "b",
-							},
-							RHS: ast.IdentifierExpression{
-								Identifier: "c",
-							},
 						},
 					},
 				},
@@ -333,31 +309,23 @@ func TestParser_Next(t *testing.T) {
 		{
 			src: "let a = -a + a;",
 			expected: ast.LetStatement{
-				Assignment: ast.InfixExpression{
+				Identifier: "a",
+				Value: ast.InfixExpression{
 					Operator: token.Token{
-						Type:    token.Assign,
-						Literal: "=",
+						Type:    token.Plus,
+						Literal: "+",
 					},
-					LHS: ast.IdentifierExpression{
-						Identifier: "a",
-					},
-					RHS: ast.InfixExpression{
+					LHS: ast.PrefixExpression{
 						Operator: token.Token{
-							Type:    token.Plus,
-							Literal: "+",
-						},
-						LHS: ast.PrefixExpression{
-							Operator: token.Token{
-								Type:    token.Minus,
-								Literal: "-",
-							},
-							RHS: ast.IdentifierExpression{
-								Identifier: "a",
-							},
+							Type:    token.Minus,
+							Literal: "-",
 						},
 						RHS: ast.IdentifierExpression{
 							Identifier: "a",
 						},
+					},
+					RHS: ast.IdentifierExpression{
+						Identifier: "a",
 					},
 				},
 			},
@@ -394,22 +362,14 @@ func TestParser_Next(t *testing.T) {
 		{
 			src: "let b64 = import \"core/base64\";",
 			expected: ast.LetStatement{
-				Assignment: ast.InfixExpression{
+				Identifier: "b64",
+				Value: ast.PrefixExpression{
 					Operator: token.Token{
-						Type:    token.Assign,
-						Literal: "=",
+						Type:    token.Import,
+						Literal: "import",
 					},
-					LHS: ast.IdentifierExpression{
-						Identifier: "b64",
-					},
-					RHS: ast.PrefixExpression{
-						Operator: token.Token{
-							Type:    token.Import,
-							Literal: "import",
-						},
-						RHS: ast.StringExpression{
-							String: "core/base64",
-						},
+					RHS: ast.StringExpression{
+						String: "core/base64",
 					},
 				},
 			},
@@ -417,22 +377,14 @@ func TestParser_Next(t *testing.T) {
 		{
 			src: "let a = !b;",
 			expected: ast.LetStatement{
-				Assignment: ast.InfixExpression{
+				Identifier: "a",
+				Value: ast.PrefixExpression{
 					Operator: token.Token{
-						Type:    token.Assign,
-						Literal: "=",
+						Type:    token.Bang,
+						Literal: "!",
 					},
-					LHS: ast.IdentifierExpression{
-						Identifier: "a",
-					},
-					RHS: ast.PrefixExpression{
-						Operator: token.Token{
-							Type:    token.Bang,
-							Literal: "!",
-						},
-						RHS: ast.IdentifierExpression{
-							Identifier: "b",
-						},
+					RHS: ast.IdentifierExpression{
+						Identifier: "b",
 					},
 				},
 			},
@@ -442,17 +394,9 @@ func TestParser_Next(t *testing.T) {
 			expected: ast.BlockStatement{
 				Statements: []ast.StatementNode{
 					ast.LetStatement{
-						Assignment: ast.InfixExpression{
-							Operator: token.Token{
-								Type:    token.Assign,
-								Literal: "=",
-							},
-							LHS: ast.IdentifierExpression{
-								Identifier: "a",
-							},
-							RHS: ast.IntegerExpression{
-								Integer: 0,
-							},
+						Identifier: "a",
+						Value: ast.IntegerExpression{
+							Integer: 0,
 						},
 					},
 				},
@@ -473,6 +417,12 @@ func TestParser_Next(t *testing.T) {
 						},
 					},
 				},
+			},
+		},
+		{
+			src: "let crookdc;",
+			expected: ast.LetStatement{
+				Identifier: "crookdc",
 			},
 		},
 	}

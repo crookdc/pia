@@ -61,7 +61,8 @@ func (s Statement) Node() {
 // LetStatement represents a statement which creates and initializes a new variable, for example: "let a = 5;".
 type LetStatement struct {
 	Statement
-	Assignment ExpressionNode
+	Identifier string
+	Value      ExpressionNode
 }
 
 // IfStatement represents a statement that allows the user to choose one of several branched statements to execute
@@ -120,12 +121,14 @@ type BooleanExpression struct {
 	Boolean bool
 }
 
+// PrefixExpression represents an expression with a single operand where the operator is located before the operand.
 type PrefixExpression struct {
 	Expression
 	Operator token.Token
 	RHS      ExpressionNode
 }
 
+// InfixExpression represents an expression with two operands where the operator is located inbetween the operands.
 type InfixExpression struct {
 	Expression
 	Operator token.Token
