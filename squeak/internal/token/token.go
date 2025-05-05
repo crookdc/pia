@@ -86,9 +86,9 @@ type Type int
 // brackets, but it can also be entire Squeak keywords.
 type Token struct {
 	Type
-	// Literal contains the literal string representation of a token. For many token types this is static, like
+	// Lexeme contains the literal string representation of a token. For many token types this is static, like
 	// semicolons and keywords, but for others it may vary such as for integer and string literals.
-	Literal string
+	Lexeme string
 }
 
 // Opt represents an optional transformer of token values which is applied to the Token upon construction with
@@ -98,7 +98,7 @@ type Opt func(t *Token)
 // Literal is an Opt implementation that allows the caller to set the [token.Token.Literal] value to a custom one.
 func Literal(literal string) Opt {
 	return func(t *Token) {
-		t.Literal = literal
+		t.Lexeme = literal
 	}
 }
 
@@ -106,13 +106,13 @@ func Literal(literal string) Opt {
 // representation.
 func New(t Type, opts ...Opt) (Token, error) {
 	token := Token{
-		Type:    t,
-		Literal: literals[t],
+		Type:   t,
+		Lexeme: literals[t],
 	}
 	for _, opt := range opts {
 		opt(&token)
 	}
-	if token.Literal == "" {
+	if token.Lexeme == "" {
 		return Token{}, ErrMissingLiteral
 	}
 	return token, nil

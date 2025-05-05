@@ -31,24 +31,24 @@ func TestLexer_Next(t *testing.T) {
 			bl:  LexerBufferLength,
 			expected: []token.Token{
 				{
-					Type:    token.Let,
-					Literal: "let",
+					Type:   token.Let,
+					Lexeme: "let",
 				},
 				{
-					Type:    token.Assign,
-					Literal: "=",
+					Type:   token.Assign,
+					Lexeme: "=",
 				},
 				{
-					Type:    token.Integer,
-					Literal: "512",
+					Type:   token.Integer,
+					Lexeme: "512",
 				},
 				{
-					Type:    token.Semicolon,
-					Literal: ";",
+					Type:   token.Semicolon,
+					Lexeme: ";",
 				},
 				{
-					Type:    token.EOF,
-					Literal: "EOF",
+					Type:   token.EOF,
+					Lexeme: "EOF",
 				},
 			},
 		},
@@ -57,60 +57,60 @@ func TestLexer_Next(t *testing.T) {
 			bl:  LexerBufferLength,
 			expected: []token.Token{
 				{
-					Type:    token.Identifier,
-					Literal: "a",
+					Type:   token.Identifier,
+					Lexeme: "a",
 				},
 				{
-					Type:    token.Plus,
-					Literal: "+",
+					Type:   token.Plus,
+					Lexeme: "+",
 				},
 				{
-					Type:    token.Identifier,
-					Literal: "b",
+					Type:   token.Identifier,
+					Lexeme: "b",
 				},
 				{
-					Type:    token.Slash,
-					Literal: "/",
+					Type:   token.Slash,
+					Lexeme: "/",
 				},
 				{
-					Type:    token.And,
-					Literal: "&&",
+					Type:   token.And,
+					Lexeme: "&&",
 				},
 				{
-					Type:    token.LeftParenthesis,
-					Literal: "(",
+					Type:   token.LeftParenthesis,
+					Lexeme: "(",
 				},
 				{
-					Type:    token.RightCurlyBrace,
-					Literal: "}",
+					Type:   token.RightCurlyBrace,
+					Lexeme: "}",
 				},
 				{
-					Type:    token.RightParenthesis,
-					Literal: ")",
+					Type:   token.RightParenthesis,
+					Lexeme: ")",
 				},
 				{
-					Type:    token.LeftCurlyBrace,
-					Literal: "{",
+					Type:   token.LeftCurlyBrace,
+					Lexeme: "{",
 				},
 				{
-					Type:    token.Asterisk,
-					Literal: "*",
+					Type:   token.Asterisk,
+					Lexeme: "*",
 				},
 				{
-					Type:    token.NotEquals,
-					Literal: "!=",
+					Type:   token.NotEquals,
+					Lexeme: "!=",
 				},
 				{
-					Type:    token.Bang,
-					Literal: "!",
+					Type:   token.Bang,
+					Lexeme: "!",
 				},
 				{
-					Type:    token.FullStop,
-					Literal: ".",
+					Type:   token.FullStop,
+					Lexeme: ".",
 				},
 				{
-					Type:    token.EOF,
-					Literal: "EOF",
+					Type:   token.EOF,
+					Lexeme: "EOF",
 				},
 			},
 		},
@@ -119,28 +119,28 @@ func TestLexer_Next(t *testing.T) {
 			bl:  LexerBufferLength,
 			expected: []token.Token{
 				{
-					Type:    token.Boolean,
-					Literal: "true",
+					Type:   token.Boolean,
+					Lexeme: "true",
 				},
 				{
-					Type:    token.And,
-					Literal: "&&",
+					Type:   token.And,
+					Lexeme: "&&",
 				},
 				{
-					Type:    token.Boolean,
-					Literal: "false",
+					Type:   token.Boolean,
+					Lexeme: "false",
 				},
 				{
-					Type:    token.Or,
-					Literal: "||",
+					Type:   token.Or,
+					Lexeme: "||",
 				},
 				{
-					Type:    token.Boolean,
-					Literal: "false",
+					Type:   token.Boolean,
+					Lexeme: "false",
 				},
 				{
-					Type:    token.EOF,
-					Literal: "EOF",
+					Type:   token.EOF,
+					Lexeme: "EOF",
 				},
 			},
 		},
@@ -156,68 +156,68 @@ func TestLexer_Next(t *testing.T) {
 			bl: LexerBufferLength,
 			expected: []token.Token{
 				{
-					Type:    token.Import,
-					Literal: "import",
+					Type:   token.Import,
+					Lexeme: "import",
 				},
 				{
-					Type:    token.String,
-					Literal: "math",
+					Type:   token.String,
+					Lexeme: "math",
 				},
 				{
-					Type:    token.Semicolon,
-					Literal: ";",
+					Type:   token.Semicolon,
+					Lexeme: ";",
 				},
 				{
-					Type:    token.While,
-					Literal: "while",
+					Type:   token.While,
+					Lexeme: "while",
 				},
 				{
-					Type:    token.LeftParenthesis,
-					Literal: "(",
+					Type:   token.LeftParenthesis,
+					Lexeme: "(",
 				},
 				{
-					Type:    token.Boolean,
-					Literal: "true",
+					Type:   token.Boolean,
+					Lexeme: "true",
 				},
 				{
-					Type:    token.RightParenthesis,
-					Literal: ")",
+					Type:   token.RightParenthesis,
+					Lexeme: ")",
 				},
 				{
-					Type:    token.LeftCurlyBrace,
-					Literal: "{",
+					Type:   token.LeftCurlyBrace,
+					Lexeme: "{",
 				},
 				{
-					Type:    token.Return,
-					Literal: "return",
+					Type:   token.Return,
+					Lexeme: "return",
 				},
 				{
-					Type:    token.Identifier,
-					Literal: "a",
+					Type:   token.Identifier,
+					Lexeme: "a",
 				},
 				{
-					Type:    token.LeftBracket,
-					Literal: "[",
+					Type:   token.LeftBracket,
+					Lexeme: "[",
 				},
 				{
-					Type:    token.Integer,
-					Literal: "0",
+					Type:   token.Integer,
+					Lexeme: "0",
 				},
 				{
-					Type:    token.RightBracket,
-					Literal: "]",
+					Type:   token.RightBracket,
+					Lexeme: "]",
 				},
 				{
-					Type:    token.Semicolon,
-					Literal: ";",
+					Type:   token.Semicolon,
+					Lexeme: ";",
 				},
 				{
-					Type:    token.RightCurlyBrace,
-					Literal: "}",
+					Type:   token.RightCurlyBrace,
+					Lexeme: "}",
 				},
 				{
-					Type:    token.EOF,
-					Literal: "EOF",
+					Type:   token.EOF,
+					Lexeme: "EOF",
 				},
 			},
 		},
@@ -226,28 +226,28 @@ func TestLexer_Next(t *testing.T) {
 			bl:  LexerBufferLength,
 			expected: []token.Token{
 				{
-					Type:    token.Let,
-					Literal: "let",
+					Type:   token.Let,
+					Lexeme: "let",
 				},
 				{
-					Type:    token.Identifier,
-					Literal: "name",
+					Type:   token.Identifier,
+					Lexeme: "name",
 				},
 				{
-					Type:    token.Assign,
-					Literal: "=",
+					Type:   token.Assign,
+					Lexeme: "=",
 				},
 				{
-					Type:    token.String,
-					Literal: "crookdc",
+					Type:   token.String,
+					Lexeme: "crookdc",
 				},
 				{
-					Type:    token.Semicolon,
-					Literal: ";",
+					Type:   token.Semicolon,
+					Lexeme: ";",
 				},
 				{
-					Type:    token.EOF,
-					Literal: "EOF",
+					Type:   token.EOF,
+					Lexeme: "EOF",
 				},
 			},
 		},
@@ -260,60 +260,60 @@ func TestLexer_Next(t *testing.T) {
 			bl: LexerBufferLength,
 			expected: []token.Token{
 				{
-					Type:    token.If,
-					Literal: "if",
+					Type:   token.If,
+					Lexeme: "if",
 				},
 				{
-					Type:    token.LeftParenthesis,
-					Literal: "(",
+					Type:   token.LeftParenthesis,
+					Lexeme: "(",
 				},
 				{
-					Type:    token.Identifier,
-					Literal: "a",
+					Type:   token.Identifier,
+					Lexeme: "a",
 				},
 				{
-					Type:    token.GreaterThan,
-					Literal: ">",
+					Type:   token.GreaterThan,
+					Lexeme: ">",
 				},
 				{
-					Type:    token.Identifier,
-					Literal: "b",
+					Type:   token.Identifier,
+					Lexeme: "b",
 				},
 				{
-					Type:    token.RightParenthesis,
-					Literal: ")",
+					Type:   token.RightParenthesis,
+					Lexeme: ")",
 				},
 				{
-					Type:    token.LeftCurlyBrace,
-					Literal: "{",
+					Type:   token.LeftCurlyBrace,
+					Lexeme: "{",
 				},
 				{
-					Type:    token.Let,
-					Literal: "let",
+					Type:   token.Let,
+					Lexeme: "let",
 				},
 				{
-					Type:    token.Identifier,
-					Literal: "c",
+					Type:   token.Identifier,
+					Lexeme: "c",
 				},
 				{
-					Type:    token.Assign,
-					Literal: "=",
+					Type:   token.Assign,
+					Lexeme: "=",
 				},
 				{
-					Type:    token.Integer,
-					Literal: "5",
+					Type:   token.Integer,
+					Lexeme: "5",
 				},
 				{
-					Type:    token.Semicolon,
-					Literal: ";",
+					Type:   token.Semicolon,
+					Lexeme: ";",
 				},
 				{
-					Type:    token.RightCurlyBrace,
-					Literal: "}",
+					Type:   token.RightCurlyBrace,
+					Lexeme: "}",
 				},
 				{
-					Type:    token.EOF,
-					Literal: "EOF",
+					Type:   token.EOF,
+					Lexeme: "EOF",
 				},
 			},
 		},
@@ -322,28 +322,28 @@ func TestLexer_Next(t *testing.T) {
 			bl:  4,
 			expected: []token.Token{
 				{
-					Type:    token.Let,
-					Literal: "let",
+					Type:   token.Let,
+					Lexeme: "let",
 				},
 				{
-					Type:    token.Identifier,
-					Literal: "developer",
+					Type:   token.Identifier,
+					Lexeme: "developer",
 				},
 				{
-					Type:    token.Assign,
-					Literal: "=",
+					Type:   token.Assign,
+					Lexeme: "=",
 				},
 				{
-					Type:    token.String,
-					Literal: "crookd",
+					Type:   token.String,
+					Lexeme: "crookd",
 				},
 				{
-					Type:    token.Semicolon,
-					Literal: ";",
+					Type:   token.Semicolon,
+					Lexeme: ";",
 				},
 				{
-					Type:    token.EOF,
-					Literal: "EOF",
+					Type:   token.EOF,
+					Lexeme: "EOF",
 				},
 			},
 		},
@@ -352,24 +352,24 @@ func TestLexer_Next(t *testing.T) {
 			bl:  LexerBufferLength,
 			expected: []token.Token{
 				{
-					Type:    token.Identifier,
-					Literal: "name",
+					Type:   token.Identifier,
+					Lexeme: "name",
 				},
 				{
-					Type:    token.Plus,
-					Literal: "+",
+					Type:   token.Plus,
+					Lexeme: "+",
 				},
 				{
-					Type:    token.String,
-					Literal: "is a good developer",
+					Type:   token.String,
+					Lexeme: "is a good developer",
 				},
 				{
-					Type:    token.Semicolon,
-					Literal: ";",
+					Type:   token.Semicolon,
+					Lexeme: ";",
 				},
 				{
-					Type:    token.EOF,
-					Literal: "EOF",
+					Type:   token.EOF,
+					Lexeme: "EOF",
 				},
 			},
 		},
@@ -385,92 +385,92 @@ func TestLexer_Next(t *testing.T) {
 			bl: LexerBufferLength,
 			expected: []token.Token{
 				{
-					Type:    token.Let,
-					Literal: "let",
+					Type:   token.Let,
+					Lexeme: "let",
 				},
 				{
-					Type:    token.Identifier,
-					Literal: "pos",
+					Type:   token.Identifier,
+					Lexeme: "pos",
 				},
 				{
-					Type:    token.Assign,
-					Literal: "=",
+					Type:   token.Assign,
+					Lexeme: "=",
 				},
 				{
-					Type:    token.Function,
-					Literal: "func",
+					Type:   token.Function,
+					Lexeme: "func",
 				},
 				{
-					Type:    token.LeftParenthesis,
-					Literal: "(",
+					Type:   token.LeftParenthesis,
+					Lexeme: "(",
 				},
 				{
-					Type:    token.Identifier,
-					Literal: "a",
+					Type:   token.Identifier,
+					Lexeme: "a",
 				},
 				{
-					Type:    token.Comma,
-					Literal: ",",
+					Type:   token.Comma,
+					Lexeme: ",",
 				},
 				{
-					Type:    token.Identifier,
-					Literal: "b",
+					Type:   token.Identifier,
+					Lexeme: "b",
 				},
 				{
-					Type:    token.RightParenthesis,
-					Literal: ")",
+					Type:   token.RightParenthesis,
+					Lexeme: ")",
 				},
 				{
-					Type:    token.LeftCurlyBrace,
-					Literal: "{",
+					Type:   token.LeftCurlyBrace,
+					Lexeme: "{",
 				},
 				{
-					Type:    token.Return,
-					Literal: "return",
+					Type:   token.Return,
+					Lexeme: "return",
 				},
 				{
-					Type:    token.Identifier,
-					Literal: "a",
+					Type:   token.Identifier,
+					Lexeme: "a",
 				},
 				{
-					Type:    token.GreaterThan,
-					Literal: ">",
+					Type:   token.GreaterThan,
+					Lexeme: ">",
 				},
 				{
-					Type:    token.Integer,
-					Literal: "0",
+					Type:   token.Integer,
+					Lexeme: "0",
 				},
 				{
-					Type:    token.And,
-					Literal: "&&",
+					Type:   token.And,
+					Lexeme: "&&",
 				},
 				{
-					Type:    token.Identifier,
-					Literal: "b",
+					Type:   token.Identifier,
+					Lexeme: "b",
 				},
 				{
-					Type:    token.GreaterThan,
-					Literal: ">",
+					Type:   token.GreaterThan,
+					Lexeme: ">",
 				},
 				{
-					Type:    token.Integer,
-					Literal: "0",
+					Type:   token.Integer,
+					Lexeme: "0",
 				},
 				{
-					Type:    token.Semicolon,
-					Literal: ";",
+					Type:   token.Semicolon,
+					Lexeme: ";",
 				},
 				{
-					Type:    token.RightCurlyBrace,
-					Literal: "}",
+					Type:   token.RightCurlyBrace,
+					Lexeme: "}",
 				},
 				{
-					Type:    token.Semicolon,
-					Literal: ";",
+					Type:   token.Semicolon,
+					Lexeme: ";",
 				},
 				{
-					Type:    token.EOF,
-					Literal: "EOF",
+					Type:   token.EOF,
+					Lexeme: "EOF",
 				},
 			},
 		},
@@ -518,21 +518,21 @@ func TestPeekingLexer_Peek(t *testing.T) {
 
 	tok, err := plx.Peek()
 	assert.Nil(t, err)
-	assert.Equal(t, token.Token{Type: token.Let, Literal: "let"}, tok)
+	assert.Equal(t, token.Token{Type: token.Let, Lexeme: "let"}, tok)
 
 	tok, err = plx.Peek()
 	assert.Nil(t, err)
-	assert.Equal(t, token.Token{Type: token.Let, Literal: "let"}, tok)
+	assert.Equal(t, token.Token{Type: token.Let, Lexeme: "let"}, tok)
 
 	tok, err = plx.Next()
 	assert.Nil(t, err)
-	assert.Equal(t, token.Token{Type: token.Let, Literal: "let"}, tok)
+	assert.Equal(t, token.Token{Type: token.Let, Lexeme: "let"}, tok)
 
 	tok, err = plx.Peek()
 	assert.Nil(t, err)
-	assert.Equal(t, token.Token{Type: token.Identifier, Literal: "a"}, tok)
+	assert.Equal(t, token.Token{Type: token.Identifier, Lexeme: "a"}, tok)
 
 	tok, err = plx.Peek()
 	assert.Nil(t, err)
-	assert.Equal(t, token.Token{Type: token.Identifier, Literal: "a"}, tok)
+	assert.Equal(t, token.Token{Type: token.Identifier, Lexeme: "a"}, tok)
 }

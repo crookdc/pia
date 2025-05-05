@@ -26,8 +26,8 @@ func TestParser_Next(t *testing.T) {
 			expected: ast.ExpressionStatement{
 				Expression: ast.InfixExpression{
 					Operator: token.Token{
-						Type:    token.Plus,
-						Literal: "+",
+						Type:   token.Plus,
+						Lexeme: "+",
 					},
 					LHS: ast.IdentifierExpression{
 						Identifier: "a",
@@ -43,13 +43,13 @@ func TestParser_Next(t *testing.T) {
 			expected: ast.ExpressionStatement{
 				Expression: ast.InfixExpression{
 					Operator: token.Token{
-						Type:    token.Minus,
-						Literal: "-",
+						Type:   token.Minus,
+						Lexeme: "-",
 					},
 					LHS: ast.InfixExpression{
 						Operator: token.Token{
-							Type:    token.Plus,
-							Literal: "+",
+							Type:   token.Plus,
+							Lexeme: "+",
 						},
 						LHS: ast.IdentifierExpression{
 							Identifier: "a",
@@ -69,8 +69,8 @@ func TestParser_Next(t *testing.T) {
 			expected: ast.ExpressionStatement{
 				Expression: ast.InfixExpression{
 					Operator: token.Token{
-						Type:    token.Plus,
-						Literal: "+",
+						Type:   token.Plus,
+						Lexeme: "+",
 					},
 					LHS: ast.IdentifierExpression{
 						Identifier: "name",
@@ -86,16 +86,16 @@ func TestParser_Next(t *testing.T) {
 			expected: ast.ExpressionStatement{
 				Expression: ast.InfixExpression{
 					Operator: token.Token{
-						Type:    token.Plus,
-						Literal: "+",
+						Type:   token.Plus,
+						Lexeme: "+",
 					},
 					LHS: ast.IdentifierExpression{
 						Identifier: "a",
 					},
 					RHS: ast.InfixExpression{
 						Operator: token.Token{
-							Type:    token.Asterisk,
-							Literal: "*",
+							Type:   token.Asterisk,
+							Lexeme: "*",
 						},
 						LHS: ast.IdentifierExpression{
 							Identifier: "b",
@@ -112,13 +112,13 @@ func TestParser_Next(t *testing.T) {
 			expected: ast.ExpressionStatement{
 				Expression: ast.InfixExpression{
 					Operator: token.Token{
-						Type:    token.Asterisk,
-						Literal: "*",
+						Type:   token.Asterisk,
+						Lexeme: "*",
 					},
 					LHS: ast.InfixExpression{
 						Operator: token.Token{
-							Type:    token.Plus,
-							Literal: "+",
+							Type:   token.Plus,
+							Lexeme: "+",
 						},
 						LHS: ast.IdentifierExpression{
 							Identifier: "a",
@@ -140,13 +140,13 @@ func TestParser_Next(t *testing.T) {
 				Value: ast.InfixExpression{
 
 					Operator: token.Token{
-						Type:    token.Asterisk,
-						Literal: "*",
+						Type:   token.Asterisk,
+						Lexeme: "*",
 					},
 					LHS: ast.InfixExpression{
 						Operator: token.Token{
-							Type:    token.Plus,
-							Literal: "+",
+							Type:   token.Plus,
+							Lexeme: "+",
 						},
 						LHS: ast.IdentifierExpression{
 							Identifier: "a",
@@ -176,16 +176,16 @@ func TestParser_Next(t *testing.T) {
 				Identifier: "crookdc",
 				Value: ast.InfixExpression{
 					Operator: token.Token{
-						Type:    token.Plus,
-						Literal: "+",
+						Type:   token.Plus,
+						Lexeme: "+",
 					},
 					LHS: ast.IdentifierExpression{
 						Identifier: "a",
 					},
 					RHS: ast.InfixExpression{
 						Operator: token.Token{
-							Type:    token.Asterisk,
-							Literal: "*",
+							Type:   token.Asterisk,
+							Lexeme: "*",
 						},
 						LHS: ast.IdentifierExpression{
 							Identifier: "b",
@@ -202,13 +202,13 @@ func TestParser_Next(t *testing.T) {
 			expected: ast.IfStatement{
 				Condition: ast.InfixExpression{
 					Operator: token.Token{
-						Type:    token.And,
-						Literal: "&&",
+						Type:   token.And,
+						Lexeme: "&&",
 					},
 					LHS: ast.InfixExpression{
 						Operator: token.Token{
-							Type:    token.LessThan,
-							Literal: "<",
+							Type:   token.LessThan,
+							Lexeme: "<",
 						},
 						LHS: ast.IdentifierExpression{
 							Identifier: "a",
@@ -219,8 +219,8 @@ func TestParser_Next(t *testing.T) {
 					},
 					RHS: ast.InfixExpression{
 						Operator: token.Token{
-							Type:    token.GreaterThan,
-							Literal: ">",
+							Type:   token.GreaterThan,
+							Lexeme: ">",
 						},
 						LHS: ast.IdentifierExpression{
 							Identifier: "b",
@@ -244,8 +244,8 @@ func TestParser_Next(t *testing.T) {
 			expected: ast.IfStatement{
 				Condition: ast.InfixExpression{
 					Operator: token.Token{
-						Type:    token.Or,
-						Literal: "||",
+						Type:   token.Or,
+						Lexeme: "||",
 					},
 					LHS: ast.BooleanExpression{
 						Boolean: true,
@@ -258,8 +258,8 @@ func TestParser_Next(t *testing.T) {
 					Statement: ast.Statement{},
 					Expression: ast.InfixExpression{
 						Operator: token.Token{
-							Type:    token.Minus,
-							Literal: "-",
+							Type:   token.Minus,
+							Lexeme: "-",
 						},
 						LHS: ast.IdentifierExpression{
 							Identifier: "a",
@@ -312,13 +312,13 @@ func TestParser_Next(t *testing.T) {
 				Identifier: "a",
 				Value: ast.InfixExpression{
 					Operator: token.Token{
-						Type:    token.Plus,
-						Literal: "+",
+						Type:   token.Plus,
+						Lexeme: "+",
 					},
 					LHS: ast.PrefixExpression{
 						Operator: token.Token{
-							Type:    token.Minus,
-							Literal: "-",
+							Type:   token.Minus,
+							Lexeme: "-",
 						},
 						RHS: ast.IdentifierExpression{
 							Identifier: "a",
@@ -335,8 +335,8 @@ func TestParser_Next(t *testing.T) {
 			expected: ast.IfStatement{
 				Condition: ast.InfixExpression{
 					Operator: token.Token{
-						Type:    token.Equals,
-						Literal: "==",
+						Type:   token.Equals,
+						Lexeme: "==",
 					},
 					LHS: ast.IntegerExpression{
 						Integer: 1,
@@ -365,8 +365,8 @@ func TestParser_Next(t *testing.T) {
 				Identifier: "b64",
 				Value: ast.PrefixExpression{
 					Operator: token.Token{
-						Type:    token.Import,
-						Literal: "import",
+						Type:   token.Import,
+						Lexeme: "import",
 					},
 					RHS: ast.StringExpression{
 						String: "core/base64",
@@ -380,8 +380,8 @@ func TestParser_Next(t *testing.T) {
 				Identifier: "a",
 				Value: ast.PrefixExpression{
 					Operator: token.Token{
-						Type:    token.Bang,
-						Literal: "!",
+						Type:   token.Bang,
+						Lexeme: "!",
 					},
 					RHS: ast.IdentifierExpression{
 						Identifier: "b",
@@ -430,8 +430,8 @@ func TestParser_Next(t *testing.T) {
 			expected: ast.ExpressionStatement{
 				Expression: ast.InfixExpression{
 					Operator: token.Token{
-						Type:    token.FullStop,
-						Literal: ".",
+						Type:   token.FullStop,
+						Lexeme: ".",
 					},
 					LHS: ast.IdentifierExpression{
 						Identifier: "a",
@@ -464,8 +464,8 @@ func TestParser_Next(t *testing.T) {
 							ast.ReturnStatement{
 								Expression: ast.InfixExpression{
 									Operator: token.Token{
-										Type:    token.Plus,
-										Literal: "+",
+										Type:   token.Plus,
+										Lexeme: "+",
 									},
 									LHS: ast.IdentifierExpression{
 										Identifier: "a",

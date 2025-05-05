@@ -92,7 +92,7 @@ func (ps *Parser) let() (ast.LetStatement, error) {
 		return ast.LetStatement{}, err
 	}
 	stmt := ast.LetStatement{
-		Identifier: id.Literal,
+		Identifier: id.Lexeme,
 	}
 	// Let statements can include an initializer expression but does not have to.
 	switch pk.Type {
@@ -243,7 +243,7 @@ func (ps *Parser) expression(precedence int) (ast.ExpressionNode, error) {
 	switch t.Type {
 	case token.Identifier:
 		e = ast.IdentifierExpression{
-			Identifier: t.Literal,
+			Identifier: t.Lexeme,
 		}
 	case token.Integer:
 		e, err = ps.integer(t)
@@ -252,11 +252,11 @@ func (ps *Parser) expression(precedence int) (ast.ExpressionNode, error) {
 		}
 	case token.String:
 		e = ast.StringExpression{
-			String: t.Literal,
+			String: t.Lexeme,
 		}
 	case token.Boolean:
 		e = ast.BooleanExpression{
-			Boolean: t.Literal == "true",
+			Boolean: t.Lexeme == "true",
 		}
 	case token.Minus:
 		e, err = ps.prefix(t)
@@ -295,7 +295,7 @@ func (ps *Parser) expression(precedence int) (ast.ExpressionNode, error) {
 			return nil, err
 		}
 	default:
-		return nil, fmt.Errorf("%w: %s", ErrUnrecognizedToken, t.Literal)
+		return nil, fmt.Errorf("%w: %s", ErrUnrecognizedToken, t.Lexeme)
 	}
 	var done bool
 	for !done {
@@ -372,7 +372,7 @@ func (ps *Parser) list(prefix, suffix token.Type) ([]ast.ExpressionNode, error) 
 }
 
 func (ps *Parser) integer(t token.Token) (ast.IntegerExpression, error) {
-	n, err := strconv.Atoi(t.Literal)
+	n, err := strconv.Atoi(t.Lexeme)
 	if err != nil {
 		return ast.IntegerExpression{}, err
 	}
@@ -410,7 +410,7 @@ func (ps *Parser) expect(v token.Type) (token.Token, error) {
 		return token.Token{}, err
 	}
 	if t.Type != v {
-		return token.Token{}, fmt.Errorf("%w: %s", ErrUnrecognizedToken, t.Literal)
+		return token.Token{}, fmt.Errorf("%w: %s", ErrUnrecognizedToken, t.Lexeme)
 	}
 	return t, nil
 }
