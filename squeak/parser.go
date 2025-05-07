@@ -27,13 +27,13 @@ var (
 	}
 )
 
-type UnrecognizedToken struct {
+type UnexpectedToken struct {
 	Line  int
 	Token token.Token
 }
 
-func (u UnrecognizedToken) Error() string {
-	return fmt.Sprintf("unrecognized token '%s' on line %d", u.Token.Lexeme, u.Line)
+func (u UnexpectedToken) Error() string {
+	return fmt.Sprintf("unexpected token '%s' on line %d", u.Token.Lexeme, u.Line)
 }
 
 const (
@@ -117,7 +117,7 @@ func (ps *Parser) let() (ast.LetStatement, error) {
 		stmt.Value = val
 	case token.Semicolon:
 	default:
-		return ast.LetStatement{}, UnrecognizedToken{
+		return ast.LetStatement{}, UnexpectedToken{
 			Line:  ps.lx.Line(),
 			Token: pk,
 		}
@@ -308,7 +308,7 @@ func (ps *Parser) expression(precedence int) (ast.ExpressionNode, error) {
 			return nil, err
 		}
 	default:
-		return nil, UnrecognizedToken{
+		return nil, UnexpectedToken{
 			Line:  ps.lx.Line(),
 			Token: t,
 		}
@@ -378,7 +378,7 @@ func (ps *Parser) list(prefix, suffix token.Type) ([]ast.ExpressionNode, error) 
 		case suffix:
 			// Ignore
 		default:
-			return nil, UnrecognizedToken{
+			return nil, UnexpectedToken{
 				Line:  ps.lx.Line(),
 				Token: t,
 			}
@@ -429,7 +429,7 @@ func (ps *Parser) expect(v token.Type) (token.Token, error) {
 		return token.Token{}, err
 	}
 	if t.Type != v {
-		return token.Token{}, UnrecognizedToken{
+		return token.Token{}, UnexpectedToken{
 			Line:  ps.lx.Line(),
 			Token: t,
 		}

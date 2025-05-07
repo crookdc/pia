@@ -2,7 +2,9 @@ package squeak
 
 import (
 	"errors"
+	"fmt"
 	"github.com/crookdc/pia/squeak/internal/ast"
+	"github.com/crookdc/pia/squeak/internal/token"
 )
 
 var (
@@ -40,14 +42,33 @@ func (ev *Evaluator) Statement(stmt ast.StatementNode) (Object, error) {
 }
 
 func (ev *Evaluator) expression(expr ast.ExpressionNode) (Object, error) {
-	switch e := expr.(type) {
+	switch expr := expr.(type) {
 	case ast.IntegerExpression:
-		return Integer{e.Integer}, nil
+		return Integer{expr.Integer}, nil
 	case ast.StringExpression:
-		return String{e.String}, nil
+		return String{expr.String}, nil
 	case ast.BooleanExpression:
-		return Boolean{Boolean: e.Boolean}, nil
+		return Boolean{Boolean: expr.Boolean}, nil
+	case ast.InfixExpression:
+		return ev.infix(expr)
 	default:
 		return NullObject, ErrUnknownExpression
+	}
+}
+
+func (ev *Evaluator) infix(expr ast.InfixExpression) (Object, error) {
+	rhs, err := ev.expression(expr.RHS)
+	if err != nil {
+		return NullObject, err
+	}
+	lhs, err := ev.expression(expr.LHS)
+	if err != nil {
+		return NullObject, err
+	}
+	switch expr.Operator.Type {
+	case token.Plus:
+		return lhs.Add(rhs)
+	default:
+		return NullObject, fmt.Errorf("unknown operator '%s'", expr.Operator.Lexeme)
 	}
 }

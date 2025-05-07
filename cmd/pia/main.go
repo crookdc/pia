@@ -31,6 +31,7 @@ type model struct {
 	evaluator *squeak.Evaluator
 	statement textinput.Model
 	object    squeak.Object
+	err       error
 }
 
 func (m model) Init() tea.Cmd {
@@ -47,7 +48,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
 		}
+	case error:
+		m.err = msg
+		return m, nil
 	case squeak.Object:
+		m.err = nil
 		m.object = msg
 		return m, nil
 	}
@@ -57,8 +62,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
 	sb := strings.Builder{}
-	sb.WriteString(fmt.Sprintf("%+v", m.object))
-	sb.WriteString("\n")
+	if m.err != nil {
+		sb.WriteString(fmt.Sprintf("%+v\n", m.err))
+	} else if m.object != nil {
+		sb.WriteString(fmt.Sprintf("%+v\n", m.object))
+	}
 	sb.WriteString(m.statement.View())
 	return sb.String()
 }

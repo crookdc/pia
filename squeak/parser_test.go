@@ -535,7 +535,7 @@ func TestParser_Next(t *testing.T) {
 		{
 			src:      "if;",
 			expected: ast.IfStatement{},
-			err: UnrecognizedToken{
+			err: UnexpectedToken{
 				Line: 1,
 				Token: token.Token{
 					Type:   token.Semicolon,
@@ -550,7 +550,7 @@ func TestParser_Next(t *testing.T) {
 			}
 			`,
 			expected: ast.IfStatement{},
-			err: UnrecognizedToken{
+			err: UnexpectedToken{
 				Line: 3,
 				Token: token.Token{
 					Type:   token.Semicolon,
