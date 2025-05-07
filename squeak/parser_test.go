@@ -12,6 +12,7 @@ func TestParser_Next(t *testing.T) {
 	tests := []struct {
 		src      string
 		expected ast.StatementNode
+		err      error
 	}{
 		{
 			src: "a;",
@@ -531,6 +532,32 @@ func TestParser_Next(t *testing.T) {
 				},
 			},
 		},
+		{
+			src:      "if;",
+			expected: ast.IfStatement{},
+			err: UnrecognizedToken{
+				Line: 1,
+				Token: token.Token{
+					Type:   token.Semicolon,
+					Lexeme: ";",
+				},
+			},
+		},
+		{
+			src: `
+			if (a > b) {
+				5 + ;
+			}
+			`,
+			expected: ast.IfStatement{},
+			err: UnrecognizedToken{
+				Line: 3,
+				Token: token.Token{
+					Type:   token.Semicolon,
+					Lexeme: ";",
+				},
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.src, func(t *testing.T) {
@@ -541,7 +568,7 @@ func TestParser_Next(t *testing.T) {
 
 			ps := Parser{lx: plx}
 			n, err := ps.Next()
-			assert.Nil(t, err)
+			assert.Equal(t, test.err, err)
 			assert.Equal(t, test.expected, n)
 		})
 	}

@@ -1,7 +1,6 @@
 package squeak
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -10,8 +9,6 @@ import (
 )
 
 var (
-	ErrUnrecognizedToken = errors.New("unrecognized token")
-
 	Precedences = map[token.Type]int{
 		token.RightParenthesis: PrecedenceLowest,
 		token.Assign:           PrecedenceAssignment,
@@ -30,6 +27,15 @@ var (
 	}
 )
 
+type UnrecognizedToken struct {
+	Line  int
+	Token token.Token
+}
+
+func (u UnrecognizedToken) Error() string {
+	return fmt.Sprintf("unrecognized token '%s' on line %d", u.Token.Lexeme, u.Line)
+}
+
 const (
 	_ int = iota
 	PrecedenceLowest
@@ -41,13 +47,17 @@ const (
 	PrecedenceCall
 )
 
+func NewParser(lx *PeekingLexer) *Parser {
+	return &Parser{lx: lx}
+}
+
 // Parser builds an abstract syntax tree from the tokens yielded by a Lexer.
 type Parser struct {
 	lx *PeekingLexer
 }
 
 // Next constructs and returns the next node in the abstract syntax tree for the targeted Lexer.
-func (ps *Parser) Next() (ast.Node, error) {
+func (ps *Parser) Next() (ast.StatementNode, error) {
 	return ps.statement()
 }
 
@@ -107,7 +117,10 @@ func (ps *Parser) let() (ast.LetStatement, error) {
 		stmt.Value = val
 	case token.Semicolon:
 	default:
-		return ast.LetStatement{}, ErrUnrecognizedToken
+		return ast.LetStatement{}, UnrecognizedToken{
+			Line:  ps.lx.Line(),
+			Token: pk,
+		}
 	}
 
 	if _, err := ps.expect(token.Semicolon); err != nil {
@@ -295,7 +308,10 @@ func (ps *Parser) expression(precedence int) (ast.ExpressionNode, error) {
 			return nil, err
 		}
 	default:
-		return nil, fmt.Errorf("%w: %s", ErrUnrecognizedToken, t.Lexeme)
+		return nil, UnrecognizedToken{
+			Line:  ps.lx.Line(),
+			Token: t,
+		}
 	}
 	var done bool
 	for !done {
@@ -362,7 +378,10 @@ func (ps *Parser) list(prefix, suffix token.Type) ([]ast.ExpressionNode, error) 
 		case suffix:
 			// Ignore
 		default:
-			return nil, ErrUnrecognizedToken
+			return nil, UnrecognizedToken{
+				Line:  ps.lx.Line(),
+				Token: t,
+			}
 		}
 	}
 	if _, err := ps.expect(suffix); err != nil {
@@ -410,7 +429,10 @@ func (ps *Parser) expect(v token.Type) (token.Token, error) {
 		return token.Token{}, err
 	}
 	if t.Type != v {
-		return token.Token{}, fmt.Errorf("%w: %s", ErrUnrecognizedToken, t.Lexeme)
+		return token.Token{}, UnrecognizedToken{
+			Line:  ps.lx.Line(),
+			Token: t,
+		}
 	}
 	return t, nil
 }

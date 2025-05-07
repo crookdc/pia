@@ -17,6 +17,13 @@ type Scope struct {
 	table  map[string]Object
 }
 
+func NewEvaluator() *Evaluator {
+	return &Evaluator{scope: Scope{
+		parent: nil,
+		table:  make(map[string]Object),
+	}}
+}
+
 type Evaluator struct {
 	scope Scope
 }

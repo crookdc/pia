@@ -33,8 +33,18 @@ func NewPeekingLexer(lx *Lexer) (*PeekingLexer, error) {
 // PeekingLexer extends a value of [squeak.Lexer] with a Peek operation which is often necessary for a clean
 // implementation of lexical analysis users such as parsers. See PeekingLexer.Peek.
 type PeekingLexer struct {
-	lx  *Lexer
-	ptr *token.Token
+	lx   *Lexer
+	ptr  *token.Token
+	line int
+}
+
+// Line reports the line of the currently peeked token if one exists. If there is no peeked token then it delegates the
+// call to its underlying Lexer.
+func (pl *PeekingLexer) Line() int {
+	if pl.ptr == nil {
+		return pl.lx.line
+	}
+	return pl.line
 }
 
 // Peek either returns the latest non-read peeked token or reads from the underlying [squeak.Lexer] and stores the read
@@ -48,6 +58,7 @@ func (pl *PeekingLexer) Peek() (token.Token, error) {
 		return token.Nil, err
 	}
 	pl.ptr = &n
+	pl.line = pl.lx.Line()
 	return n, nil
 }
 
@@ -93,6 +104,7 @@ func NewLexer(src io.Reader, opts ...LexerOpt) (*Lexer, error) {
 		cursor: 0,
 		length: 0,
 		buffer: make([]byte, LexerBufferLength),
+		line:   1,
 	}
 	for _, opt := range opts {
 		opt(lx)
@@ -115,6 +127,12 @@ type Lexer struct {
 	cursor int
 	length int
 	buffer []byte
+	line   int
+}
+
+// Line reports the line number of the latest read token.
+func (lx *Lexer) Line() int {
+	return lx.line
 }
 
 // Next returns the next available token from the source code reader. If the source code contains an illegal token then
@@ -364,8 +382,12 @@ func (lx *Lexer) read(proceed func(byte) bool) (c byte, err error) {
 		lx.cursor = 0
 	}
 	c = lx.buffer[lx.cursor]
-	if proceed(c) {
-		lx.cursor += 1
+	if !proceed(c) {
+		return
+	}
+	lx.cursor += 1
+	if c == '\n' {
+		lx.line++
 	}
 	return
 }

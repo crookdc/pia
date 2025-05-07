@@ -20,6 +20,44 @@ func TestNewLexer(t *testing.T) {
 	})
 }
 
+func TestLexer_Line(t *testing.T) {
+	tests := []struct {
+		src      string
+		expected int
+	}{
+		{
+			src:      "  let = 4444;",
+			expected: 1,
+		},
+		{
+			src: `				// 1
+			if (a == a) {		// 2
+				return true;	// 3
+			}					// 4
+								// 5`,
+			expected: 5,
+		},
+		{
+			src:      "let\nit\nsnow\n\n\n\n",
+			expected: 7,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.src, func(t *testing.T) {
+			lx, err := NewLexer(strings.NewReader(test.src))
+			assert.Nil(t, err)
+			for {
+				tok, err := lx.Next()
+				assert.Nil(t, err)
+				if tok.Type == token.EOF {
+					break
+				}
+			}
+			assert.Equal(t, test.expected, lx.Line())
+		})
+	}
+}
+
 func TestLexer_Next(t *testing.T) {
 	tests := []struct {
 		src      string
@@ -505,6 +543,61 @@ func TestNewPeekingLexer(t *testing.T) {
 		_, err = NewPeekingLexer(lx)
 		assert.Nil(t, err)
 	})
+}
+
+func TestPeekingLexer_Line(t *testing.T) {
+	src := "let \na\n = \nb;"
+
+	lx, err := NewLexer(strings.NewReader(src))
+	assert.Nil(t, err)
+
+	plx, err := NewPeekingLexer(lx)
+	assert.Nil(t, err)
+
+	tok, err := plx.Peek()
+	assert.Nil(t, err)
+	assert.Equal(t, token.Token{Type: token.Let, Lexeme: "let"}, tok)
+	assert.Equal(t, 1, plx.Line())
+
+	tok, err = plx.Peek()
+	assert.Nil(t, err)
+	assert.Equal(t, token.Token{Type: token.Let, Lexeme: "let"}, tok)
+	assert.Equal(t, 1, plx.Line())
+
+	tok, err = plx.Next()
+	assert.Nil(t, err)
+	assert.Equal(t, token.Token{Type: token.Let, Lexeme: "let"}, tok)
+	assert.Equal(t, 1, plx.Line())
+
+	tok, err = plx.Peek()
+	assert.Nil(t, err)
+	assert.Equal(t, token.Token{Type: token.Identifier, Lexeme: "a"}, tok)
+	assert.Equal(t, 2, plx.Line())
+
+	tok, err = plx.Next()
+	assert.Nil(t, err)
+	assert.Equal(t, token.Token{Type: token.Identifier, Lexeme: "a"}, tok)
+	assert.Equal(t, 2, plx.Line())
+
+	tok, err = plx.Peek()
+	assert.Nil(t, err)
+	assert.Equal(t, token.Token{Type: token.Assign, Lexeme: "="}, tok)
+	assert.Equal(t, 3, plx.Line())
+
+	tok, err = plx.Next()
+	assert.Nil(t, err)
+	assert.Equal(t, token.Token{Type: token.Assign, Lexeme: "="}, tok)
+	assert.Equal(t, 3, plx.Line())
+
+	tok, err = plx.Next()
+	assert.Nil(t, err)
+	assert.Equal(t, token.Token{Type: token.Identifier, Lexeme: "b"}, tok)
+	assert.Equal(t, 4, plx.Line())
+
+	tok, err = plx.Next()
+	assert.Nil(t, err)
+	assert.Equal(t, token.Token{Type: token.Semicolon, Lexeme: ";"}, tok)
+	assert.Equal(t, 4, plx.Line())
 }
 
 func TestPeekingLexer_Peek(t *testing.T) {
