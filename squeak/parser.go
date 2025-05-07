@@ -2,6 +2,7 @@ package squeak
 
 import (
 	"fmt"
+	"io"
 	"strconv"
 
 	"github.com/crookdc/pia/squeak/internal/ast"
@@ -75,6 +76,8 @@ func (ps *Parser) statement() (s ast.StatementNode, err error) {
 		return ps.ret()
 	case token.LeftCurlyBrace:
 		return ps.block()
+	case token.EOF:
+		return nil, io.EOF
 	default:
 		e, err := ps.expression(PrecedenceLowest)
 		if err != nil {

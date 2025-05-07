@@ -85,7 +85,7 @@ func repl(ev *squeak.Evaluator, src string) tea.Cmd {
 		if err != nil {
 			return err
 		}
-		obj, err := ev.Statement(st)
+		obj, err := ev.Run(st)
 		if err != nil {
 			return err
 		}

@@ -22,7 +22,6 @@ func TestInteger_Add(t *testing.T) {
 			other:   Integer{12_123},
 			expected: expectation{
 				object: Integer{141_114},
-				err:    nil,
 			},
 		},
 		{
@@ -30,8 +29,7 @@ func TestInteger_Add(t *testing.T) {
 			integer: Integer{128_991},
 			other:   String{"hello world"},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				object: String{"128991hello world"},
 			},
 		},
 		{
@@ -39,8 +37,7 @@ func TestInteger_Add(t *testing.T) {
 			integer: Integer{128_991},
 			other:   Boolean{true},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 	}
@@ -70,7 +67,6 @@ func TestInteger_Subtract(t *testing.T) {
 			other:   Integer{2},
 			expected: expectation{
 				object: Integer{48},
-				err:    nil,
 			},
 		},
 		{
@@ -79,7 +75,6 @@ func TestInteger_Subtract(t *testing.T) {
 			other:   Integer{200},
 			expected: expectation{
 				object: Integer{-150},
-				err:    nil,
 			},
 		},
 		{
@@ -87,8 +82,7 @@ func TestInteger_Subtract(t *testing.T) {
 			integer: Integer{128_991},
 			other:   String{"hello world"},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 		{
@@ -96,8 +90,7 @@ func TestInteger_Subtract(t *testing.T) {
 			integer: Integer{128_991},
 			other:   Boolean{true},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 	}
@@ -127,7 +120,6 @@ func TestInteger_Multiply(t *testing.T) {
 			other:   Integer{2},
 			expected: expectation{
 				object: Integer{-100},
-				err:    nil,
 			},
 		},
 		{
@@ -136,7 +128,6 @@ func TestInteger_Multiply(t *testing.T) {
 			other:   Integer{2},
 			expected: expectation{
 				object: Integer{100},
-				err:    nil,
 			},
 		},
 		{
@@ -144,8 +135,7 @@ func TestInteger_Multiply(t *testing.T) {
 			integer: Integer{128_991},
 			other:   String{"hello world"},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 		{
@@ -153,8 +143,7 @@ func TestInteger_Multiply(t *testing.T) {
 			integer: Integer{128_991},
 			other:   Boolean{true},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 	}
@@ -184,7 +173,6 @@ func TestInteger_Divide(t *testing.T) {
 			other:   Integer{2},
 			expected: expectation{
 				object: Integer{25},
-				err:    nil,
 			},
 		},
 		{
@@ -192,8 +180,7 @@ func TestInteger_Divide(t *testing.T) {
 			integer: Integer{128_991},
 			other:   String{"hello world"},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 		{
@@ -201,8 +188,7 @@ func TestInteger_Divide(t *testing.T) {
 			integer: Integer{128_991},
 			other:   Boolean{true},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 	}
@@ -231,8 +217,7 @@ func TestInteger_Invert(t *testing.T) {
 			integer: Integer{50},
 			other:   Integer{2},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 		{
@@ -240,8 +225,7 @@ func TestInteger_Invert(t *testing.T) {
 			integer: Integer{128_991},
 			other:   String{"hello world"},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 		{
@@ -249,8 +233,7 @@ func TestInteger_Invert(t *testing.T) {
 			integer: Integer{128_991},
 			other:   Boolean{true},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 	}
@@ -279,8 +262,7 @@ func TestString_Add(t *testing.T) {
 			string: String{"hello"},
 			other:  Integer{2},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				object: String{"hello2"},
 			},
 		},
 		{
@@ -289,7 +271,6 @@ func TestString_Add(t *testing.T) {
 			other:  String{" world"},
 			expected: expectation{
 				object: String{"hello world"},
-				err:    nil,
 			},
 		},
 		{
@@ -297,8 +278,7 @@ func TestString_Add(t *testing.T) {
 			string: String{"hello"},
 			other:  Boolean{true},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 	}
@@ -327,8 +307,7 @@ func TestString_Subtract(t *testing.T) {
 			string: String{"hello"},
 			other:  Integer{2},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 		{
@@ -336,8 +315,7 @@ func TestString_Subtract(t *testing.T) {
 			string: String{"hello"},
 			other:  String{" world"},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 		{
@@ -345,8 +323,7 @@ func TestString_Subtract(t *testing.T) {
 			string: String{"hello"},
 			other:  Boolean{true},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 	}
@@ -375,8 +352,7 @@ func TestString_Multiply(t *testing.T) {
 			string: String{"hello"},
 			other:  Integer{2},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 		{
@@ -384,8 +360,7 @@ func TestString_Multiply(t *testing.T) {
 			string: String{"hello"},
 			other:  String{" world"},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 		{
@@ -393,8 +368,7 @@ func TestString_Multiply(t *testing.T) {
 			string: String{"hello"},
 			other:  Boolean{true},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 	}
@@ -423,8 +397,7 @@ func TestString_Divide(t *testing.T) {
 			string: String{"hello"},
 			other:  Integer{2},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 		{
@@ -432,8 +405,7 @@ func TestString_Divide(t *testing.T) {
 			string: String{"hello"},
 			other:  String{" world"},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 		{
@@ -441,8 +413,7 @@ func TestString_Divide(t *testing.T) {
 			string: String{"hello"},
 			other:  Boolean{true},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 	}
@@ -477,8 +448,7 @@ func TestBoolean_Add(t *testing.T) {
 			boolean: Boolean{true},
 			other:   Integer{2},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 		{
@@ -486,8 +456,7 @@ func TestBoolean_Add(t *testing.T) {
 			boolean: Boolean{true},
 			other:   String{" world"},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 		{
@@ -495,8 +464,7 @@ func TestBoolean_Add(t *testing.T) {
 			boolean: Boolean{true},
 			other:   Boolean{true},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 	}
@@ -525,8 +493,7 @@ func TestBoolean_Subtract(t *testing.T) {
 			boolean: Boolean{true},
 			other:   Integer{2},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 		{
@@ -534,8 +501,7 @@ func TestBoolean_Subtract(t *testing.T) {
 			boolean: Boolean{true},
 			other:   String{" world"},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 		{
@@ -543,8 +509,7 @@ func TestBoolean_Subtract(t *testing.T) {
 			boolean: Boolean{true},
 			other:   Boolean{true},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 	}
@@ -573,8 +538,7 @@ func TestBoolean_Multiply(t *testing.T) {
 			boolean: Boolean{true},
 			other:   Integer{2},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 		{
@@ -582,8 +546,7 @@ func TestBoolean_Multiply(t *testing.T) {
 			boolean: Boolean{true},
 			other:   String{" world"},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 		{
@@ -591,8 +554,7 @@ func TestBoolean_Multiply(t *testing.T) {
 			boolean: Boolean{true},
 			other:   Boolean{true},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 	}
@@ -621,8 +583,7 @@ func TestBoolean_Divide(t *testing.T) {
 			boolean: Boolean{true},
 			other:   Integer{2},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 		{
@@ -630,8 +591,7 @@ func TestBoolean_Divide(t *testing.T) {
 			boolean: Boolean{true},
 			other:   String{" world"},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 		{
@@ -639,8 +599,7 @@ func TestBoolean_Divide(t *testing.T) {
 			boolean: Boolean{true},
 			other:   Boolean{true},
 			expected: expectation{
-				object: nil,
-				err:    ErrUnexpectedType,
+				err: ErrUnexpectedType,
 			},
 		},
 	}

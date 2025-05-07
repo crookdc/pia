@@ -1,5 +1,9 @@
 package squeak
 
+import (
+	"fmt"
+)
+
 var NullObject = Object(nil)
 
 // Object represents any piece of primitive data in a Squeak program. Not all data types are able to
@@ -19,10 +23,12 @@ type Integer struct {
 	Integer int
 }
 
-func (i Integer) Add(o Object) (Object, error) {
-	switch t := o.(type) {
+func (i Integer) Add(obj Object) (Object, error) {
+	switch obj := obj.(type) {
 	case Integer:
-		return Integer{Integer: i.Integer + t.Integer}, nil
+		return Integer{Integer: i.Integer + obj.Integer}, nil
+	case String:
+		return String{String: fmt.Sprintf("%d%s", i.Integer, obj.String)}, nil
 	default:
 		return nil, ErrUnexpectedType
 	}
@@ -68,12 +74,14 @@ type String struct {
 	String string
 }
 
-func (s String) Add(o Object) (Object, error) {
-	switch t := o.(type) {
+func (s String) Add(obj Object) (Object, error) {
+	switch obj := obj.(type) {
 	case String:
 		return String{
-			String: s.String + t.String,
+			String: s.String + obj.String,
 		}, nil
+	case Integer:
+		return String{String: fmt.Sprintf("%s%d", s.String, obj.Integer)}, nil
 	default:
 		return nil, ErrUnexpectedType
 	}

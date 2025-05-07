@@ -30,9 +30,9 @@ type Evaluator struct {
 	scope Scope
 }
 
-// Statement executes the provided [ast.StatementNode] within the context of the current scope. Mutating statements such
+// Run executes the provided [ast.StatementNode] within the context of the current scope. Mutating statements such
 // as [ast.LetStatement] also subsequently mutate the internal state of the Evaluator.
-func (ev *Evaluator) Statement(stmt ast.StatementNode) (Object, error) {
+func (ev *Evaluator) Run(stmt ast.StatementNode) (Object, error) {
 	switch s := stmt.(type) {
 	case ast.ExpressionStatement:
 		return ev.expression(s.Expression)
@@ -68,6 +68,8 @@ func (ev *Evaluator) infix(expr ast.InfixExpression) (Object, error) {
 	switch expr.Operator.Type {
 	case token.Plus:
 		return lhs.Add(rhs)
+	case token.Minus:
+		return lhs.Subtract(rhs)
 	default:
 		return NullObject, fmt.Errorf("unknown operator '%s'", expr.Operator.Lexeme)
 	}
