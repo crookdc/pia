@@ -44,7 +44,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyEnter:
-			return m, repl(m.evaluator, m.statement.Value())
+			cmd := repl(m.evaluator, m.statement.Value())
+			m.statement.SetValue("")
+			return m, cmd
 		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
 		}
