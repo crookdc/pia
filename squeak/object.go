@@ -2,6 +2,7 @@ package squeak
 
 import (
 	"fmt"
+	"strconv"
 )
 
 var NullObject = Object(nil)
@@ -11,6 +12,7 @@ var NullObject = Object(nil)
 // change quite rapidly as it might be broken down into sub-interfaces. For now, any method not
 // supported by an implementation is expected to return an ErrUnexpectedType error.
 type Object interface {
+	fmt.Stringer
 	Add(Object) (Object, error)
 	Subtract(Object) (Object, error)
 	Multiply(Object) (Object, error)
@@ -23,12 +25,16 @@ type Integer struct {
 	Integer int
 }
 
+func (i Integer) String() string {
+	return strconv.Itoa(i.Integer)
+}
+
 func (i Integer) Add(obj Object) (Object, error) {
 	switch obj := obj.(type) {
 	case Integer:
 		return Integer{Integer: i.Integer + obj.Integer}, nil
 	case String:
-		return String{String: fmt.Sprintf("%d%s", i.Integer, obj.String)}, nil
+		return String{Str: fmt.Sprintf("%d%s", i.Integer, obj.String)}, nil
 	default:
 		return nil, ErrUnexpectedType
 	}
@@ -71,17 +77,21 @@ func (i Integer) Invert() (Object, error) {
 
 // String represents a string stored within the Squeak environment.
 type String struct {
-	String string
+	Str string
+}
+
+func (s String) String() string {
+	return s.Str
 }
 
 func (s String) Add(obj Object) (Object, error) {
 	switch obj := obj.(type) {
 	case String:
 		return String{
-			String: s.String + obj.String,
+			Str: s.Str + obj.Str,
 		}, nil
 	case Integer:
-		return String{String: fmt.Sprintf("%s%d", s.String, obj.Integer)}, nil
+		return String{Str: fmt.Sprintf("%s%d", s.Str, obj.Integer)}, nil
 	default:
 		return nil, ErrUnexpectedType
 	}
@@ -106,6 +116,10 @@ func (s String) Invert() (Object, error) {
 // Boolean represents a boolean stored within the Squeak environment.
 type Boolean struct {
 	Boolean bool
+}
+
+func (b Boolean) String() string {
+	return fmt.Sprintf("%v", b.Boolean)
 }
 
 func (b Boolean) Add(_ Object) (Object, error) {
