@@ -364,6 +364,22 @@ func (lx *Lexer) word() (token.Token, error) {
 		return token.Nil, err
 	}
 	switch string(w) {
+	case "if":
+		return token.New(token.If)
+	case "and":
+		return token.New(token.And)
+	case "or":
+		return token.New(token.Or)
+	case "for":
+		return token.New(token.For)
+	case "while":
+		return token.New(token.While)
+	case "return":
+		return token.New(token.Return)
+	case "func":
+		return token.New(token.Function)
+	case "let":
+		return token.New(token.Let)
 	case "true", "false":
 		return token.New(token.Boolean, token.Lexeme(string(w)))
 	default:

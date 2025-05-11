@@ -69,7 +69,7 @@ func TestLexer_Next(t *testing.T) {
 			bl:  LexerBufferLength,
 			expected: []token.Token{
 				{
-					Type:   token.Identifier,
+					Type:   token.Let,
 					Lexeme: "let",
 				},
 				{
@@ -91,7 +91,7 @@ func TestLexer_Next(t *testing.T) {
 			},
 		},
 		{
-			src: "a+b/&&(}){*!=!.",
+			src: "a+b/and(}){*!=!.",
 			bl:  LexerBufferLength,
 			expected: []token.Token{
 				{
@@ -112,7 +112,7 @@ func TestLexer_Next(t *testing.T) {
 				},
 				{
 					Type:   token.And,
-					Lexeme: "&&",
+					Lexeme: "and",
 				},
 				{
 					Type:   token.LeftParenthesis,
@@ -153,7 +153,7 @@ func TestLexer_Next(t *testing.T) {
 			},
 		},
 		{
-			src: "true && false || false",
+			src: "true and false or false",
 			bl:  LexerBufferLength,
 			expected: []token.Token{
 				{
@@ -162,7 +162,7 @@ func TestLexer_Next(t *testing.T) {
 				},
 				{
 					Type:   token.And,
-					Lexeme: "&&",
+					Lexeme: "and",
 				},
 				{
 					Type:   token.Boolean,
@@ -170,7 +170,7 @@ func TestLexer_Next(t *testing.T) {
 				},
 				{
 					Type:   token.Or,
-					Lexeme: "||",
+					Lexeme: "or",
 				},
 				{
 					Type:   token.Boolean,
@@ -184,7 +184,6 @@ func TestLexer_Next(t *testing.T) {
 		},
 		{
 			src: `
-			import "math";
 			# This makes no sense but it does not have to since this is a test
 			# Will this work with two lines of comments?
 			while (true) {
@@ -194,19 +193,7 @@ func TestLexer_Next(t *testing.T) {
 			bl: LexerBufferLength,
 			expected: []token.Token{
 				{
-					Type:   token.Identifier,
-					Lexeme: "import",
-				},
-				{
-					Type:   token.String,
-					Lexeme: "math",
-				},
-				{
-					Type:   token.Semicolon,
-					Lexeme: ";",
-				},
-				{
-					Type:   token.Identifier,
+					Type:   token.While,
 					Lexeme: "while",
 				},
 				{
@@ -226,7 +213,7 @@ func TestLexer_Next(t *testing.T) {
 					Lexeme: "{",
 				},
 				{
-					Type:   token.Identifier,
+					Type:   token.Return,
 					Lexeme: "return",
 				},
 				{
@@ -264,7 +251,7 @@ func TestLexer_Next(t *testing.T) {
 			bl:  LexerBufferLength,
 			expected: []token.Token{
 				{
-					Type:   token.Identifier,
+					Type:   token.Let,
 					Lexeme: "let",
 				},
 				{
@@ -298,7 +285,7 @@ func TestLexer_Next(t *testing.T) {
 			bl: LexerBufferLength,
 			expected: []token.Token{
 				{
-					Type:   token.Identifier,
+					Type:   token.If,
 					Lexeme: "if",
 				},
 				{
@@ -326,7 +313,7 @@ func TestLexer_Next(t *testing.T) {
 					Lexeme: "{",
 				},
 				{
-					Type:   token.Identifier,
+					Type:   token.Let,
 					Lexeme: "let",
 				},
 				{
@@ -360,7 +347,7 @@ func TestLexer_Next(t *testing.T) {
 			bl:  4,
 			expected: []token.Token{
 				{
-					Type:   token.Identifier,
+					Type:   token.Let,
 					Lexeme: "let",
 				},
 				{
@@ -416,14 +403,14 @@ func TestLexer_Next(t *testing.T) {
 			# This function reports whether both a and b are positive
 			let pos = func(a, b) {
 				# Holy cow, this is a comment isn't it!
-				return a > 0 && b > 0;
+				return a > 0 and b > 0;
 			};
 			# Sometimes there are comments at the very end of the source code!
 			# It's important that we cover those as well.`,
 			bl: LexerBufferLength,
 			expected: []token.Token{
 				{
-					Type:   token.Identifier,
+					Type:   token.Let,
 					Lexeme: "let",
 				},
 				{
@@ -435,7 +422,7 @@ func TestLexer_Next(t *testing.T) {
 					Lexeme: "=",
 				},
 				{
-					Type:   token.Identifier,
+					Type:   token.Function,
 					Lexeme: "func",
 				},
 				{
@@ -463,7 +450,7 @@ func TestLexer_Next(t *testing.T) {
 					Lexeme: "{",
 				},
 				{
-					Type:   token.Identifier,
+					Type:   token.Return,
 					Lexeme: "return",
 				},
 				{
@@ -480,7 +467,7 @@ func TestLexer_Next(t *testing.T) {
 				},
 				{
 					Type:   token.And,
-					Lexeme: "&&",
+					Lexeme: "and",
 				},
 				{
 					Type:   token.Identifier,
@@ -556,17 +543,17 @@ func TestPeekingLexer_Line(t *testing.T) {
 
 	tok, err := plx.Peek()
 	assert.Nil(t, err)
-	assert.Equal(t, token.Token{Type: token.Identifier, Lexeme: "let"}, tok)
+	assert.Equal(t, token.Token{Type: token.Let, Lexeme: "let"}, tok)
 	assert.Equal(t, 1, plx.Line())
 
 	tok, err = plx.Peek()
 	assert.Nil(t, err)
-	assert.Equal(t, token.Token{Type: token.Identifier, Lexeme: "let"}, tok)
+	assert.Equal(t, token.Token{Type: token.Let, Lexeme: "let"}, tok)
 	assert.Equal(t, 1, plx.Line())
 
 	tok, err = plx.Next()
 	assert.Nil(t, err)
-	assert.Equal(t, token.Token{Type: token.Identifier, Lexeme: "let"}, tok)
+	assert.Equal(t, token.Token{Type: token.Let, Lexeme: "let"}, tok)
 	assert.Equal(t, 1, plx.Line())
 
 	tok, err = plx.Peek()
@@ -611,15 +598,15 @@ func TestPeekingLexer_Peek(t *testing.T) {
 
 	tok, err := plx.Peek()
 	assert.Nil(t, err)
-	assert.Equal(t, token.Token{Type: token.Identifier, Lexeme: "let"}, tok)
+	assert.Equal(t, token.Token{Type: token.Let, Lexeme: "let"}, tok)
 
 	tok, err = plx.Peek()
 	assert.Nil(t, err)
-	assert.Equal(t, token.Token{Type: token.Identifier, Lexeme: "let"}, tok)
+	assert.Equal(t, token.Token{Type: token.Let, Lexeme: "let"}, tok)
 
 	tok, err = plx.Next()
 	assert.Nil(t, err)
-	assert.Equal(t, token.Token{Type: token.Identifier, Lexeme: "let"}, tok)
+	assert.Equal(t, token.Token{Type: token.Let, Lexeme: "let"}, tok)
 
 	tok, err = plx.Peek()
 	assert.Nil(t, err)

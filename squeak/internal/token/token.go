@@ -13,12 +13,21 @@ const (
 	_ Type = iota
 	EOF
 	Illegal
+
 	Identifier
 	Integer
 	String
 	Boolean
+
 	And
 	Or
+	If
+	For
+	While
+	Return
+	Function
+	Let
+
 	Less
 	LessEqual
 	Greater
@@ -44,8 +53,14 @@ const (
 
 var lexemes = map[Type]string{
 	EOF:              "EOF",
-	And:              "&&",
-	Or:               "||",
+	And:              "and",
+	Or:               "or",
+	If:               "if",
+	For:              "for",
+	While:            "while",
+	Return:           "return",
+	Function:         "func",
+	Let:              "let",
 	Less:             "<",
 	LessEqual:        "<=",
 	Greater:          ">",
