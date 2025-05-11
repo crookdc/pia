@@ -58,38 +58,6 @@ func (s Statement) Node() {
 	panic("Statement.Node's behavior is classed as undefined and should never be invoked")
 }
 
-// LetStatement represents a statement which creates and initializes a new variable, for example: "let a = 5;".
-type LetStatement struct {
-	Statement
-	Identifier string
-	Value      ExpressionNode
-}
-
-// IfStatement represents a statement that allows the user to choose one of several branched statements to execute
-// exclusively.
-type IfStatement struct {
-	Statement
-	Condition   ExpressionNode
-	Consequence StatementNode
-	// Alternative represents any number of if-else pairs chained together or a single else statement which is
-	// represented as an alternative statement with a Condition that always resolves to true.
-	Alternative *IfStatement
-}
-
-// ReturnStatement represents a statement that gives control flow back to the caller of the currently executing
-// function. A ReturnStatement can optionally include a value represented by an ExpressionNode that should be given to
-// the caller.
-type ReturnStatement struct {
-	Statement
-	Expression ExpressionNode
-}
-
-// BlockStatement holds many statements but is treated as a single statement by the Squeak evaluator. This allows if statements and other control structures to branch into multi-statement code.
-type BlockStatement struct {
-	Statement
-	Statements []StatementNode
-}
-
 // ExpressionStatement represents an expression that exists in isolation within a Squeak script, meaning that it is not
 // defined as part of a statement and will thus be considered a statement by itself.
 type ExpressionStatement struct {
@@ -97,53 +65,45 @@ type ExpressionStatement struct {
 	Expression ExpressionNode
 }
 
-// IdentifierExpression represents an expression in the format of just an identifier.
-type IdentifierExpression struct {
+// Identifier represents an expression in the format of just an identifier.
+type Identifier struct {
 	Expression
 	Identifier string
 }
 
-// IntegerExpression represents an expression which holds a primitive integer literal.
-type IntegerExpression struct {
+// IntegerLiteral represents an expression which holds a primitive integer literal.
+type IntegerLiteral struct {
 	Expression
 	Integer int
 }
 
-// StringExpression represents an expression which holds a string literal.
-type StringExpression struct {
+// StringLiteral represents an expression which holds a string literal.
+type StringLiteral struct {
 	Expression
 	String string
 }
 
-// BooleanExpression represents an expression which holds a boolean literal.
-type BooleanExpression struct {
+// BooleanLiteral represents an expression which holds a boolean literal.
+type BooleanLiteral struct {
 	Expression
 	Boolean bool
 }
 
-// FunctionExpression represents a function declaration.
-type FunctionExpression struct {
+// Grouping represents an expression held together as a unit.
+type Grouping struct {
 	Expression
-	Parameters []ExpressionNode
-	Body       StatementNode
+	Group ExpressionNode
 }
 
-// CallExpression represents a function invocation. The Identifier field should resolve to the function name.
-type CallExpression struct {
-	Expression
-	Identifier ExpressionNode
-	Arguments  []ExpressionNode
-}
-
-// PrefixExpression represents an expression with a single operand where the operator is located before the operand.
-type PrefixExpression struct {
+// Prefix represents an expression with a single operand where the operator is located before the operand.
+type Prefix struct {
 	Expression
 	Operator token.Token
 	RHS      ExpressionNode
 }
 
-// InfixExpression represents an expression with two operands where the operator is located inbetween the operands.
-type InfixExpression struct {
+// Infix represents an expression with two operands where the operator is located inbetween the operands.
+type Infix struct {
 	Expression
 	Operator token.Token
 	LHS      ExpressionNode

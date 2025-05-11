@@ -5,8 +5,8 @@ import (
 )
 
 var (
-	Nil               = Token{}
-	ErrMissingLiteral = errors.New("missing token literal")
+	Nil              = Token{}
+	ErrMissingLexeme = errors.New("missing token lexeme")
 )
 
 const (
@@ -19,14 +19,12 @@ const (
 	Boolean
 	And
 	Or
-	If
-	Else
-	While
-	LessThan
-	GreaterThan
+	Less
+	LessEqual
+	Greater
+	GreaterEqual
 	Equals
 	NotEquals
-	Return
 	Assign
 	Bang
 	Plus
@@ -34,7 +32,7 @@ const (
 	Asterisk
 	Slash
 	Comma
-	FullStop
+	Dot
 	Semicolon
 	LeftParenthesis
 	RightParenthesis
@@ -42,23 +40,18 @@ const (
 	RightCurlyBrace
 	LeftBracket
 	RightBracket
-	Function
-	Let
-	Import
 )
 
-var literals = map[Type]string{
+var lexemes = map[Type]string{
 	EOF:              "EOF",
 	And:              "&&",
 	Or:               "||",
-	If:               "if",
-	Else:             "else",
-	While:            "while",
-	LessThan:         "<",
-	GreaterThan:      ">",
+	Less:             "<",
+	LessEqual:        "<=",
+	Greater:          ">",
+	GreaterEqual:     ">=",
 	Equals:           "==",
 	NotEquals:        "!=",
-	Return:           "return",
 	Assign:           "=",
 	Bang:             "!",
 	Plus:             "+",
@@ -66,7 +59,7 @@ var literals = map[Type]string{
 	Asterisk:         "*",
 	Slash:            "/",
 	Comma:            ",",
-	FullStop:         ".",
+	Dot:              ".",
 	Semicolon:        ";",
 	LeftParenthesis:  "(",
 	RightParenthesis: ")",
@@ -74,9 +67,6 @@ var literals = map[Type]string{
 	RightCurlyBrace:  "}",
 	LeftBracket:      "[",
 	RightBracket:     "]",
-	Function:         "func",
-	Let:              "let",
-	Import:           "import",
 }
 
 // Type identifies a token type such as brackets, parenthesis and keywords.
@@ -95,10 +85,10 @@ type Token struct {
 // [token.New].
 type Opt func(t *Token)
 
-// Literal is an Opt implementation that allows the caller to set the [token.Token.Literal] value to a custom one.
-func Literal(literal string) Opt {
+// Lexeme is an Opt implementation that allows the caller to set the [token.Token.Lexeme] value to a custom one.
+func Lexeme(lexeme string) Opt {
 	return func(t *Token) {
-		t.Lexeme = literal
+		t.Lexeme = lexeme
 	}
 }
 
@@ -107,13 +97,13 @@ func Literal(literal string) Opt {
 func New(t Type, opts ...Opt) (Token, error) {
 	token := Token{
 		Type:   t,
-		Lexeme: literals[t],
+		Lexeme: lexemes[t],
 	}
 	for _, opt := range opts {
 		opt(&token)
 	}
 	if token.Lexeme == "" {
-		return Token{}, ErrMissingLiteral
+		return Token{}, ErrMissingLexeme
 	}
 	return token, nil
 }

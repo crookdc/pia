@@ -165,7 +165,7 @@ func (lx *Lexer) number() (token.Token, error) {
 	if err != nil {
 		return token.Nil, err
 	}
-	return token.New(token.Integer, token.Literal(string(digit)))
+	return token.New(token.Integer, token.Lexeme(string(digit)))
 }
 
 func (lx *Lexer) string() (token.Token, error) {
@@ -181,7 +181,7 @@ func (lx *Lexer) string() (token.Token, error) {
 	if err := lx.skip(amount(1)); err != nil {
 		return token.Nil, err
 	}
-	return token.New(token.String, token.Literal(string(literal)))
+	return token.New(token.String, token.Lexeme(string(literal)))
 }
 
 func (lx *Lexer) symbol() (token.Token, error) {
@@ -199,12 +199,32 @@ func (lx *Lexer) symbol() (token.Token, error) {
 		if err := lx.skip(amount(1)); err != nil {
 			return token.Nil, err
 		}
-		return token.New(token.LessThan)
+		nxt, err := lx.read(never)
+		if err != nil {
+			return token.Nil, err
+		}
+		if nxt != '=' {
+			return token.New(token.Less)
+		}
+		if err := lx.skip(amount(1)); err != nil {
+			return token.Nil, err
+		}
+		return token.New(token.LessEqual)
 	case '>':
 		if err := lx.skip(amount(1)); err != nil {
 			return token.Nil, err
 		}
-		return token.New(token.GreaterThan)
+		nxt, err := lx.read(never)
+		if err != nil {
+			return token.Nil, err
+		}
+		if nxt != '=' {
+			return token.New(token.Greater)
+		}
+		if err := lx.skip(amount(1)); err != nil {
+			return token.Nil, err
+		}
+		return token.New(token.GreaterEqual)
 	case '+':
 		if err := lx.skip(amount(1)); err != nil {
 			return token.Nil, err
@@ -234,7 +254,7 @@ func (lx *Lexer) symbol() (token.Token, error) {
 		if err := lx.skip(amount(1)); err != nil {
 			return token.Nil, err
 		}
-		return token.New(token.FullStop)
+		return token.New(token.Dot)
 	case '(':
 		if err := lx.skip(amount(1)); err != nil {
 			return token.Nil, err
@@ -304,7 +324,7 @@ func (lx *Lexer) symbol() (token.Token, error) {
 			return token.Nil, err
 		}
 		if nxt != '&' {
-			return token.New(token.Illegal, token.Literal(string([]byte{c, nxt})))
+			return token.New(token.Illegal, token.Lexeme(string([]byte{c, nxt})))
 		}
 		return token.New(token.And)
 	case '|':
@@ -316,7 +336,7 @@ func (lx *Lexer) symbol() (token.Token, error) {
 			return token.Nil, err
 		}
 		if nxt != '|' {
-			return token.New(token.Illegal, token.Literal(string([]byte{c, nxt})))
+			return token.New(token.Illegal, token.Lexeme(string([]byte{c, nxt})))
 		}
 		return token.New(token.Or)
 	case '"':
@@ -332,9 +352,9 @@ func (lx *Lexer) symbol() (token.Token, error) {
 		if err := lx.skip(amount(1)); err != nil {
 			return token.Nil, err
 		}
-		return token.New(token.String, token.Literal(string(literal)))
+		return token.New(token.String, token.Lexeme(string(literal)))
 	default:
-		return token.New(token.Illegal, token.Literal(string(c)))
+		return token.New(token.Illegal, token.Lexeme(string(c)))
 	}
 }
 
@@ -344,24 +364,10 @@ func (lx *Lexer) word() (token.Token, error) {
 		return token.Nil, err
 	}
 	switch string(w) {
-	case "let":
-		return token.New(token.Let)
-	case "if":
-		return token.New(token.If)
-	case "else":
-		return token.New(token.Else)
-	case "return":
-		return token.New(token.Return)
-	case "while":
-		return token.New(token.While)
-	case "func":
-		return token.New(token.Function)
-	case "import":
-		return token.New(token.Import)
 	case "true", "false":
-		return token.New(token.Boolean, token.Literal(string(w)))
+		return token.New(token.Boolean, token.Lexeme(string(w)))
 	default:
-		return token.New(token.Identifier, token.Literal(string(w)))
+		return token.New(token.Identifier, token.Lexeme(string(w)))
 	}
 }
 

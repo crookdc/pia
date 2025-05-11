@@ -17,7 +17,7 @@ func TestParser_Next(t *testing.T) {
 		{
 			src: "a;",
 			expected: ast.ExpressionStatement{
-				Expression: ast.IdentifierExpression{
+				Expression: ast.Identifier{
 					Identifier: "a",
 				},
 			},
@@ -25,15 +25,15 @@ func TestParser_Next(t *testing.T) {
 		{
 			src: "a + b;",
 			expected: ast.ExpressionStatement{
-				Expression: ast.InfixExpression{
+				Expression: ast.Infix{
 					Operator: token.Token{
 						Type:   token.Plus,
 						Lexeme: "+",
 					},
-					LHS: ast.IdentifierExpression{
+					LHS: ast.Identifier{
 						Identifier: "a",
 					},
-					RHS: ast.IdentifierExpression{
+					RHS: ast.Identifier{
 						Identifier: "b",
 					},
 				},
@@ -42,24 +42,24 @@ func TestParser_Next(t *testing.T) {
 		{
 			src: "a + b - 1;",
 			expected: ast.ExpressionStatement{
-				Expression: ast.InfixExpression{
+				Expression: ast.Infix{
 					Operator: token.Token{
 						Type:   token.Minus,
 						Lexeme: "-",
 					},
-					LHS: ast.InfixExpression{
+					LHS: ast.Infix{
 						Operator: token.Token{
 							Type:   token.Plus,
 							Lexeme: "+",
 						},
-						LHS: ast.IdentifierExpression{
+						LHS: ast.Identifier{
 							Identifier: "a",
 						},
-						RHS: ast.IdentifierExpression{
+						RHS: ast.Identifier{
 							Identifier: "b",
 						},
 					},
-					RHS: ast.IntegerExpression{
+					RHS: ast.IntegerLiteral{
 						Integer: 1,
 					},
 				},
@@ -68,15 +68,15 @@ func TestParser_Next(t *testing.T) {
 		{
 			src: "name + \"is a good developer\";",
 			expected: ast.ExpressionStatement{
-				Expression: ast.InfixExpression{
+				Expression: ast.Infix{
 					Operator: token.Token{
 						Type:   token.Plus,
 						Lexeme: "+",
 					},
-					LHS: ast.IdentifierExpression{
+					LHS: ast.Identifier{
 						Identifier: "name",
 					},
-					RHS: ast.StringExpression{
+					RHS: ast.StringLiteral{
 						String: "is a good developer",
 					},
 				},
@@ -85,23 +85,23 @@ func TestParser_Next(t *testing.T) {
 		{
 			src: "a + b * c;",
 			expected: ast.ExpressionStatement{
-				Expression: ast.InfixExpression{
+				Expression: ast.Infix{
 					Operator: token.Token{
 						Type:   token.Plus,
 						Lexeme: "+",
 					},
-					LHS: ast.IdentifierExpression{
+					LHS: ast.Identifier{
 						Identifier: "a",
 					},
-					RHS: ast.InfixExpression{
+					RHS: ast.Infix{
 						Operator: token.Token{
 							Type:   token.Asterisk,
 							Lexeme: "*",
 						},
-						LHS: ast.IdentifierExpression{
+						LHS: ast.Identifier{
 							Identifier: "b",
 						},
-						RHS: ast.IdentifierExpression{
+						RHS: ast.Identifier{
 							Identifier: "c",
 						},
 					},
@@ -111,450 +111,65 @@ func TestParser_Next(t *testing.T) {
 		{
 			src: "(a + b) * c;",
 			expected: ast.ExpressionStatement{
-				Expression: ast.InfixExpression{
+				Expression: ast.Infix{
 					Operator: token.Token{
 						Type:   token.Asterisk,
 						Lexeme: "*",
 					},
-					LHS: ast.InfixExpression{
-						Operator: token.Token{
-							Type:   token.Plus,
-							Lexeme: "+",
-						},
-						LHS: ast.IdentifierExpression{
-							Identifier: "a",
-						},
-						RHS: ast.IdentifierExpression{
-							Identifier: "b",
+					LHS: ast.Grouping{
+						Group: ast.Infix{
+							Operator: token.Token{
+								Type:   token.Plus,
+								Lexeme: "+",
+							},
+							LHS: ast.Identifier{
+								Identifier: "a",
+							},
+							RHS: ast.Identifier{
+								Identifier: "b",
+							},
 						},
 					},
-					RHS: ast.IdentifierExpression{
+					RHS: ast.Identifier{
 						Identifier: "c",
 					},
 				},
 			},
 		},
 		{
-			src: "let a = (a + b) * c;",
-			expected: ast.LetStatement{
-				Identifier: "a",
-				Value: ast.InfixExpression{
-
+			src: "5 + -1 <= 6 * 5;",
+			expected: ast.ExpressionStatement{
+				Expression: ast.Infix{
 					Operator: token.Token{
-						Type:   token.Asterisk,
-						Lexeme: "*",
+						Type:   token.LessEqual,
+						Lexeme: "<=",
 					},
-					LHS: ast.InfixExpression{
+					LHS: ast.Infix{
+						Expression: ast.Expression{},
 						Operator: token.Token{
 							Type:   token.Plus,
 							Lexeme: "+",
 						},
-						LHS: ast.IdentifierExpression{
-							Identifier: "a",
+						LHS: ast.IntegerLiteral{Integer: 5},
+						RHS: ast.Prefix{
+							Operator: token.Token{
+								Type:   token.Minus,
+								Lexeme: "-",
+							},
+							RHS: ast.IntegerLiteral{
+								Integer: 1,
+							},
 						},
-						RHS: ast.IdentifierExpression{
-							Identifier: "b",
-						},
 					},
-					RHS: ast.IdentifierExpression{
-						Identifier: "c",
-					},
-				},
-			},
-		},
-		{
-			src: "let a = \"crookdc\";",
-			expected: ast.LetStatement{
-				Identifier: "a",
-				Value: ast.StringExpression{
-					String: "crookdc",
-				},
-			},
-		},
-		{
-			src: "let crookdc = a + b * c;",
-			expected: ast.LetStatement{
-				Identifier: "crookdc",
-				Value: ast.InfixExpression{
-					Operator: token.Token{
-						Type:   token.Plus,
-						Lexeme: "+",
-					},
-					LHS: ast.IdentifierExpression{
-						Identifier: "a",
-					},
-					RHS: ast.InfixExpression{
+					RHS: ast.Infix{
+						Expression: ast.Expression{},
 						Operator: token.Token{
 							Type:   token.Asterisk,
 							Lexeme: "*",
 						},
-						LHS: ast.IdentifierExpression{
-							Identifier: "b",
-						},
-						RHS: ast.IdentifierExpression{
-							Identifier: "c",
-						},
+						LHS: ast.IntegerLiteral{Integer: 6},
+						RHS: ast.IntegerLiteral{Integer: 5},
 					},
-				},
-			},
-		},
-		{
-			src: "if (a < b && b > a) a;",
-			expected: ast.IfStatement{
-				Condition: ast.InfixExpression{
-					Operator: token.Token{
-						Type:   token.And,
-						Lexeme: "&&",
-					},
-					LHS: ast.InfixExpression{
-						Operator: token.Token{
-							Type:   token.LessThan,
-							Lexeme: "<",
-						},
-						LHS: ast.IdentifierExpression{
-							Identifier: "a",
-						},
-						RHS: ast.IdentifierExpression{
-							Identifier: "b",
-						},
-					},
-					RHS: ast.InfixExpression{
-						Operator: token.Token{
-							Type:   token.GreaterThan,
-							Lexeme: ">",
-						},
-						LHS: ast.IdentifierExpression{
-							Identifier: "b",
-						},
-						RHS: ast.IdentifierExpression{
-							Identifier: "a",
-						},
-					},
-				},
-				Consequence: ast.ExpressionStatement{
-					Expression: ast.IdentifierExpression{
-						Expression: ast.Expression{},
-						Identifier: "a",
-					},
-				},
-				Alternative: nil,
-			},
-		},
-		{
-			src: "if (true || (false)) a - b;",
-			expected: ast.IfStatement{
-				Condition: ast.InfixExpression{
-					Operator: token.Token{
-						Type:   token.Or,
-						Lexeme: "||",
-					},
-					LHS: ast.BooleanExpression{
-						Boolean: true,
-					},
-					RHS: ast.BooleanExpression{
-						Boolean: false,
-					},
-				},
-				Consequence: ast.ExpressionStatement{
-					Statement: ast.Statement{},
-					Expression: ast.InfixExpression{
-						Operator: token.Token{
-							Type:   token.Minus,
-							Lexeme: "-",
-						},
-						LHS: ast.IdentifierExpression{
-							Identifier: "a",
-						},
-						RHS: ast.IdentifierExpression{
-							Identifier: "b",
-						},
-					},
-				},
-				Alternative: nil,
-			},
-		},
-		{
-			src: "if (true) a; else if (false) b; else c;",
-			expected: ast.IfStatement{
-				Condition: ast.BooleanExpression{
-					Boolean: true,
-				},
-				Consequence: ast.ExpressionStatement{
-					Expression: ast.IdentifierExpression{
-						Identifier: "a",
-					},
-				},
-				Alternative: &ast.IfStatement{
-					Condition: ast.BooleanExpression{
-						Boolean: false,
-					},
-					Consequence: ast.ExpressionStatement{
-						Expression: ast.IdentifierExpression{
-							Identifier: "b",
-						},
-					},
-					Alternative: &ast.IfStatement{
-						Condition: ast.BooleanExpression{
-							Boolean: true,
-						},
-						Consequence: ast.ExpressionStatement{
-							Expression: ast.IdentifierExpression{
-								Identifier: "c",
-							},
-						},
-						Alternative: nil,
-					},
-				},
-			},
-		},
-		{
-			src: "let a = -a + a;",
-			expected: ast.LetStatement{
-				Identifier: "a",
-				Value: ast.InfixExpression{
-					Operator: token.Token{
-						Type:   token.Plus,
-						Lexeme: "+",
-					},
-					LHS: ast.PrefixExpression{
-						Operator: token.Token{
-							Type:   token.Minus,
-							Lexeme: "-",
-						},
-						RHS: ast.IdentifierExpression{
-							Identifier: "a",
-						},
-					},
-					RHS: ast.IdentifierExpression{
-						Identifier: "a",
-					},
-				},
-			},
-		},
-		{
-			src: "if (1 == 1) return; else return false;",
-			expected: ast.IfStatement{
-				Condition: ast.InfixExpression{
-					Operator: token.Token{
-						Type:   token.Equals,
-						Lexeme: "==",
-					},
-					LHS: ast.IntegerExpression{
-						Integer: 1,
-					},
-					RHS: ast.IntegerExpression{
-						Integer: 1,
-					},
-				},
-				Consequence: ast.ReturnStatement{},
-				Alternative: &ast.IfStatement{
-					Condition: ast.BooleanExpression{
-						Boolean: true,
-					},
-					Consequence: ast.ReturnStatement{
-						Expression: ast.BooleanExpression{
-							Boolean: false,
-						},
-					},
-					Alternative: nil,
-				},
-			},
-		},
-		{
-			src: "let b64 = import \"core/base64\";",
-			expected: ast.LetStatement{
-				Identifier: "b64",
-				Value: ast.PrefixExpression{
-					Operator: token.Token{
-						Type:   token.Import,
-						Lexeme: "import",
-					},
-					RHS: ast.StringExpression{
-						String: "core/base64",
-					},
-				},
-			},
-		},
-		{
-			src: "let a = !b;",
-			expected: ast.LetStatement{
-				Identifier: "a",
-				Value: ast.PrefixExpression{
-					Operator: token.Token{
-						Type:   token.Bang,
-						Lexeme: "!",
-					},
-					RHS: ast.IdentifierExpression{
-						Identifier: "b",
-					},
-				},
-			},
-		},
-		{
-			src: "{ let a = 0; }",
-			expected: ast.BlockStatement{
-				Statements: []ast.StatementNode{
-					ast.LetStatement{
-						Identifier: "a",
-						Value: ast.IntegerExpression{
-							Integer: 0,
-						},
-					},
-				},
-			},
-		},
-		{
-			src: "if (a) { a; }",
-			expected: ast.IfStatement{
-				Condition: ast.IdentifierExpression{
-					Identifier: "a",
-				},
-				Consequence: ast.BlockStatement{
-					Statements: []ast.StatementNode{
-						ast.ExpressionStatement{
-							Expression: ast.IdentifierExpression{
-								Identifier: "a",
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			src: "let crookdc;",
-			expected: ast.LetStatement{
-				Identifier: "crookdc",
-			},
-		},
-		{
-			src: "a.b;",
-			expected: ast.ExpressionStatement{
-				Expression: ast.InfixExpression{
-					Operator: token.Token{
-						Type:   token.FullStop,
-						Lexeme: ".",
-					},
-					LHS: ast.IdentifierExpression{
-						Identifier: "a",
-					},
-					RHS: ast.IdentifierExpression{
-						Identifier: "b",
-					},
-				},
-			},
-		},
-		{
-			src: `
-			let add = func(a, b) {
-				return a + b;
-			};
-			`,
-			expected: ast.LetStatement{
-				Identifier: "add",
-				Value: ast.FunctionExpression{
-					Parameters: []ast.ExpressionNode{
-						ast.IdentifierExpression{
-							Identifier: "a",
-						},
-						ast.IdentifierExpression{
-							Identifier: "b",
-						},
-					},
-					Body: ast.BlockStatement{
-						Statements: []ast.StatementNode{
-							ast.ReturnStatement{
-								Expression: ast.InfixExpression{
-									Operator: token.Token{
-										Type:   token.Plus,
-										Lexeme: "+",
-									},
-									LHS: ast.IdentifierExpression{
-										Identifier: "a",
-									},
-									RHS: ast.IdentifierExpression{
-										Identifier: "b",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			src: `
-			let one = func() {
-				return 1;
-			};
-			`,
-			expected: ast.LetStatement{
-				Identifier: "one",
-				Value: ast.FunctionExpression{
-					Parameters: []ast.ExpressionNode{},
-					Body: ast.BlockStatement{
-						Statements: []ast.StatementNode{
-							ast.ReturnStatement{
-								Expression: ast.IntegerExpression{
-									Integer: 1,
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			src: "greet(\"crookdc\", 5);",
-			expected: ast.ExpressionStatement{
-				Expression: ast.CallExpression{
-					Identifier: ast.IdentifierExpression{
-						Identifier: "greet",
-					},
-					Arguments: []ast.ExpressionNode{
-						ast.StringExpression{
-							String: "crookdc",
-						},
-						ast.IntegerExpression{
-							Integer: 5,
-						},
-					},
-				},
-			},
-		},
-		{
-			src: "noargs();",
-			expected: ast.ExpressionStatement{
-				Expression: ast.CallExpression{
-					Identifier: ast.IdentifierExpression{
-						Identifier: "noargs",
-					},
-					Arguments: []ast.ExpressionNode{},
-				},
-			},
-		},
-		{
-			src:      "if;",
-			expected: ast.IfStatement{},
-			err: UnexpectedToken{
-				Line: 1,
-				Token: token.Token{
-					Type:   token.Semicolon,
-					Lexeme: ";",
-				},
-			},
-		},
-		{
-			src: `
-			if (a > b) {
-				5 + ;
-			}
-			`,
-			expected: ast.IfStatement{},
-			err: UnexpectedToken{
-				Line: 3,
-				Token: token.Token{
-					Type:   token.Semicolon,
-					Lexeme: ";",
 				},
 			},
 		},

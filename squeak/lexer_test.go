@@ -69,7 +69,7 @@ func TestLexer_Next(t *testing.T) {
 			bl:  LexerBufferLength,
 			expected: []token.Token{
 				{
-					Type:   token.Let,
+					Type:   token.Identifier,
 					Lexeme: "let",
 				},
 				{
@@ -143,7 +143,7 @@ func TestLexer_Next(t *testing.T) {
 					Lexeme: "!",
 				},
 				{
-					Type:   token.FullStop,
+					Type:   token.Dot,
 					Lexeme: ".",
 				},
 				{
@@ -194,7 +194,7 @@ func TestLexer_Next(t *testing.T) {
 			bl: LexerBufferLength,
 			expected: []token.Token{
 				{
-					Type:   token.Import,
+					Type:   token.Identifier,
 					Lexeme: "import",
 				},
 				{
@@ -206,7 +206,7 @@ func TestLexer_Next(t *testing.T) {
 					Lexeme: ";",
 				},
 				{
-					Type:   token.While,
+					Type:   token.Identifier,
 					Lexeme: "while",
 				},
 				{
@@ -226,7 +226,7 @@ func TestLexer_Next(t *testing.T) {
 					Lexeme: "{",
 				},
 				{
-					Type:   token.Return,
+					Type:   token.Identifier,
 					Lexeme: "return",
 				},
 				{
@@ -264,7 +264,7 @@ func TestLexer_Next(t *testing.T) {
 			bl:  LexerBufferLength,
 			expected: []token.Token{
 				{
-					Type:   token.Let,
+					Type:   token.Identifier,
 					Lexeme: "let",
 				},
 				{
@@ -298,7 +298,7 @@ func TestLexer_Next(t *testing.T) {
 			bl: LexerBufferLength,
 			expected: []token.Token{
 				{
-					Type:   token.If,
+					Type:   token.Identifier,
 					Lexeme: "if",
 				},
 				{
@@ -310,7 +310,7 @@ func TestLexer_Next(t *testing.T) {
 					Lexeme: "a",
 				},
 				{
-					Type:   token.GreaterThan,
+					Type:   token.Greater,
 					Lexeme: ">",
 				},
 				{
@@ -326,7 +326,7 @@ func TestLexer_Next(t *testing.T) {
 					Lexeme: "{",
 				},
 				{
-					Type:   token.Let,
+					Type:   token.Identifier,
 					Lexeme: "let",
 				},
 				{
@@ -360,7 +360,7 @@ func TestLexer_Next(t *testing.T) {
 			bl:  4,
 			expected: []token.Token{
 				{
-					Type:   token.Let,
+					Type:   token.Identifier,
 					Lexeme: "let",
 				},
 				{
@@ -423,7 +423,7 @@ func TestLexer_Next(t *testing.T) {
 			bl: LexerBufferLength,
 			expected: []token.Token{
 				{
-					Type:   token.Let,
+					Type:   token.Identifier,
 					Lexeme: "let",
 				},
 				{
@@ -435,7 +435,7 @@ func TestLexer_Next(t *testing.T) {
 					Lexeme: "=",
 				},
 				{
-					Type:   token.Function,
+					Type:   token.Identifier,
 					Lexeme: "func",
 				},
 				{
@@ -463,7 +463,7 @@ func TestLexer_Next(t *testing.T) {
 					Lexeme: "{",
 				},
 				{
-					Type:   token.Return,
+					Type:   token.Identifier,
 					Lexeme: "return",
 				},
 				{
@@ -471,7 +471,7 @@ func TestLexer_Next(t *testing.T) {
 					Lexeme: "a",
 				},
 				{
-					Type:   token.GreaterThan,
+					Type:   token.Greater,
 					Lexeme: ">",
 				},
 				{
@@ -487,7 +487,7 @@ func TestLexer_Next(t *testing.T) {
 					Lexeme: "b",
 				},
 				{
-					Type:   token.GreaterThan,
+					Type:   token.Greater,
 					Lexeme: ">",
 				},
 				{
@@ -556,17 +556,17 @@ func TestPeekingLexer_Line(t *testing.T) {
 
 	tok, err := plx.Peek()
 	assert.Nil(t, err)
-	assert.Equal(t, token.Token{Type: token.Let, Lexeme: "let"}, tok)
+	assert.Equal(t, token.Token{Type: token.Identifier, Lexeme: "let"}, tok)
 	assert.Equal(t, 1, plx.Line())
 
 	tok, err = plx.Peek()
 	assert.Nil(t, err)
-	assert.Equal(t, token.Token{Type: token.Let, Lexeme: "let"}, tok)
+	assert.Equal(t, token.Token{Type: token.Identifier, Lexeme: "let"}, tok)
 	assert.Equal(t, 1, plx.Line())
 
 	tok, err = plx.Next()
 	assert.Nil(t, err)
-	assert.Equal(t, token.Token{Type: token.Let, Lexeme: "let"}, tok)
+	assert.Equal(t, token.Token{Type: token.Identifier, Lexeme: "let"}, tok)
 	assert.Equal(t, 1, plx.Line())
 
 	tok, err = plx.Peek()
@@ -611,15 +611,15 @@ func TestPeekingLexer_Peek(t *testing.T) {
 
 	tok, err := plx.Peek()
 	assert.Nil(t, err)
-	assert.Equal(t, token.Token{Type: token.Let, Lexeme: "let"}, tok)
+	assert.Equal(t, token.Token{Type: token.Identifier, Lexeme: "let"}, tok)
 
 	tok, err = plx.Peek()
 	assert.Nil(t, err)
-	assert.Equal(t, token.Token{Type: token.Let, Lexeme: "let"}, tok)
+	assert.Equal(t, token.Token{Type: token.Identifier, Lexeme: "let"}, tok)
 
 	tok, err = plx.Next()
 	assert.Nil(t, err)
-	assert.Equal(t, token.Token{Type: token.Let, Lexeme: "let"}, tok)
+	assert.Equal(t, token.Token{Type: token.Identifier, Lexeme: "let"}, tok)
 
 	tok, err = plx.Peek()
 	assert.Nil(t, err)
