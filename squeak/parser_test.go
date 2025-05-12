@@ -156,7 +156,7 @@ func TestParser_Next(t *testing.T) {
 								Type:   token.Minus,
 								Lexeme: "-",
 							},
-							RHS: ast.IntegerLiteral{
+							Target: ast.IntegerLiteral{
 								Integer: 1,
 							},
 						},
@@ -173,6 +173,21 @@ func TestParser_Next(t *testing.T) {
 				},
 			},
 		},
+		{
+			src: "\n5\n",
+			// Since linefeed characters aren't much of a concern for the Squeak parser it makes sense that the error
+			// actually appears on line 3, where we reach the end of the stream without having encountered a semicolon.
+			err: SyntaxError{Line: 3},
+		},
+		{
+			src: "\n5\n;\n",
+			// This is an example of where the linefeed character is totally ignored (other than during line counting)
+			// and it is therefor okay to defer the statement terminator (semicolon) to the next line (or several lines
+			// down).
+			expected: ast.ExpressionStatement{
+				Expression: ast.IntegerLiteral{Integer: 5},
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.src, func(t *testing.T) {
@@ -183,7 +198,7 @@ func TestParser_Next(t *testing.T) {
 
 			ps := Parser{lx: plx}
 			n, err := ps.Next()
-			assert.Equal(t, test.err, err)
+			assert.ErrorIs(t, err, test.err)
 			assert.Equal(t, test.expected, n)
 		})
 	}

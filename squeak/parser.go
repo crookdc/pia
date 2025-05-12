@@ -169,7 +169,7 @@ func (ps *Parser) prefix() (ast.ExpressionNode, error) {
 		}
 		return ast.Prefix{
 			Operator: pk,
-			RHS:      expr,
+			Target:   expr,
 		}, nil
 	default:
 		return ps.primary()

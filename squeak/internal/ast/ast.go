@@ -99,7 +99,7 @@ type Grouping struct {
 type Prefix struct {
 	Expression
 	Operator token.Token
-	RHS      ExpressionNode
+	Target   ExpressionNode
 }
 
 // Infix represents an expression with two operands where the operator is located inbetween the operands.

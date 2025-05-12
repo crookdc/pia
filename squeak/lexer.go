@@ -460,12 +460,6 @@ func amount(n int) func(rune) bool {
 	}
 }
 
-func (lx *Lexer) seek(c byte) error {
-	return lx.skip(func(r rune) bool {
-		return r != rune(c)
-	})
-}
-
 func ignored() func(rune) bool {
 	var delegate = unicode.IsSpace
 	return func(r rune) bool {
