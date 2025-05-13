@@ -545,6 +545,808 @@ func TestEvaluator_expression(t *testing.T) {
 			},
 			err: ErrRuntimeFault,
 		},
+		{
+			name: "comparing less than with numbers",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Less,
+					Lexeme: "<",
+				},
+				LHS: ast.IntegerLiteral{
+					Integer: 123,
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: 13,
+				},
+			},
+			obj: Boolean{false},
+		},
+		{
+			name: "comparing less than with numbers",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Less,
+					Lexeme: "<",
+				},
+				LHS: ast.IntegerLiteral{
+					Integer: 34,
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: 132,
+				},
+			},
+			obj: Boolean{true},
+		},
+		{
+			name: "comparing less than with numbers",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Less,
+					Lexeme: "<",
+				},
+				LHS: ast.IntegerLiteral{
+					Integer: -34,
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: 132,
+				},
+			},
+			obj: Boolean{true},
+		},
+		{
+			name: "comparing less than with booleans",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Less,
+					Lexeme: "<",
+				},
+				LHS: ast.BooleanLiteral{
+					Boolean: true,
+				},
+				RHS: ast.BooleanLiteral{
+					Boolean: false,
+				},
+			},
+			err: ErrRuntimeFault,
+		},
+		{
+			name: "comparing less than with strings",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Less,
+					Lexeme: "<",
+				},
+				LHS: ast.StringLiteral{
+					String: "crookdc",
+				},
+				RHS: ast.StringLiteral{
+					String: "lackluster",
+				},
+			},
+			err: ErrRuntimeFault,
+		},
+		{
+			name: "comparing less than with string and boolean",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Less,
+					Lexeme: "<",
+				},
+				LHS: ast.StringLiteral{
+					String: "crookdc",
+				},
+				RHS: ast.BooleanLiteral{
+					Boolean: true,
+				},
+			},
+			err: ErrRuntimeFault,
+		},
+		{
+			name: "comparing less than with string and number",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Less,
+					Lexeme: "<",
+				},
+				LHS: ast.StringLiteral{
+					String: "crookdc",
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: 12,
+				},
+			},
+			err: ErrRuntimeFault,
+		},
+		{
+			name: "comparing less than with boolean and number",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Less,
+					Lexeme: "<",
+				},
+				LHS: ast.BooleanLiteral{
+					Boolean: true,
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: 12,
+				},
+			},
+			err: ErrRuntimeFault,
+		},
+		{
+			name: "comparing greater than with numbers",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Greater,
+					Lexeme: ">",
+				},
+				LHS: ast.IntegerLiteral{
+					Integer: 123,
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: 13,
+				},
+			},
+			obj: Boolean{true},
+		},
+		{
+			name: "comparing greater than with numbers",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Greater,
+					Lexeme: ">",
+				},
+				LHS: ast.IntegerLiteral{
+					Integer: 34,
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: 132,
+				},
+			},
+			obj: Boolean{false},
+		},
+		{
+			name: "comparing greater than with numbers",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Greater,
+					Lexeme: ">",
+				},
+				LHS: ast.IntegerLiteral{
+					Integer: -34,
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: 132,
+				},
+			},
+			obj: Boolean{false},
+		},
+		{
+			name: "comparing greater than with booleans",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Greater,
+					Lexeme: ">",
+				},
+				LHS: ast.BooleanLiteral{
+					Boolean: true,
+				},
+				RHS: ast.BooleanLiteral{
+					Boolean: false,
+				},
+			},
+			err: ErrRuntimeFault,
+		},
+		{
+			name: "comparing greater than with strings",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Greater,
+					Lexeme: ">",
+				},
+				LHS: ast.StringLiteral{
+					String: "crookdc",
+				},
+				RHS: ast.StringLiteral{
+					String: "lackluster",
+				},
+			},
+			err: ErrRuntimeFault,
+		},
+		{
+			name: "comparing greater than with string and boolean",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Greater,
+					Lexeme: ">",
+				},
+				LHS: ast.StringLiteral{
+					String: "crookdc",
+				},
+				RHS: ast.BooleanLiteral{
+					Boolean: true,
+				},
+			},
+			err: ErrRuntimeFault,
+		},
+		{
+			name: "comparing greater than with string and number",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Greater,
+					Lexeme: ">",
+				},
+				LHS: ast.StringLiteral{
+					String: "crookdc",
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: 12,
+				},
+			},
+			err: ErrRuntimeFault,
+		},
+		{
+			name: "comparing greater than with boolean and number",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Greater,
+					Lexeme: ">",
+				},
+				LHS: ast.BooleanLiteral{
+					Boolean: true,
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: 12,
+				},
+			},
+			err: ErrRuntimeFault,
+		},
+		{
+			name: "comparing equals with numbers",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Equals,
+					Lexeme: "==",
+				},
+				LHS: ast.IntegerLiteral{
+					Integer: 34,
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: 132,
+				},
+			},
+			obj: Boolean{false},
+		},
+		{
+			name: "comparing equals with numbers",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Equals,
+					Lexeme: "==",
+				},
+				LHS: ast.IntegerLiteral{
+					Integer: -34,
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: -34,
+				},
+			},
+			obj: Boolean{true},
+		},
+		{
+			name: "comparing equals with booleans",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Equals,
+					Lexeme: "==",
+				},
+				LHS: ast.BooleanLiteral{
+					Boolean: true,
+				},
+				RHS: ast.BooleanLiteral{
+					Boolean: false,
+				},
+			},
+			obj: Boolean{false},
+		},
+		{
+			name: "comparing equals with booleans",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Equals,
+					Lexeme: "==",
+				},
+				LHS: ast.BooleanLiteral{
+					Boolean: true,
+				},
+				RHS: ast.BooleanLiteral{
+					Boolean: true,
+				},
+			},
+			obj: Boolean{true},
+		},
+		{
+			name: "comparing equals with strings",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Equals,
+					Lexeme: "==",
+				},
+				LHS: ast.StringLiteral{
+					String: "crookdc",
+				},
+				RHS: ast.StringLiteral{
+					String: "lackluster",
+				},
+			},
+			obj: Boolean{false},
+		},
+		{
+			name: "comparing equals with strings",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Equals,
+					Lexeme: "==",
+				},
+				LHS: ast.StringLiteral{
+					String: "crookdc",
+				},
+				RHS: ast.StringLiteral{
+					String: "crookdc",
+				},
+			},
+			obj: Boolean{true},
+		},
+		{
+			name: "comparing equals with string and boolean",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Equals,
+					Lexeme: "==",
+				},
+				LHS: ast.StringLiteral{
+					String: "crookdc",
+				},
+				RHS: ast.BooleanLiteral{
+					Boolean: true,
+				},
+			},
+			err: ErrRuntimeFault,
+		},
+		{
+			name: "comparing equals with string and number",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Equals,
+					Lexeme: "==",
+				},
+				LHS: ast.StringLiteral{
+					String: "crookdc",
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: 12,
+				},
+			},
+			err: ErrRuntimeFault,
+		},
+		{
+			name: "comparing equals with boolean and number",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Equals,
+					Lexeme: "==",
+				},
+				LHS: ast.BooleanLiteral{
+					Boolean: true,
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: 12,
+				},
+			},
+			err: ErrRuntimeFault,
+		},
+		{
+			name: "comparing not equals with numbers",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.NotEquals,
+					Lexeme: "!=",
+				},
+				LHS: ast.IntegerLiteral{
+					Integer: 34,
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: 132,
+				},
+			},
+			obj: Boolean{true},
+		},
+		{
+			name: "comparing not equals with numbers",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.NotEquals,
+					Lexeme: "!=",
+				},
+				LHS: ast.IntegerLiteral{
+					Integer: -34,
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: -34,
+				},
+			},
+			obj: Boolean{false},
+		},
+		{
+			name: "comparing not equals with booleans",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.NotEquals,
+					Lexeme: "!=",
+				},
+				LHS: ast.BooleanLiteral{
+					Boolean: true,
+				},
+				RHS: ast.BooleanLiteral{
+					Boolean: false,
+				},
+			},
+			obj: Boolean{true},
+		},
+		{
+			name: "comparing not equals with booleans",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.NotEquals,
+					Lexeme: "!=",
+				},
+				LHS: ast.BooleanLiteral{
+					Boolean: true,
+				},
+				RHS: ast.BooleanLiteral{
+					Boolean: true,
+				},
+			},
+			obj: Boolean{false},
+		},
+		{
+			name: "comparing not equals with strings",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.NotEquals,
+					Lexeme: "!=",
+				},
+				LHS: ast.StringLiteral{
+					String: "crookdc",
+				},
+				RHS: ast.StringLiteral{
+					String: "lackluster",
+				},
+			},
+			obj: Boolean{true},
+		},
+		{
+			name: "comparing not equals with strings",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.NotEquals,
+					Lexeme: "!=",
+				},
+				LHS: ast.StringLiteral{
+					String: "crookdc",
+				},
+				RHS: ast.StringLiteral{
+					String: "crookdc",
+				},
+			},
+			obj: Boolean{false},
+		},
+		{
+			name: "comparing not equals with string and boolean",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.NotEquals,
+					Lexeme: "!=",
+				},
+				LHS: ast.StringLiteral{
+					String: "crookdc",
+				},
+				RHS: ast.BooleanLiteral{
+					Boolean: true,
+				},
+			},
+			err: ErrRuntimeFault,
+		},
+		{
+			name: "comparing not equals with string and number",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.NotEquals,
+					Lexeme: "!=",
+				},
+				LHS: ast.StringLiteral{
+					String: "crookdc",
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: 12,
+				},
+			},
+			err: ErrRuntimeFault,
+		},
+		{
+			name: "comparing not equals with boolean and number",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.NotEquals,
+					Lexeme: "!=",
+				},
+				LHS: ast.BooleanLiteral{
+					Boolean: true,
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: 12,
+				},
+			},
+			err: ErrRuntimeFault,
+		},
+
+		{
+			name: "comparing less equals with numbers",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.LessEqual,
+					Lexeme: "<=",
+				},
+				LHS: ast.IntegerLiteral{
+					Integer: 34,
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: 132,
+				},
+			},
+			obj: Boolean{true},
+		},
+		{
+			name: "comparing less equals with numbers",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.LessEqual,
+					Lexeme: "<=",
+				},
+				LHS: ast.IntegerLiteral{
+					Integer: -34,
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: -34,
+				},
+			},
+			obj: Boolean{true},
+		},
+		{
+			name: "comparing less equals with numbers",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.LessEqual,
+					Lexeme: "<=",
+				},
+				LHS: ast.IntegerLiteral{
+					Integer: 34,
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: -34,
+				},
+			},
+			obj: Boolean{false},
+		},
+		{
+			name: "comparing less equals with booleans",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.LessEqual,
+					Lexeme: "<=",
+				},
+				LHS: ast.BooleanLiteral{
+					Boolean: true,
+				},
+				RHS: ast.BooleanLiteral{
+					Boolean: false,
+				},
+			},
+			err: ErrRuntimeFault,
+		},
+		{
+			name: "comparing less equals with strings",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.LessEqual,
+					Lexeme: "<=",
+				},
+				LHS: ast.StringLiteral{
+					String: "crookdc",
+				},
+				RHS: ast.StringLiteral{
+					String: "lackluster",
+				},
+			},
+			err: ErrRuntimeFault,
+		},
+		{
+			name: "comparing less equals with string and boolean",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.LessEqual,
+					Lexeme: "<=",
+				},
+				LHS: ast.StringLiteral{
+					String: "crookdc",
+				},
+				RHS: ast.BooleanLiteral{
+					Boolean: true,
+				},
+			},
+			err: ErrRuntimeFault,
+		},
+		{
+			name: "comparing less equals with string and number",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.LessEqual,
+					Lexeme: "<=",
+				},
+				LHS: ast.StringLiteral{
+					String: "crookdc",
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: 12,
+				},
+			},
+			err: ErrRuntimeFault,
+		},
+		{
+			name: "comparing less equals with boolean and number",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.LessEqual,
+					Lexeme: "<=",
+				},
+				LHS: ast.BooleanLiteral{
+					Boolean: true,
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: 12,
+				},
+			},
+			err: ErrRuntimeFault,
+		},
+
+		{
+			name: "comparing greater equals with numbers",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.GreaterEqual,
+					Lexeme: ">=",
+				},
+				LHS: ast.IntegerLiteral{
+					Integer: 34,
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: 132,
+				},
+			},
+			obj: Boolean{false},
+		},
+		{
+			name: "comparing greater equals with numbers",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.GreaterEqual,
+					Lexeme: ">=",
+				},
+				LHS: ast.IntegerLiteral{
+					Integer: -34,
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: -34,
+				},
+			},
+			obj: Boolean{true},
+		},
+		{
+			name: "comparing greater equals with numbers",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.GreaterEqual,
+					Lexeme: ">=",
+				},
+				LHS: ast.IntegerLiteral{
+					Integer: 34,
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: -34,
+				},
+			},
+			obj: Boolean{true},
+		},
+		{
+			name: "comparing greater equals with booleans",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.GreaterEqual,
+					Lexeme: ">=",
+				},
+				LHS: ast.BooleanLiteral{
+					Boolean: true,
+				},
+				RHS: ast.BooleanLiteral{
+					Boolean: false,
+				},
+			},
+			err: ErrRuntimeFault,
+		},
+		{
+			name: "comparing greater equals with strings",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.GreaterEqual,
+					Lexeme: ">=",
+				},
+				LHS: ast.StringLiteral{
+					String: "crookdc",
+				},
+				RHS: ast.StringLiteral{
+					String: "lackluster",
+				},
+			},
+			err: ErrRuntimeFault,
+		},
+		{
+			name: "comparing greater equals with string and boolean",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.GreaterEqual,
+					Lexeme: ">=",
+				},
+				LHS: ast.StringLiteral{
+					String: "crookdc",
+				},
+				RHS: ast.BooleanLiteral{
+					Boolean: true,
+				},
+			},
+			err: ErrRuntimeFault,
+		},
+		{
+			name: "comparing greater equals with string and number",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.GreaterEqual,
+					Lexeme: ">=",
+				},
+				LHS: ast.StringLiteral{
+					String: "crookdc",
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: 12,
+				},
+			},
+			err: ErrRuntimeFault,
+		},
+		{
+			name: "comparing greater equals with boolean and number",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.GreaterEqual,
+					Lexeme: ">=",
+				},
+				LHS: ast.BooleanLiteral{
+					Boolean: true,
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: 12,
+				},
+			},
+			err: ErrRuntimeFault,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

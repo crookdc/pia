@@ -157,6 +157,34 @@ func (ev *Evaluator) infix(node ast.Infix) (Object, error) {
 		return ev.multiply(lhs, rhs)
 	case token.Slash:
 		return ev.divide(lhs, rhs)
+	case token.Less:
+		return ev.isLessThan(lhs, rhs)
+	case token.LessEqual:
+		lt, err := ev.isLessThan(lhs, rhs)
+		if err != nil {
+			return nil, err
+		}
+		if lt.value {
+			return lt, nil
+		}
+		return ev.isEqual(lhs, rhs)
+	case token.Greater:
+		return ev.isGreaterThan(lhs, rhs)
+	case token.GreaterEqual:
+		gt, err := ev.isGreaterThan(lhs, rhs)
+		if err != nil {
+			return nil, err
+		}
+		if gt.value {
+			return gt, nil
+		}
+		return ev.isEqual(lhs, rhs)
+	case token.Equals:
+		return ev.isEqual(lhs, rhs)
+	case token.NotEquals:
+		eq, err := ev.isEqual(lhs, rhs)
+		eq.value = !eq.value
+		return eq, err
 	default:
 		return nil, fmt.Errorf(
 			"%w: unexpected infix operator %s",
@@ -228,4 +256,43 @@ func (ev *Evaluator) divide(lhs, rhs Object) (Number, error) {
 		return Number{}, fmt.Errorf("%w: tried to divide by zero", ErrRuntimeFault)
 	}
 	return Number{lhn.value / rhn.value}, nil
+}
+
+func (ev *Evaluator) isLessThan(lhs, rhs Object) (Boolean, error) {
+	lhn, ok := lhs.(Number)
+	if !ok {
+		return Boolean{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(lhs))
+	}
+	rhn, ok := rhs.(Number)
+	if !ok {
+		return Boolean{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(rhs))
+	}
+	return Boolean{lhn.value < rhn.value}, nil
+}
+
+func (ev *Evaluator) isGreaterThan(lhs, rhs Object) (Boolean, error) {
+	lhn, ok := lhs.(Number)
+	if !ok {
+		return Boolean{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(lhs))
+	}
+	rhn, ok := rhs.(Number)
+	if !ok {
+		return Boolean{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(rhs))
+	}
+	return Boolean{lhn.value > rhn.value}, nil
+}
+
+func (ev *Evaluator) isEqual(lhs, rhs Object) (Boolean, error) {
+	if lhs == nil && rhs == nil {
+		return Boolean{true}, nil
+	}
+	if reflect.TypeOf(lhs) != reflect.TypeOf(rhs) {
+		return Boolean{}, fmt.Errorf(
+			"%w: cannot compare equality between %s with %s",
+			ErrRuntimeFault,
+			reflect.TypeOf(lhs),
+			reflect.TypeOf(rhs),
+		)
+	}
+	return Boolean{lhs == rhs}, nil
 }
