@@ -166,66 +166,66 @@ func (ev *Evaluator) infix(node ast.Infix) (Object, error) {
 	}
 }
 
-func (ev *Evaluator) concat(a, b Object) (Object, error) {
-	na, ok := a.(String)
+func (ev *Evaluator) concat(lhs, rhs Object) (String, error) {
+	lhn, ok := lhs.(String)
 	if !ok {
-		return nil, fmt.Errorf("%w: %s is not a string", ErrRuntimeFault, reflect.TypeOf(a))
+		return String{}, fmt.Errorf("%w: %s is not a string", ErrRuntimeFault, reflect.TypeOf(lhs))
 	}
-	nb, ok := b.(String)
+	rhn, ok := rhs.(String)
 	if !ok {
-		return nil, fmt.Errorf("%w: %s is not a string", ErrRuntimeFault, reflect.TypeOf(b))
+		return String{}, fmt.Errorf("%w: %s is not a string", ErrRuntimeFault, reflect.TypeOf(rhs))
 	}
-	return String{na.value + nb.value}, nil
+	return String{lhn.value + rhn.value}, nil
 }
 
-func (ev *Evaluator) add(a, b Object) (Object, error) {
-	na, ok := a.(Number)
+func (ev *Evaluator) add(lhs, rhs Object) (Number, error) {
+	lhn, ok := lhs.(Number)
 	if !ok {
-		return nil, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(a))
+		return Number{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(lhs))
 	}
-	nb, ok := b.(Number)
+	rhn, ok := rhs.(Number)
 	if !ok {
-		return nil, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(b))
+		return Number{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(rhs))
 	}
-	return Number{na.value + nb.value}, nil
+	return Number{lhn.value + rhn.value}, nil
 }
 
-func (ev *Evaluator) subtract(a, b Object) (Object, error) {
-	na, ok := a.(Number)
+func (ev *Evaluator) subtract(lhs, rhs Object) (Number, error) {
+	lhn, ok := lhs.(Number)
 	if !ok {
-		return nil, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(a))
+		return Number{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(lhs))
 	}
-	nb, ok := b.(Number)
+	rhn, ok := rhs.(Number)
 	if !ok {
-		return nil, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(b))
+		return Number{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(rhs))
 	}
-	return Number{na.value - nb.value}, nil
+	return Number{lhn.value - rhn.value}, nil
 }
 
-func (ev *Evaluator) multiply(a, b Object) (Object, error) {
-	na, ok := a.(Number)
+func (ev *Evaluator) multiply(lhs, rhs Object) (Number, error) {
+	lhn, ok := lhs.(Number)
 	if !ok {
-		return nil, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(a))
+		return Number{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(lhs))
 	}
-	nb, ok := b.(Number)
+	rhn, ok := rhs.(Number)
 	if !ok {
-		return nil, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(b))
+		return Number{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(rhs))
 	}
-	return Number{na.value * nb.value}, nil
+	return Number{lhn.value * rhn.value}, nil
 }
 
-func (ev *Evaluator) divide(a, b Object) (Object, error) {
-	na, ok := a.(Number)
+func (ev *Evaluator) divide(lhs, rhs Object) (Number, error) {
+	lhn, ok := lhs.(Number)
 	if !ok {
-		return nil, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(a))
+		return Number{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(lhs))
 	}
-	nb, ok := b.(Number)
+	rhn, ok := rhs.(Number)
 	if !ok {
-		return nil, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(b))
+		return Number{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(rhs))
 	}
-	if nb.value == 0 {
+	if rhn.value == 0 {
 		// Division by zero is undefined and counts as an erroneous input.
-		return nil, fmt.Errorf("%w: tried to divide by zero", ErrRuntimeFault)
+		return Number{}, fmt.Errorf("%w: tried to divide by zero", ErrRuntimeFault)
 	}
-	return Number{na.value / nb.value}, nil
+	return Number{lhn.value / rhn.value}, nil
 }

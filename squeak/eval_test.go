@@ -550,7 +550,11 @@ func TestEvaluator_expression(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			obj, err := (&Evaluator{}).expression(test.node)
 			assert.ErrorIs(t, err, test.err)
-			assert.Equal(t, test.obj, obj)
+			if err == nil {
+				// The returned value is only interesting if the returned error is nil. If the error is not nil then the
+				// returned object does not have a defined rule to its state and should never be used anyway.
+				assert.Equal(t, test.obj, obj)
+			}
 		})
 	}
 }
