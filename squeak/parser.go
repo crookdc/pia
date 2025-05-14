@@ -1,6 +1,7 @@
 package squeak
 
 import (
+	"errors"
 	"fmt"
 	"github.com/crookdc/pia/squeak/internal/ast"
 	"github.com/crookdc/pia/squeak/internal/token"
@@ -24,11 +25,11 @@ type Parser struct {
 	lx *PeekingLexer
 }
 
-// Next constructs and returns the next node in the abstract syntax tree for the targeted Lexer.
+// Next constructs and returns the next node in the abstract syntax tree for the underlying Lexer.
 func (ps *Parser) Next() (ast.StatementNode, error) {
 	expr, err := ps.expression()
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(err, ps.clear())
 	}
 	if _, err := ps.expect(token.Semicolon); err != nil {
 		return nil, err
@@ -36,6 +37,22 @@ func (ps *Parser) Next() (ast.StatementNode, error) {
 	return ast.ExpressionStatement{
 		Expression: expr,
 	}, nil
+}
+
+func (ps *Parser) clear() error {
+	look := true
+	for look {
+		nxt, err := ps.lx.Next()
+		if err != nil {
+			return err
+		}
+		switch nxt.Type {
+		case token.EOF, token.Semicolon, token.RightCurlyBrace:
+			look = false
+		default:
+		}
+	}
+	return nil
 }
 
 func (ps *Parser) expression() (ast.ExpressionNode, error) {

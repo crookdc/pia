@@ -202,4 +202,35 @@ func TestParser_Next(t *testing.T) {
 			assert.Equal(t, test.expected, n)
 		})
 	}
+
+	t.Run("clears current statement if error occurs", func(t *testing.T) {
+		src := `
+		a +/ b; # This line contains an invalid expression 
+		a + b; `
+		lx, err := NewLexer(strings.NewReader(src))
+		assert.Nil(t, err)
+		plx, err := NewPeekingLexer(lx)
+		assert.Nil(t, err)
+
+		ps := Parser{lx: plx}
+		n, err := ps.Next()
+		assert.ErrorIs(t, err, SyntaxError{Line: 2})
+
+		n, err = ps.Next()
+		assert.Nil(t, err)
+		assert.Equal(t, ast.ExpressionStatement{
+			Expression: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Plus,
+					Lexeme: "+",
+				},
+				LHS: ast.Identifier{
+					Identifier: "a",
+				},
+				RHS: ast.Identifier{
+					Identifier: "b",
+				},
+			},
+		}, n)
+	})
 }

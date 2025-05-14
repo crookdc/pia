@@ -11,7 +11,7 @@ favourite Postman features, but do not assume that just because Postman offers s
 this project.
 
 ## State of Pia
-The Pia project is still in **very** early development. There are no milestones or deadlines defined as there likely 
+The Pia project is still in **very** early development. There are no milestones or deadlines defined and there likely 
 will never be any of the sort. Hopefully there will be alpha releases of Pia once development has reached a point where 
 it can be used by the public in exchange for some feedback (not mandatory). You can of course clone and build Pia from 
 source whenever you want but the quality of your experience cannot be guaranteed until an official release is created.
