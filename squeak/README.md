@@ -43,8 +43,8 @@ outlines available operators as well as their supported datatypes.
 | `a > b`  | greater than           | `Number`                      |
 | `a >= b` | greater than or equals | `Number`                      |
 
-The equality comparison operator functions on values and not memory references. Hence, users coming from Java might want 
-something akin to `"John Smith".equals(name)` where, in Squeak, you would write `"John Smith" == name`.
+The equality comparison operator functions on values and not memory references. Hence, users coming from Java might 
+expect something akin to `"John Smith".equals(name)` where, in Squeak, you would write `"John Smith" == name`.
 
 ---
 *This section is under construction.*
