@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/crookdc/pia/squeak/internal/ast"
 	"github.com/crookdc/pia/squeak/internal/token"
+	"io"
 	"strconv"
 )
 
@@ -27,16 +28,27 @@ type Parser struct {
 
 // Next constructs and returns the next node in the abstract syntax tree for the underlying Lexer.
 func (ps *Parser) Next() (ast.StatementNode, error) {
-	expr, err := ps.expression()
+	pk, err := ps.lx.Peek()
 	if err != nil {
-		return nil, errors.Join(err, ps.clear())
-	}
-	if _, err := ps.expect(token.Semicolon); err != nil {
 		return nil, err
 	}
-	return ast.ExpressionStatement{
-		Expression: expr,
-	}, nil
+	switch pk.Type {
+	case token.EOF:
+		return nil, io.EOF
+	default:
+		expr, err := ps.expression()
+		if err != nil {
+			// Clears the statement that failed parsing so that subsequent calls to Next() don't automatically return errors
+			// due to it trying to start parsing from the middle of the erroneous statement.
+			return nil, errors.Join(err, ps.clear())
+		}
+		if _, err := ps.expect(token.Semicolon); err != nil {
+			return nil, err
+		}
+		return ast.ExpressionStatement{
+			Expression: expr,
+		}, nil
+	}
 }
 
 func (ps *Parser) clear() error {

@@ -4,6 +4,7 @@ import (
 	"github.com/crookdc/pia/squeak/internal/ast"
 	"github.com/crookdc/pia/squeak/internal/token"
 	"github.com/stretchr/testify/assert"
+	"io"
 	"strings"
 	"testing"
 )
@@ -188,6 +189,10 @@ func TestParser_Next(t *testing.T) {
 				Expression: ast.IntegerLiteral{Integer: 5},
 			},
 		},
+		{
+			src: "",
+			err: io.EOF,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.src, func(t *testing.T) {
@@ -206,7 +211,7 @@ func TestParser_Next(t *testing.T) {
 	t.Run("clears current statement if error occurs", func(t *testing.T) {
 		src := `
 		a +/ b; # This line contains an invalid expression 
-		a + b; `
+		a + b;`
 		lx, err := NewLexer(strings.NewReader(src))
 		assert.Nil(t, err)
 		plx, err := NewPeekingLexer(lx)
