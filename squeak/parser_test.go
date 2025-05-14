@@ -193,6 +193,10 @@ func TestParser_Next(t *testing.T) {
 			src: "",
 			err: io.EOF,
 		},
+		{
+			src: "\n\t\t\n# Hello world\n",
+			err: io.EOF,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.src, func(t *testing.T) {

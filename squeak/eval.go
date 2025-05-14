@@ -137,8 +137,8 @@ func (ev *Evaluator) infix(node ast.Infix) (Object, error) {
 	}
 	switch node.Operator.Type {
 	case token.Plus:
-		// Addition evaluation lets the left hand side expression operand to control whether the addition should be
-		// considered a concatenation of an addition of numbers.
+		// Addition evaluation lets the left hand side expression operand control whether the addition should be
+		// considered a concatenation or an addition of numbers.
 		switch lhs := lhs.(type) {
 		case String:
 			return ev.concat(lhs, rhs)
