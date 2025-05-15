@@ -35,6 +35,15 @@ func (ps *Parser) Next() (ast.StatementNode, error) {
 	switch pk.Type {
 	case token.EOF:
 		return nil, io.EOF
+	case token.Print:
+		ps.lx.Discard()
+		expr, err := ps.expression()
+		if err != nil {
+			return nil, errors.Join(err, ps.clear())
+		}
+		return ast.Print{
+			Expression: expr,
+		}, nil
 	default:
 		expr, err := ps.expression()
 		if err != nil {

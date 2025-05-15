@@ -1,6 +1,7 @@
 package squeak
 
 import (
+	"bytes"
 	"github.com/crookdc/pia/squeak/internal/ast"
 	"github.com/crookdc/pia/squeak/internal/token"
 	"github.com/stretchr/testify/assert"
@@ -1357,6 +1358,88 @@ func TestEvaluator_expression(t *testing.T) {
 				// returned object does not have a defined rule to its state and should never be used anyway.
 				assert.Equal(t, test.obj, obj)
 			}
+		})
+	}
+}
+
+func TestEvaluator_Statement(t *testing.T) {
+	tests := []struct {
+		name string
+		stmt ast.StatementNode
+
+		out string
+		err error
+	}{
+		{
+			name: "print writes string object to output",
+			stmt: ast.Print{
+				Expression: ast.Infix{
+					Operator: token.Token{
+						Type:   token.Plus,
+						Lexeme: "+",
+					},
+					LHS: ast.StringLiteral{
+						String: "hello",
+					},
+					RHS: ast.StringLiteral{
+						String: " world",
+					},
+				},
+			},
+			out: "hello world",
+		},
+		{
+			name: "print writes whole number object to output",
+			stmt: ast.Print{
+				Expression: ast.Infix{
+					Operator: token.Token{
+						Type:   token.Plus,
+						Lexeme: "+",
+					},
+					LHS: ast.IntegerLiteral{
+						Integer: 15,
+					},
+					RHS: ast.IntegerLiteral{
+						Integer: 30,
+					},
+				},
+			},
+			out: "45",
+		},
+		{
+			name: "print writes number object to output",
+			stmt: ast.Print{
+				Expression: ast.Infix{
+					Operator: token.Token{
+						Type:   token.Slash,
+						Lexeme: "/",
+					},
+					LHS: ast.IntegerLiteral{
+						Integer: 10,
+					},
+					RHS: ast.IntegerLiteral{
+						Integer: 3,
+					},
+				},
+			},
+			out: "3.33",
+		},
+		{
+			name: "print writes boolean object to output",
+			stmt: ast.Print{
+				Expression: ast.BooleanLiteral{Boolean: true},
+			},
+			out: "true",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			out := bytes.NewBufferString("")
+			ev := Evaluator{out: out}
+			err := ev.statement(test.stmt)
+			assert.ErrorIs(t, err, test.err)
+			assert.Equal(t, test.out, out.String())
 		})
 	}
 }

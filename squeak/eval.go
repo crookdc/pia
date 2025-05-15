@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/crookdc/pia/squeak/internal/ast"
 	"github.com/crookdc/pia/squeak/internal/token"
+	"io"
+	"math"
 	"reflect"
 )
 
@@ -19,7 +21,10 @@ type Number struct {
 }
 
 func (i Number) String() string {
-	return fmt.Sprintf("%f", i.value)
+	if i.value == math.Floor(i.value) {
+		return fmt.Sprintf("%d", int(i.value))
+	}
+	return fmt.Sprintf("%.2f", i.value)
 }
 
 type String struct {
@@ -41,7 +46,9 @@ func (b Boolean) String() string {
 	return "false"
 }
 
-type Evaluator struct{}
+type Evaluator struct {
+	out io.Writer
+}
 
 func (ev *Evaluator) Evaluate(node ast.Node) (Object, error) {
 	switch node := node.(type) {
@@ -62,6 +69,13 @@ func (ev *Evaluator) statement(node ast.StatementNode) error {
 	switch node := node.(type) {
 	case ast.ExpressionStatement:
 		_, err := ev.expression(node.Expression)
+		return err
+	case ast.Print:
+		obj, err := ev.expression(node.Expression)
+		if err != nil {
+			return err
+		}
+		_, err = io.WriteString(ev.out, obj.String())
 		return err
 	default:
 		return fmt.Errorf(

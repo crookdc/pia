@@ -380,6 +380,8 @@ func (lx *Lexer) word() (token.Token, error) {
 		return token.New(token.Function)
 	case "let":
 		return token.New(token.Let)
+	case "print":
+		return token.New(token.Print)
 	case "true", "false":
 		return token.New(token.Boolean, token.Lexeme(string(w)))
 	default:

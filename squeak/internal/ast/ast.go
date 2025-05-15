@@ -65,6 +65,12 @@ type ExpressionStatement struct {
 	Expression ExpressionNode
 }
 
+// Print represents a request from the running script to print the [squeak.Object] evaluated from Expression.
+type Print struct {
+	Statement
+	Expression ExpressionNode
+}
+
 // Identifier represents an expression in the format of just an identifier.
 type Identifier struct {
 	Expression

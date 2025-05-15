@@ -190,6 +190,14 @@ func TestParser_Next(t *testing.T) {
 			},
 		},
 		{
+			src: "print \"hello world\";",
+			expected: ast.Print{
+				Expression: ast.StringLiteral{
+					String: "hello world",
+				},
+			},
+		},
+		{
 			src: "",
 			err: io.EOF,
 		},
