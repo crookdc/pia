@@ -71,6 +71,14 @@ type Print struct {
 	Expression ExpressionNode
 }
 
+// Var represents a variable declaration with an optional initializer. Since Initializer is optional it must always be
+// nil-checked before use.
+type Var struct {
+	Statement
+	Name        token.Token
+	Initializer ExpressionNode
+}
+
 // Identifier represents an expression in the format of just an identifier.
 type Identifier struct {
 	Expression

@@ -205,6 +205,33 @@ func TestParser_Next(t *testing.T) {
 			src: "\n\t\t\n# Hello world\n",
 			err: io.EOF,
 		},
+		{
+			src: "var name = \"crookdc\";",
+			expected: ast.Var{
+				Name: token.Token{
+					Type:   token.Identifier,
+					Lexeme: "name",
+				},
+				Initializer: ast.StringLiteral{
+					String: "crookdc",
+				},
+			},
+		},
+		{
+			src: "var name;",
+			expected: ast.Var{
+				Name: token.Token{
+					Type:   token.Identifier,
+					Lexeme: "name",
+				},
+			},
+		},
+		{
+			src: "var name ? \"crookdc\";",
+			err: SyntaxError{
+				Line: 1,
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.src, func(t *testing.T) {
@@ -216,7 +243,9 @@ func TestParser_Next(t *testing.T) {
 			ps := Parser{lx: plx}
 			n, err := ps.Next()
 			assert.ErrorIs(t, err, test.err)
-			assert.Equal(t, test.expected, n)
+			if err == nil {
+				assert.Equal(t, test.expected, n)
+			}
 		})
 	}
 

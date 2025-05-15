@@ -27,7 +27,16 @@ type Parser struct {
 }
 
 // Next constructs and returns the next node in the abstract syntax tree for the underlying Lexer.
-func (ps *Parser) Next() (ast.StatementNode, error) {
+func (ps *Parser) Next() (stmt ast.StatementNode, err error) {
+	defer func() {
+		if err != nil {
+			// If an error occurred for any reason during the parsing of the current statement then the parser should at
+			// least try to fast-forward to the next statement. This counteracts cascading syntax errors that would be
+			// fine if it wasn't for the initial error that triggered a chain reaction. However, it is possible that
+			// another is encountered as the current statement is cleared, hence the call to errors.Join().
+			err = errors.Join(err, ps.clear())
+		}
+	}()
 	pk, err := ps.lx.Peek()
 	if err != nil {
 		return nil, err
@@ -35,29 +44,78 @@ func (ps *Parser) Next() (ast.StatementNode, error) {
 	switch pk.Type {
 	case token.EOF:
 		return nil, io.EOF
-	case token.Print:
-		ps.lx.Discard()
-		expr, err := ps.expression()
-		if err != nil {
-			return nil, errors.Join(err, ps.clear())
-		}
-		return ast.Print{
-			Expression: expr,
-		}, nil
 	default:
-		expr, err := ps.expression()
-		if err != nil {
-			// Clears the statement that failed parsing so that subsequent calls to Next() don't automatically return errors
-			// due to it trying to start parsing from the middle of the erroneous statement.
-			return nil, errors.Join(err, ps.clear())
-		}
-		if _, err := ps.expect(token.Semicolon); err != nil {
-			return nil, err
-		}
-		return ast.ExpressionStatement{
-			Expression: expr,
-		}, nil
+		return ps.declaration()
 	}
+}
+
+func (ps *Parser) declaration() (ast.StatementNode, error) {
+	pk, err := ps.lx.Peek()
+	if err != nil {
+		return nil, err
+	}
+	switch pk.Type {
+	case token.Var:
+		return ps.variable()
+	default:
+		return ps.statement()
+	}
+}
+
+func (ps *Parser) variable() (ast.Var, error) {
+	if _, err := ps.expect(token.Var); err != nil {
+		return ast.Var{}, err
+	}
+	name, err := ps.expect(token.Identifier)
+	if err != nil {
+		return ast.Var{}, err
+	}
+	stmt := ast.Var{
+		Name:        name,
+		Initializer: nil,
+	}
+	pk, err := ps.lx.Peek()
+	if err != nil {
+		return ast.Var{}, err
+	}
+	if pk.Type == token.Semicolon {
+		return stmt, nil
+	}
+	if _, err := ps.expect(token.Assign); err != nil {
+		return ast.Var{}, err
+	}
+	init, err := ps.equality()
+	if err != nil {
+		return ast.Var{}, err
+	}
+	stmt.Initializer = init
+	return stmt, nil
+}
+
+func (ps *Parser) statement() (ast.StatementNode, error) {
+	pk, err := ps.lx.Peek()
+	if err != nil {
+		return nil, err
+	}
+	switch pk.Type {
+	case token.Print:
+		return ps.print()
+	default:
+		return ps.expression()
+	}
+}
+
+func (ps *Parser) print() (ast.Print, error) {
+	if _, err := ps.expect(token.Print); err != nil {
+		return ast.Print{}, err
+	}
+	expr, err := ps.equality()
+	if err != nil {
+		return ast.Print{}, err
+	}
+	return ast.Print{
+		Expression: expr,
+	}, nil
 }
 
 func (ps *Parser) clear() error {
@@ -76,8 +134,17 @@ func (ps *Parser) clear() error {
 	return nil
 }
 
-func (ps *Parser) expression() (ast.ExpressionNode, error) {
-	return ps.equality()
+func (ps *Parser) expression() (ast.ExpressionStatement, error) {
+	expr, err := ps.equality()
+	if err != nil {
+		return ast.ExpressionStatement{}, err
+	}
+	if _, err := ps.expect(token.Semicolon); err != nil {
+		return ast.ExpressionStatement{}, err
+	}
+	return ast.ExpressionStatement{
+		Expression: expr,
+	}, nil
 }
 
 func (ps *Parser) equality() (ast.ExpressionNode, error) {
@@ -245,7 +312,7 @@ func (ps *Parser) primary() (ast.ExpressionNode, error) {
 		}
 		return ast.BooleanLiteral{Boolean: b}, nil
 	case token.LeftParenthesis:
-		expr, err := ps.expression()
+		expr, err := ps.equality()
 		if err != nil {
 			return nil, err
 		}

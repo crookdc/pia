@@ -14,7 +14,7 @@ func TestNewLexer(t *testing.T) {
 		assert.True(t, errors.Is(err, ErrInvalidSourceReader))
 	})
 	t.Run("given non-nil source reader", func(t *testing.T) {
-		src := "let a = b;"
+		src := "var a = b;"
 		_, err := NewLexer(strings.NewReader(src))
 		assert.Nil(t, err)
 	})
@@ -26,7 +26,7 @@ func TestLexer_Line(t *testing.T) {
 		expected int
 	}{
 		{
-			src:      "  let = 4444;",
+			src:      "  var = 4444;",
 			expected: 1,
 		},
 		{
@@ -38,7 +38,7 @@ func TestLexer_Line(t *testing.T) {
 			expected: 5,
 		},
 		{
-			src:      "let\nit\nsnow\n\n\n\n",
+			src:      "var\nit\nsnow\n\n\n\n",
 			expected: 7,
 		},
 	}
@@ -65,12 +65,12 @@ func TestLexer_Next(t *testing.T) {
 		bl       int
 	}{
 		{
-			src: " let  = 512;",
+			src: " var  = 512;",
 			bl:  LexerBufferLength,
 			expected: []token.Token{
 				{
-					Type:   token.Let,
-					Lexeme: "let",
+					Type:   token.Var,
+					Lexeme: "var",
 				},
 				{
 					Type:   token.Assign,
@@ -269,12 +269,12 @@ func TestLexer_Next(t *testing.T) {
 			},
 		},
 		{
-			src: "let name = \"crookdc\";",
+			src: "var name = \"crookdc\";",
 			bl:  LexerBufferLength,
 			expected: []token.Token{
 				{
-					Type:   token.Let,
-					Lexeme: "let",
+					Type:   token.Var,
+					Lexeme: "var",
 				},
 				{
 					Type:   token.Identifier,
@@ -301,7 +301,7 @@ func TestLexer_Next(t *testing.T) {
 		{
 			src: `
 			if (a > b) {
-				let c = 5;
+				var c = 5;
 			}
 			`,
 			bl: LexerBufferLength,
@@ -335,8 +335,8 @@ func TestLexer_Next(t *testing.T) {
 					Lexeme: "{",
 				},
 				{
-					Type:   token.Let,
-					Lexeme: "let",
+					Type:   token.Var,
+					Lexeme: "var",
 				},
 				{
 					Type:   token.Identifier,
@@ -365,12 +365,12 @@ func TestLexer_Next(t *testing.T) {
 			},
 		},
 		{
-			src: "let developer = \"crookd\";",
+			src: "var developer = \"crookd\";",
 			bl:  4,
 			expected: []token.Token{
 				{
-					Type:   token.Let,
-					Lexeme: "let",
+					Type:   token.Var,
+					Lexeme: "var",
 				},
 				{
 					Type:   token.Identifier,
@@ -423,7 +423,7 @@ func TestLexer_Next(t *testing.T) {
 		{
 			src: `
 			# This function reports whether both a and b are positive
-			let pos = func(a, b) {
+			var pos = func(a, b) {
 				# Holy cow, this is a comment isn't it!
 				return a > 0 and b > 0;
 			};
@@ -432,8 +432,8 @@ func TestLexer_Next(t *testing.T) {
 			bl: LexerBufferLength,
 			expected: []token.Token{
 				{
-					Type:   token.Let,
-					Lexeme: "let",
+					Type:   token.Var,
+					Lexeme: "var",
 				},
 				{
 					Type:   token.Identifier,
@@ -546,7 +546,7 @@ func TestNewPeekingLexer(t *testing.T) {
 		assert.True(t, errors.Is(err, ErrInvalidSourceLexer))
 	})
 	t.Run("given non-nil lexer", func(t *testing.T) {
-		src := "let a = b;"
+		src := "var a = b;"
 		lx, err := NewLexer(strings.NewReader(src))
 		assert.Nil(t, err)
 		_, err = NewPeekingLexer(lx)
@@ -555,7 +555,7 @@ func TestNewPeekingLexer(t *testing.T) {
 }
 
 func TestPeekingLexer_Line(t *testing.T) {
-	src := "let \na\n = \nb;"
+	src := "var \na\n = \nb;"
 
 	lx, err := NewLexer(strings.NewReader(src))
 	assert.Nil(t, err)
@@ -565,17 +565,17 @@ func TestPeekingLexer_Line(t *testing.T) {
 
 	tok, err := plx.Peek()
 	assert.Nil(t, err)
-	assert.Equal(t, token.Token{Type: token.Let, Lexeme: "let"}, tok)
+	assert.Equal(t, token.Token{Type: token.Var, Lexeme: "var"}, tok)
 	assert.Equal(t, 1, plx.Line())
 
 	tok, err = plx.Peek()
 	assert.Nil(t, err)
-	assert.Equal(t, token.Token{Type: token.Let, Lexeme: "let"}, tok)
+	assert.Equal(t, token.Token{Type: token.Var, Lexeme: "var"}, tok)
 	assert.Equal(t, 1, plx.Line())
 
 	tok, err = plx.Next()
 	assert.Nil(t, err)
-	assert.Equal(t, token.Token{Type: token.Let, Lexeme: "let"}, tok)
+	assert.Equal(t, token.Token{Type: token.Var, Lexeme: "var"}, tok)
 	assert.Equal(t, 1, plx.Line())
 
 	tok, err = plx.Peek()
@@ -610,7 +610,7 @@ func TestPeekingLexer_Line(t *testing.T) {
 }
 
 func TestPeekingLexer_Peek(t *testing.T) {
-	src := "let a = b;"
+	src := "var a = b;"
 
 	lx, err := NewLexer(strings.NewReader(src))
 	assert.Nil(t, err)
@@ -620,15 +620,15 @@ func TestPeekingLexer_Peek(t *testing.T) {
 
 	tok, err := plx.Peek()
 	assert.Nil(t, err)
-	assert.Equal(t, token.Token{Type: token.Let, Lexeme: "let"}, tok)
+	assert.Equal(t, token.Token{Type: token.Var, Lexeme: "var"}, tok)
 
 	tok, err = plx.Peek()
 	assert.Nil(t, err)
-	assert.Equal(t, token.Token{Type: token.Let, Lexeme: "let"}, tok)
+	assert.Equal(t, token.Token{Type: token.Var, Lexeme: "var"}, tok)
 
 	tok, err = plx.Next()
 	assert.Nil(t, err)
-	assert.Equal(t, token.Token{Type: token.Let, Lexeme: "let"}, tok)
+	assert.Equal(t, token.Token{Type: token.Var, Lexeme: "var"}, tok)
 
 	tok, err = plx.Peek()
 	assert.Nil(t, err)

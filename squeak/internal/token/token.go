@@ -26,7 +26,7 @@ const (
 	While
 	Return
 	Function
-	Let
+	Var
 	Print
 
 	Less
@@ -61,7 +61,7 @@ var lexemes = map[Type]string{
 	While:            "while",
 	Return:           "return",
 	Function:         "func",
-	Let:              "let",
+	Var:              "var",
 	Print:            "print",
 	Less:             "<",
 	LessEqual:        "<=",

@@ -354,6 +354,9 @@ func (lx *Lexer) symbol() (token.Token, error) {
 		}
 		return token.New(token.String, token.Lexeme(string(literal)))
 	default:
+		if err := lx.skip(amount(1)); err != nil {
+			return token.Nil, err
+		}
 		return token.New(token.Illegal, token.Lexeme(string(c)))
 	}
 }
@@ -378,8 +381,8 @@ func (lx *Lexer) word() (token.Token, error) {
 		return token.New(token.Return)
 	case "func":
 		return token.New(token.Function)
-	case "let":
-		return token.New(token.Let)
+	case "var":
+		return token.New(token.Var)
 	case "print":
 		return token.New(token.Print)
 	case "true", "false":
