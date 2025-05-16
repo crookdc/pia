@@ -1368,6 +1368,7 @@ func TestEvaluator_Statement(t *testing.T) {
 		stmt ast.StatementNode
 
 		out string
+		env Environment
 		err error
 	}{
 		{
@@ -1387,6 +1388,7 @@ func TestEvaluator_Statement(t *testing.T) {
 				},
 			},
 			out: "hello world",
+			env: Environment{},
 		},
 		{
 			name: "print writes whole number object to output",
@@ -1405,6 +1407,7 @@ func TestEvaluator_Statement(t *testing.T) {
 				},
 			},
 			out: "45",
+			env: Environment{},
 		},
 		{
 			name: "print writes number object to output",
@@ -1423,6 +1426,7 @@ func TestEvaluator_Statement(t *testing.T) {
 				},
 			},
 			out: "3.33",
+			env: Environment{},
 		},
 		{
 			name: "print writes boolean object to output",
@@ -1430,16 +1434,70 @@ func TestEvaluator_Statement(t *testing.T) {
 				Expression: ast.BooleanLiteral{Boolean: true},
 			},
 			out: "true",
+			env: Environment{},
+		},
+		{
+			name: "variable declaration without initializer",
+			stmt: ast.Var{
+				Name: token.Token{
+					Type:   token.Identifier,
+					Lexeme: "name",
+				},
+			},
+			env: Environment(map[string]Object{
+				"name": nil,
+			}),
+		},
+		{
+			name: "variable declaration with explicit nil initializer",
+			stmt: ast.Var{
+				Name: token.Token{
+					Type:   token.Identifier,
+					Lexeme: "name",
+				},
+				Initializer: ast.NilLiteral{},
+			},
+			env: Environment(map[string]Object{
+				"name": nil,
+			}),
+		},
+		{
+			name: "variable declaration with initializer",
+			stmt: ast.Var{
+				Name: token.Token{
+					Type:   token.Identifier,
+					Lexeme: "name",
+				},
+				Initializer: ast.Infix{
+					Operator: token.Token{
+						Type:   token.Plus,
+						Lexeme: "+",
+					},
+					LHS: ast.StringLiteral{
+						String: "hello",
+					},
+					RHS: ast.StringLiteral{
+						String: "goodbye",
+					},
+				},
+			},
+			env: Environment(map[string]Object{
+				"name": String{"hellogoodbye"},
+			}),
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			out := bytes.NewBufferString("")
-			ev := Evaluator{out: out}
+			ev := Evaluator{
+				out: out,
+				env: Environment{},
+			}
 			err := ev.statement(test.stmt)
 			assert.ErrorIs(t, err, test.err)
 			assert.Equal(t, test.out, out.String())
+			assert.Equal(t, test.env, ev.env)
 		})
 	}
 }

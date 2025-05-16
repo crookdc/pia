@@ -322,6 +322,8 @@ func (ps *Parser) primary() (ast.ExpressionNode, error) {
 		return ast.Grouping{
 			Group: expr,
 		}, nil
+	case token.Nil:
+		return ast.NilLiteral{}, nil
 	default:
 		return nil, fmt.Errorf(
 			"%w: unexpected token: %s",

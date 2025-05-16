@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	Nil              = Token{}
+	Null             = Token{}
 	ErrMissingLexeme = errors.New("missing token lexeme")
 )
 
@@ -28,6 +28,7 @@ const (
 	Function
 	Var
 	Print
+	Nil
 
 	Less
 	LessEqual
@@ -63,6 +64,7 @@ var lexemes = map[Type]string{
 	Function:         "func",
 	Var:              "var",
 	Print:            "print",
+	Nil:              "nil",
 	Less:             "<",
 	LessEqual:        "<=",
 	Greater:          ">",

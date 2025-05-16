@@ -91,6 +91,32 @@ func TestLexer_Next(t *testing.T) {
 			},
 		},
 		{
+			src: "a + nil;",
+			bl:  LexerBufferLength,
+			expected: []token.Token{
+				{
+					Type:   token.Identifier,
+					Lexeme: "a",
+				},
+				{
+					Type:   token.Plus,
+					Lexeme: "+",
+				},
+				{
+					Type:   token.Nil,
+					Lexeme: "nil",
+				},
+				{
+					Type:   token.Semicolon,
+					Lexeme: ";",
+				},
+				{
+					Type:   token.EOF,
+					Lexeme: "EOF",
+				},
+			},
+		},
+		{
 			src: "print 15;",
 			bl:  LexerBufferLength,
 			expected: []token.Token{

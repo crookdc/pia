@@ -46,7 +46,10 @@ func (b Boolean) String() string {
 	return "false"
 }
 
+type Environment map[string]Object
+
 type Evaluator struct {
+	env Environment
 	out io.Writer
 }
 
@@ -77,6 +80,17 @@ func (ev *Evaluator) statement(node ast.StatementNode) error {
 		}
 		_, err = io.WriteString(ev.out, obj.String())
 		return err
+	case ast.Var:
+		if node.Initializer == nil {
+			ev.env[node.Name.Lexeme] = nil
+			return nil
+		}
+		val, err := ev.expression(node.Initializer)
+		if err != nil {
+			return err
+		}
+		ev.env[node.Name.Lexeme] = val
+		return nil
 	default:
 		return fmt.Errorf(
 			"%w: unexpected statement type %s",
@@ -94,6 +108,8 @@ func (ev *Evaluator) expression(node ast.ExpressionNode) (Object, error) {
 		return String{node.String}, nil
 	case ast.BooleanLiteral:
 		return Boolean{node.Boolean}, nil
+	case ast.NilLiteral:
+		return nil, nil
 	case ast.Grouping:
 		return ev.expression(node.Group)
 	case ast.Prefix:

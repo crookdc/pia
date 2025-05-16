@@ -103,6 +103,11 @@ type BooleanLiteral struct {
 	Boolean bool
 }
 
+// NilLiteral represents a literal nil expression, which in turn represents the absence of a value.
+type NilLiteral struct {
+	Expression
+}
+
 // Grouping represents an expression held together as a unit.
 type Grouping struct {
 	Expression

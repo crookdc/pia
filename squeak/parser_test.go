@@ -232,6 +232,16 @@ func TestParser_Next(t *testing.T) {
 				Line: 1,
 			},
 		},
+		{
+			src: "var name = nil;",
+			expected: ast.Var{
+				Name: token.Token{
+					Type:   token.Identifier,
+					Lexeme: "name",
+				},
+				Initializer: ast.NilLiteral{},
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.src, func(t *testing.T) {
