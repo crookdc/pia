@@ -46,22 +46,63 @@ func (b Boolean) String() string {
 	return "false"
 }
 
-type Environment map[string]Object
+type EnvironmentOpt func(*Environment)
 
-func (env Environment) Declare(k string, v Object) {
-	env[k] = v
+func Parent(parent *Environment) EnvironmentOpt {
+	return func(env *Environment) {
+		env.parent = parent
+	}
 }
 
-func (env Environment) Assign(k string, v Object) error {
-	if _, ok := env[k]; !ok {
+func Prefill(k string, v Object) EnvironmentOpt {
+	return func(env *Environment) {
+		if env.tbl == nil {
+			env.tbl = make(map[string]Object)
+		}
+		env.tbl[k] = v
+	}
+}
+
+func NewEnvironment(opts ...EnvironmentOpt) *Environment {
+	env := &Environment{
+		tbl: make(map[string]Object),
+	}
+	for _, opt := range opts {
+		opt(env)
+	}
+	return env
+}
+
+type Environment struct {
+	parent *Environment
+	tbl    map[string]Object
+}
+
+func (env *Environment) Resolve(k string) (Object, error) {
+	val, ok := env.tbl[k]
+	if ok {
+		return val, nil
+	}
+	if env.parent != nil {
+		return env.parent.Resolve(k)
+	}
+	return nil, fmt.Errorf("%w: cannot resolve key %s", ErrRuntimeFault, k)
+}
+
+func (env *Environment) Declare(k string, v Object) {
+	env.tbl[k] = v
+}
+
+func (env *Environment) Assign(k string, v Object) error {
+	if _, ok := env.tbl[k]; !ok {
 		return fmt.Errorf("%w: assignment target unknown", ErrRuntimeFault)
 	}
-	env[k] = v
+	env.tbl[k] = v
 	return nil
 }
 
 type Evaluator struct {
-	env Environment
+	env *Environment
 	out io.Writer
 }
 

@@ -1368,7 +1368,7 @@ func TestEvaluator_Statement(t *testing.T) {
 		stmt ast.StatementNode
 
 		out string
-		env Environment
+		env *Environment
 		err error
 	}{
 		{
@@ -1388,7 +1388,7 @@ func TestEvaluator_Statement(t *testing.T) {
 				},
 			},
 			out: "hello world",
-			env: Environment{},
+			env: NewEnvironment(),
 		},
 		{
 			name: "print writes whole number object to output",
@@ -1407,7 +1407,7 @@ func TestEvaluator_Statement(t *testing.T) {
 				},
 			},
 			out: "45",
-			env: Environment{},
+			env: NewEnvironment(),
 		},
 		{
 			name: "print writes number object to output",
@@ -1426,7 +1426,7 @@ func TestEvaluator_Statement(t *testing.T) {
 				},
 			},
 			out: "3.33",
-			env: Environment{},
+			env: NewEnvironment(),
 		},
 		{
 			name: "print writes boolean object to output",
@@ -1434,7 +1434,7 @@ func TestEvaluator_Statement(t *testing.T) {
 				Expression: ast.BooleanLiteral{Boolean: true},
 			},
 			out: "true",
-			env: Environment{},
+			env: NewEnvironment(),
 		},
 		{
 			name: "variable declaration without initializer",
@@ -1444,9 +1444,7 @@ func TestEvaluator_Statement(t *testing.T) {
 					Lexeme: "name",
 				},
 			},
-			env: Environment(map[string]Object{
-				"name": nil,
-			}),
+			env: NewEnvironment(Prefill("name", nil)),
 		},
 		{
 			name: "variable declaration with explicit nil initializer",
@@ -1457,9 +1455,7 @@ func TestEvaluator_Statement(t *testing.T) {
 				},
 				Initializer: ast.NilLiteral{},
 			},
-			env: Environment(map[string]Object{
-				"name": nil,
-			}),
+			env: NewEnvironment(Prefill("name", nil)),
 		},
 		{
 			name: "variable declaration with initializer",
@@ -1481,9 +1477,7 @@ func TestEvaluator_Statement(t *testing.T) {
 					},
 				},
 			},
-			env: Environment(map[string]Object{
-				"name": String{"hellogoodbye"},
-			}),
+			env: NewEnvironment(Prefill("name", String{"hellogoodbye"})),
 		},
 	}
 
@@ -1492,7 +1486,7 @@ func TestEvaluator_Statement(t *testing.T) {
 			out := bytes.NewBufferString("")
 			ev := Evaluator{
 				out: out,
-				env: Environment{},
+				env: NewEnvironment(),
 			}
 			err := ev.statement(test.stmt)
 			assert.ErrorIs(t, err, test.err)
@@ -1505,7 +1499,7 @@ func TestEvaluator_Statement(t *testing.T) {
 		out := bytes.NewBufferString("")
 		ev := Evaluator{
 			out: out,
-			env: Environment{},
+			env: NewEnvironment(),
 		}
 
 		err := ev.statement(ast.Var{
@@ -1518,7 +1512,9 @@ func TestEvaluator_Statement(t *testing.T) {
 			},
 		})
 		assert.Nil(t, err)
-		assert.Equal(t, ev.env["name"], String{"hello world"})
+		val, err := ev.env.Resolve("name")
+		assert.Nil(t, err)
+		assert.Equal(t, val, String{"hello world"})
 
 		err = ev.statement(ast.ExpressionStatement{
 			Expression: ast.Assignment{
@@ -1532,6 +1528,7 @@ func TestEvaluator_Statement(t *testing.T) {
 			},
 		})
 		assert.Nil(t, err)
-		assert.Equal(t, ev.env["name"], String{"goodbye"})
+		val, err = ev.env.Resolve("name")
+		assert.Equal(t, val, String{"goodbye"})
 	})
 }
