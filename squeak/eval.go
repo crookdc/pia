@@ -179,6 +179,8 @@ func (ev *Evaluator) expression(node ast.ExpressionNode) (Object, error) {
 	switch node := node.(type) {
 	case ast.IntegerLiteral:
 		return Number{float64(node.Integer)}, nil
+	case ast.FloatLiteral:
+		return Number{node.Float}, nil
 	case ast.StringLiteral:
 		return String{node.String}, nil
 	case ast.BooleanLiteral:

@@ -161,11 +161,29 @@ func (lx *Lexer) Next() (token.Token, error) {
 }
 
 func (lx *Lexer) number() (token.Token, error) {
-	digit, err := lx.next(unicode.IsDigit)
+	integer, err := lx.next(unicode.IsDigit)
 	if err != nil {
 		return token.Null, err
 	}
-	return token.New(token.Integer, token.Lexeme(string(digit)))
+	nxt, err := lx.read(never)
+	if err != nil {
+		return token.Null, err
+	}
+	switch nxt {
+	case '.':
+		if err := lx.skip(amount(1)); err != nil {
+			return token.Null, err
+		}
+		fraction, err := lx.next(unicode.IsDigit)
+		if errors.Is(err, io.EOF) {
+			fraction = []byte("")
+		} else if err != nil {
+			return token.Null, err
+		}
+		return token.New(token.Float, token.Lexeme(fmt.Sprintf("%s.%s", integer, fraction)))
+	default:
+		return token.New(token.Integer, token.Lexeme(string(integer)))
+	}
 }
 
 func (lx *Lexer) string() (token.Token, error) {
@@ -439,6 +457,9 @@ func (lx *Lexer) next(fn func(rune) bool) ([]byte, error) {
 	c, err := lx.read(proceed)
 	if err != nil {
 		return nil, err
+	}
+	if !fn(rune(c)) {
+		return nil, nil
 	}
 	word := []byte{c}
 	for fn(rune(c)) {

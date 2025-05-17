@@ -30,11 +30,11 @@ func TestLexer_Line(t *testing.T) {
 			expected: 1,
 		},
 		{
-			src: `				// 1
-			if (a == a) {		// 2
-				return true;	// 3
-			}					// 4
-								// 5`,
+			src: `				# 1
+			if (a == a) {		# 2
+				return true;	# 3
+			}					# 4
+								# 5`,
 			expected: 5,
 		},
 		{
@@ -105,6 +105,90 @@ func TestLexer_Next(t *testing.T) {
 				{
 					Type:   token.Nil,
 					Lexeme: "nil",
+				},
+				{
+					Type:   token.Semicolon,
+					Lexeme: ";",
+				},
+				{
+					Type:   token.EOF,
+					Lexeme: "EOF",
+				},
+			},
+		},
+		{
+			src: "120.",
+			bl:  LexerBufferLength,
+			expected: []token.Token{
+				{
+					Type:   token.Float,
+					Lexeme: "120.",
+				},
+				{
+					Type:   token.EOF,
+					Lexeme: "EOF",
+				},
+			},
+		},
+		{
+			src: "120. + 13;",
+			bl:  LexerBufferLength,
+			expected: []token.Token{
+				{
+					Type:   token.Float,
+					Lexeme: "120.",
+				},
+				{
+					Type:   token.Plus,
+					Lexeme: "+",
+				},
+				{
+					Type:   token.Integer,
+					Lexeme: "13",
+				},
+				{
+					Type:   token.Semicolon,
+					Lexeme: ";",
+				},
+				{
+					Type:   token.EOF,
+					Lexeme: "EOF",
+				},
+			},
+		},
+		{
+			src: "a + 12.55;",
+			bl:  LexerBufferLength,
+			expected: []token.Token{
+				{
+					Type:   token.Identifier,
+					Lexeme: "a",
+				},
+				{
+					Type:   token.Plus,
+					Lexeme: "+",
+				},
+				{
+					Type:   token.Float,
+					Lexeme: "12.55",
+				},
+				{
+					Type:   token.Semicolon,
+					Lexeme: ";",
+				},
+				{
+					Type:   token.EOF,
+					Lexeme: "EOF",
+				},
+			},
+		},
+		{
+			src: "0.33333;",
+			bl:  LexerBufferLength,
+			expected: []token.Token{
+				{
+					Type:   token.Float,
+					Lexeme: "0.33333",
 				},
 				{
 					Type:   token.Semicolon,

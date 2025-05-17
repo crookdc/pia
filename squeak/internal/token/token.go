@@ -16,6 +16,7 @@ const (
 
 	Identifier
 	Integer
+	Float
 	String
 	Boolean
 

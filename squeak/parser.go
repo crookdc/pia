@@ -332,6 +332,16 @@ func (ps *Parser) primary() (ast.ExpressionNode, error) {
 			)
 		}
 		return ast.IntegerLiteral{Integer: i}, nil
+	case token.Float:
+		f, err := strconv.ParseFloat(nxt.Lexeme, 64)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"%w: invalid float literal: %s",
+				SyntaxError{ps.lx.Line()},
+				nxt.Lexeme,
+			)
+		}
+		return ast.FloatLiteral{Float: f}, nil
 	case token.Boolean:
 		b, err := strconv.ParseBool(nxt.Lexeme)
 		if err != nil {

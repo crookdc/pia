@@ -183,6 +183,22 @@ func TestEvaluator_expression(t *testing.T) {
 			obj: Number{10112},
 		},
 		{
+			name: "infix numerical addition with prefixed operands",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Plus,
+					Lexeme: "+",
+				},
+				LHS: ast.IntegerLiteral{
+					Integer: 10002,
+				},
+				RHS: ast.FloatLiteral{
+					Float: 13.37,
+				},
+			},
+			obj: Number{10015.37},
+		},
+		{
 			name: "string concatenation",
 			node: ast.Infix{
 				Operator: token.Token{

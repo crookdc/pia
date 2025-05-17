@@ -290,6 +290,39 @@ func TestParser_Next(t *testing.T) {
 				},
 			},
 		},
+		{
+			src: "12.44 + 12;",
+			expected: ast.ExpressionStatement{
+				Expression: ast.Infix{
+					Operator: token.Token{
+						Type:   token.Plus,
+						Lexeme: "+",
+					},
+					LHS: ast.FloatLiteral{
+						Float: 12.44,
+					},
+					RHS: ast.IntegerLiteral{
+						Integer: 12,
+					},
+				},
+			},
+		},
+		{
+			src: "0.444456;",
+			expected: ast.ExpressionStatement{
+				Expression: ast.FloatLiteral{
+					Float: 0.444456,
+				},
+			},
+		},
+		{
+			src: "50.;",
+			expected: ast.ExpressionStatement{
+				Expression: ast.FloatLiteral{
+					Float: 50,
+				},
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.src, func(t *testing.T) {

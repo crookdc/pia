@@ -91,6 +91,12 @@ type IntegerLiteral struct {
 	Integer int
 }
 
+// FloatLiteral represents an expression which holds a primitive float literal.
+type FloatLiteral struct {
+	Expression
+	Float float64
+}
+
 // StringLiteral represents an expression which holds a string literal.
 type StringLiteral struct {
 	Expression
