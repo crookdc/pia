@@ -12,10 +12,16 @@ import (
 
 var ErrRuntimeFault = errors.New("runtime error")
 
+// Object is a broad interface for any data that a Squeak script can process. It does not provide any interface beyond
+// the standard library fmt.Stringer, but passing around types of this interface around the interpreter obfuscates the
+// meaning behind the value. Hence, this interface is largely just for clearer naming.
 type Object interface {
 	fmt.Stringer
 }
 
+// Number is an Object representing a numerical value internally represented as a float64. In Squeak, the notion of
+// integers only exists in the lexical and parsing phase. During evaluation, all numerical objects are represented with
+// this struct.
 type Number struct {
 	value float64
 }
@@ -27,6 +33,7 @@ func (i Number) String() string {
 	return fmt.Sprintf("%.2f", i.value)
 }
 
+// String is an Object representing a textual value.
 type String struct {
 	value string
 }
@@ -35,6 +42,7 @@ func (s String) String() string {
 	return s.value
 }
 
+// Boolean is an Object representing a boolean value.
 type Boolean struct {
 	value bool
 }
@@ -73,11 +81,17 @@ func NewEnvironment(opts ...EnvironmentOpt) *Environment {
 	return env
 }
 
+// Environment is a table of contents for runtime variables that exposes an API to interface with the current
+// environment correctly. It also supports the concepts of hierarchical environments which enables scoping of variables.
 type Environment struct {
 	parent *Environment
 	tbl    map[string]Object
 }
 
+// Resolve returns the current value stored within the environment for the provided key. If the key cannot be resolved
+// for the immediate scope (the table of variables that is stored within the environment) then the parent environment is
+// invoked to resolve the same key within its immediate scope. This call chain continues until the key is successfully
+// resolved or the next parent is a nil value, in which case a non-nil error is returned.
 func (env *Environment) Resolve(k string) (Object, error) {
 	val, ok := env.tbl[k]
 	if ok {
@@ -89,16 +103,24 @@ func (env *Environment) Resolve(k string) (Object, error) {
 	return nil, fmt.Errorf("%w: cannot resolve key %s", ErrRuntimeFault, k)
 }
 
+// Declare sets the provided value for the provided key in the immediate scope.
 func (env *Environment) Declare(k string, v Object) {
 	env.tbl[k] = v
 }
 
+// Assign sets a new value for an already declared variable in the immediate scope. If the key cannot be resolved in the
+// immediate scope then the parent is invoked. This call chain continues until the assignment is successful or until the
+// next parent is nil, in which case it returns a non-nil error.
 func (env *Environment) Assign(k string, v Object) error {
-	if _, ok := env.tbl[k]; !ok {
-		return fmt.Errorf("%w: assignment target unknown", ErrRuntimeFault)
+	_, ok := env.tbl[k]
+	if ok {
+		env.tbl[k] = v
+		return nil
 	}
-	env.tbl[k] = v
-	return nil
+	if env.parent != nil {
+		return env.parent.Assign(k, v)
+	}
+	return fmt.Errorf("%w: cannot resolve assignment target", ErrRuntimeFault)
 }
 
 type Evaluator struct {

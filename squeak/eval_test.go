@@ -1532,3 +1532,365 @@ func TestEvaluator_Statement(t *testing.T) {
 		assert.Equal(t, val, String{"goodbye"})
 	})
 }
+
+func TestEnvironment_Resolve(t *testing.T) {
+	tests := []struct {
+		name string
+		env  Environment
+		key  string
+		obj  Object
+		err  error
+	}{
+		{
+			name: "key is available in immediate scope",
+			env: Environment{
+				parent: nil,
+				tbl: map[string]Object{
+					"name": String{"crookdc"},
+					"age":  Number{27.5},
+				},
+			},
+			key: "name",
+			obj: String{"crookdc"},
+		},
+		{
+			name: "key is not available",
+			env: Environment{
+				parent: nil,
+				tbl: map[string]Object{
+					"age": Number{27.5},
+				},
+			},
+			key: "name",
+			err: ErrRuntimeFault,
+		},
+		{
+			name: "key is available in parent scope",
+			env: Environment{
+				parent: &Environment{
+					parent: nil,
+					tbl: map[string]Object{
+						"name": String{"crookdc"},
+					},
+				},
+				tbl: map[string]Object{
+					"age": Number{27.5},
+				},
+			},
+			key: "name",
+			obj: String{"crookdc"},
+		},
+		{
+			name: "key is available in parent and immediate scope",
+			env: Environment{
+				parent: &Environment{
+					parent: nil,
+					tbl: map[string]Object{
+						"name": String{"pia"},
+					},
+				},
+				tbl: map[string]Object{
+					"name": String{"crookdc"},
+					"age":  Number{27.5},
+				},
+			},
+			key: "name",
+			obj: String{"crookdc"},
+		},
+		{
+			name: "key is available in grandparent scope",
+			env: Environment{
+				parent: &Environment{
+					parent: &Environment{
+						tbl: map[string]Object{
+							"name": String{"crookdc"},
+						},
+					},
+					tbl: map[string]Object{},
+				},
+				tbl: map[string]Object{
+					"age": Number{27.5},
+				},
+			},
+			key: "name",
+			obj: String{"crookdc"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			obj, err := test.env.Resolve(test.key)
+			assert.ErrorIs(t, err, test.err)
+			assert.Equal(t, test.obj, obj)
+		})
+	}
+}
+
+func TestEnvironment_Assign(t *testing.T) {
+	tests := []struct {
+		name  string
+		env   Environment
+		key   string
+		value Object
+		after Environment
+		err   error
+	}{
+		{
+			name: "key is available in immediate scope",
+			env: Environment{
+				parent: nil,
+				tbl: map[string]Object{
+					"name": String{"crookdc"},
+					"age":  Number{27.5},
+				},
+			},
+			key:   "name",
+			value: String{"pia"},
+			after: Environment{
+				parent: nil,
+				tbl: map[string]Object{
+					"name": String{"pia"},
+					"age":  Number{27.5},
+				},
+			},
+		},
+		{
+			name: "key is not available",
+			env: Environment{
+				parent: nil,
+				tbl: map[string]Object{
+					"age": Number{27.5},
+				},
+			},
+			key: "name",
+			after: Environment{
+				parent: nil,
+				tbl: map[string]Object{
+					"age": Number{27.5},
+				},
+			},
+			err: ErrRuntimeFault,
+		},
+		{
+			name: "key is available in parent scope",
+			env: Environment{
+				parent: &Environment{
+					parent: nil,
+					tbl: map[string]Object{
+						"name": String{"crookdc"},
+					},
+				},
+				tbl: map[string]Object{
+					"age": Number{27.5},
+				},
+			},
+			key:   "name",
+			value: Number{123.12},
+			after: Environment{
+				parent: &Environment{
+					parent: nil,
+					tbl: map[string]Object{
+						"name": Number{123.12},
+					},
+				},
+				tbl: map[string]Object{
+					"age": Number{27.5},
+				},
+			},
+		},
+		{
+			name: "key is available in parent and immediate scope",
+			env: Environment{
+				parent: &Environment{
+					parent: nil,
+					tbl: map[string]Object{
+						"name": String{"pia"},
+					},
+				},
+				tbl: map[string]Object{
+					"name": String{"crookdc"},
+					"age":  Number{27.5},
+				},
+			},
+			key:   "name",
+			value: Boolean{true},
+			after: Environment{
+				parent: &Environment{
+					parent: nil,
+					tbl: map[string]Object{
+						"name": String{"pia"},
+					},
+				},
+				tbl: map[string]Object{
+					"name": Boolean{true},
+					"age":  Number{27.5},
+				},
+			},
+		},
+		{
+			name: "key is available in grandparent scope",
+			env: Environment{
+				parent: &Environment{
+					parent: &Environment{
+						tbl: map[string]Object{
+							"name": String{"crookdc"},
+						},
+					},
+					tbl: map[string]Object{},
+				},
+				tbl: map[string]Object{
+					"age": Number{27.5},
+				},
+			},
+			key:   "name",
+			value: String{"John Smith"},
+			after: Environment{
+				parent: &Environment{
+					parent: &Environment{
+						tbl: map[string]Object{
+							"name": String{"John Smith"},
+						},
+					},
+					tbl: map[string]Object{},
+				},
+				tbl: map[string]Object{
+					"age": Number{27.5},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := test.env.Assign(test.key, test.value)
+			assert.ErrorIs(t, err, test.err)
+			assert.Equal(t, test.after, test.env)
+		})
+	}
+}
+
+func TestEnvironment_Declare(t *testing.T) {
+	tests := []struct {
+		name  string
+		env   Environment
+		key   string
+		value Object
+		after Environment
+	}{
+		{
+			name: "key is not available in immediate scope",
+			env: Environment{
+				parent: nil,
+				tbl: map[string]Object{
+					"age": Number{27.5},
+				},
+			},
+			key:   "name",
+			value: String{"pia"},
+			after: Environment{
+				parent: nil,
+				tbl: map[string]Object{
+					"name": String{"pia"},
+					"age":  Number{27.5},
+				},
+			},
+		},
+		{
+			name: "key is available in parent scope",
+			env: Environment{
+				parent: &Environment{
+					parent: nil,
+					tbl: map[string]Object{
+						"name": String{"crookdc"},
+					},
+				},
+				tbl: map[string]Object{
+					"age": Number{27.5},
+				},
+			},
+			key:   "name",
+			value: Number{123.12},
+			after: Environment{
+				parent: &Environment{
+					parent: nil,
+					tbl: map[string]Object{
+						"name": String{"crookdc"},
+					},
+				},
+				tbl: map[string]Object{
+					"age":  Number{27.5},
+					"name": Number{123.12},
+				},
+			},
+		},
+		{
+			name: "key is available in parent and immediate scope",
+			env: Environment{
+				parent: &Environment{
+					parent: nil,
+					tbl: map[string]Object{
+						"name": String{"pia"},
+					},
+				},
+				tbl: map[string]Object{
+					"name": String{"crookdc"},
+					"age":  Number{27.5},
+				},
+			},
+			key:   "name",
+			value: Boolean{true},
+			after: Environment{
+				parent: &Environment{
+					parent: nil,
+					tbl: map[string]Object{
+						"name": String{"pia"},
+					},
+				},
+				tbl: map[string]Object{
+					"name": Boolean{true},
+					"age":  Number{27.5},
+				},
+			},
+		},
+		{
+			name: "key is available in grandparent scope",
+			env: Environment{
+				parent: &Environment{
+					parent: &Environment{
+						tbl: map[string]Object{
+							"name": String{"crookdc"},
+						},
+					},
+					tbl: map[string]Object{},
+				},
+				tbl: map[string]Object{
+					"age":  Number{27.5},
+					"name": String{"crookdc"},
+				},
+			},
+			key:   "name",
+			value: String{"John Smith"},
+			after: Environment{
+				parent: &Environment{
+					parent: &Environment{
+						tbl: map[string]Object{
+							"name": String{"crookdc"},
+						},
+					},
+					tbl: map[string]Object{},
+				},
+				tbl: map[string]Object{
+					"age":  Number{27.5},
+					"name": String{"John Smith"},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			test.env.Declare(test.key, test.value)
+			assert.Equal(t, test.after, test.env)
+		})
+	}
+}
