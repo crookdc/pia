@@ -1500,4 +1500,38 @@ func TestEvaluator_Statement(t *testing.T) {
 			assert.Equal(t, test.env, ev.env)
 		})
 	}
+
+	t.Run("variable declaration followed by assignment", func(t *testing.T) {
+		out := bytes.NewBufferString("")
+		ev := Evaluator{
+			out: out,
+			env: Environment{},
+		}
+
+		err := ev.statement(ast.Var{
+			Name: token.Token{
+				Type:   token.Identifier,
+				Lexeme: "name",
+			},
+			Initializer: ast.StringLiteral{
+				String: "hello world",
+			},
+		})
+		assert.Nil(t, err)
+		assert.Equal(t, ev.env["name"], String{"hello world"})
+
+		err = ev.statement(ast.ExpressionStatement{
+			Expression: ast.Assignment{
+				Name: token.Token{
+					Type:   token.Identifier,
+					Lexeme: "name",
+				},
+				Value: ast.StringLiteral{
+					String: "goodbye",
+				},
+			},
+		})
+		assert.Nil(t, err)
+		assert.Equal(t, ev.env["name"], String{"goodbye"})
+	})
 }

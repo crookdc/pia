@@ -48,6 +48,18 @@ func (b Boolean) String() string {
 
 type Environment map[string]Object
 
+func (env Environment) Declare(k string, v Object) {
+	env[k] = v
+}
+
+func (env Environment) Assign(k string, v Object) error {
+	if _, ok := env[k]; !ok {
+		return fmt.Errorf("%w: assignment target unknown", ErrRuntimeFault)
+	}
+	env[k] = v
+	return nil
+}
+
 type Evaluator struct {
 	env Environment
 	out io.Writer
@@ -82,14 +94,14 @@ func (ev *Evaluator) statement(node ast.StatementNode) error {
 		return err
 	case ast.Var:
 		if node.Initializer == nil {
-			ev.env[node.Name.Lexeme] = nil
+			ev.env.Declare(node.Name.Lexeme, nil)
 			return nil
 		}
 		val, err := ev.expression(node.Initializer)
 		if err != nil {
 			return err
 		}
-		ev.env[node.Name.Lexeme] = val
+		ev.env.Declare(node.Name.Lexeme, val)
 		return nil
 	default:
 		return fmt.Errorf(
@@ -116,6 +128,15 @@ func (ev *Evaluator) expression(node ast.ExpressionNode) (Object, error) {
 		return ev.prefix(node)
 	case ast.Infix:
 		return ev.infix(node)
+	case ast.Assignment:
+		val, err := ev.expression(node.Value)
+		if err != nil {
+			return nil, err
+		}
+		if err := ev.env.Assign(node.Name.Lexeme, val); err != nil {
+			return nil, err
+		}
+		return val, nil
 	default:
 		return nil, fmt.Errorf(
 			"%w: unexpected expression type %s",

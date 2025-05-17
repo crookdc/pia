@@ -135,7 +135,7 @@ func (ps *Parser) clear() error {
 }
 
 func (ps *Parser) expression() (ast.ExpressionStatement, error) {
-	expr, err := ps.equality()
+	expr, err := ps.assignment()
 	if err != nil {
 		return ast.ExpressionStatement{}, err
 	}
@@ -145,6 +145,37 @@ func (ps *Parser) expression() (ast.ExpressionStatement, error) {
 	return ast.ExpressionStatement{
 		Expression: expr,
 	}, nil
+}
+
+func (ps *Parser) assignment() (ast.ExpressionNode, error) {
+	expr, err := ps.equality()
+	if err != nil {
+		return nil, err
+	}
+	pk, err := ps.lx.Peek()
+	if err != nil {
+		return nil, err
+	}
+	if pk.Type != token.Assign {
+		return expr, nil
+	}
+	ps.lx.Discard()
+	switch expr := expr.(type) {
+	case ast.Variable:
+		val, err := ps.assignment()
+		if err != nil {
+			return nil, err
+		}
+		return ast.Assignment{
+			Name:  expr.Name,
+			Value: val,
+		}, nil
+	default:
+		return nil, fmt.Errorf(
+			"%w: invalid left hand side of assignment",
+			SyntaxError{Line: ps.lx.Line()},
+		)
+	}
 }
 
 func (ps *Parser) equality() (ast.ExpressionNode, error) {
@@ -288,7 +319,7 @@ func (ps *Parser) primary() (ast.ExpressionNode, error) {
 	}
 	switch nxt.Type {
 	case token.Identifier:
-		return ast.Identifier{Identifier: nxt.Lexeme}, nil
+		return ast.Variable{Name: nxt}, nil
 	case token.String:
 		return ast.StringLiteral{String: nxt.Lexeme}, nil
 	case token.Integer:

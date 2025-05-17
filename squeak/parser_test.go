@@ -18,8 +18,11 @@ func TestParser_Next(t *testing.T) {
 		{
 			src: "a;",
 			expected: ast.ExpressionStatement{
-				Expression: ast.Identifier{
-					Identifier: "a",
+				Expression: ast.Variable{
+					Name: token.Token{
+						Type:   token.Identifier,
+						Lexeme: "a",
+					},
 				},
 			},
 		},
@@ -31,11 +34,17 @@ func TestParser_Next(t *testing.T) {
 						Type:   token.Plus,
 						Lexeme: "+",
 					},
-					LHS: ast.Identifier{
-						Identifier: "a",
+					LHS: ast.Variable{
+						Name: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "a",
+						},
 					},
-					RHS: ast.Identifier{
-						Identifier: "b",
+					RHS: ast.Variable{
+						Name: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "b",
+						},
 					},
 				},
 			},
@@ -53,11 +62,17 @@ func TestParser_Next(t *testing.T) {
 							Type:   token.Plus,
 							Lexeme: "+",
 						},
-						LHS: ast.Identifier{
-							Identifier: "a",
+						LHS: ast.Variable{
+							Name: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "a",
+							},
 						},
-						RHS: ast.Identifier{
-							Identifier: "b",
+						RHS: ast.Variable{
+							Name: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "b",
+							},
 						},
 					},
 					RHS: ast.IntegerLiteral{
@@ -74,8 +89,11 @@ func TestParser_Next(t *testing.T) {
 						Type:   token.Plus,
 						Lexeme: "+",
 					},
-					LHS: ast.Identifier{
-						Identifier: "name",
+					LHS: ast.Variable{
+						Name: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "name",
+						},
 					},
 					RHS: ast.StringLiteral{
 						String: "is a good developer",
@@ -91,19 +109,28 @@ func TestParser_Next(t *testing.T) {
 						Type:   token.Plus,
 						Lexeme: "+",
 					},
-					LHS: ast.Identifier{
-						Identifier: "a",
+					LHS: ast.Variable{
+						Name: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "a",
+						},
 					},
 					RHS: ast.Infix{
 						Operator: token.Token{
 							Type:   token.Asterisk,
 							Lexeme: "*",
 						},
-						LHS: ast.Identifier{
-							Identifier: "b",
+						LHS: ast.Variable{
+							Name: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "b",
+							},
 						},
-						RHS: ast.Identifier{
-							Identifier: "c",
+						RHS: ast.Variable{
+							Name: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "c",
+							},
 						},
 					},
 				},
@@ -123,16 +150,25 @@ func TestParser_Next(t *testing.T) {
 								Type:   token.Plus,
 								Lexeme: "+",
 							},
-							LHS: ast.Identifier{
-								Identifier: "a",
+							LHS: ast.Variable{
+								Name: token.Token{
+									Type:   token.Identifier,
+									Lexeme: "a",
+								},
 							},
-							RHS: ast.Identifier{
-								Identifier: "b",
+							RHS: ast.Variable{
+								Name: token.Token{
+									Type:   token.Identifier,
+									Lexeme: "b",
+								},
 							},
 						},
 					},
-					RHS: ast.Identifier{
-						Identifier: "c",
+					RHS: ast.Variable{
+						Name: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "c",
+						},
 					},
 				},
 			},
@@ -242,6 +278,18 @@ func TestParser_Next(t *testing.T) {
 				Initializer: ast.NilLiteral{},
 			},
 		},
+		{
+			src: "name = \"crookdc\";",
+			expected: ast.ExpressionStatement{
+				Expression: ast.Assignment{
+					Name: token.Token{
+						Type:   token.Identifier,
+						Lexeme: "name",
+					},
+					Value: ast.StringLiteral{String: "crookdc"},
+				},
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.src, func(t *testing.T) {
@@ -280,11 +328,17 @@ func TestParser_Next(t *testing.T) {
 					Type:   token.Plus,
 					Lexeme: "+",
 				},
-				LHS: ast.Identifier{
-					Identifier: "a",
+				LHS: ast.Variable{
+					Name: token.Token{
+						Type:   token.Identifier,
+						Lexeme: "a",
+					},
 				},
-				RHS: ast.Identifier{
-					Identifier: "b",
+				RHS: ast.Variable{
+					Name: token.Token{
+						Type:   token.Identifier,
+						Lexeme: "b",
+					},
 				},
 			},
 		}, n)

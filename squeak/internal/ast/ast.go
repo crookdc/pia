@@ -79,10 +79,10 @@ type Var struct {
 	Initializer ExpressionNode
 }
 
-// Identifier represents an expression in the format of just an identifier.
-type Identifier struct {
+// Variable represents an expression in the format of just an identifier.
+type Variable struct {
 	Expression
-	Identifier string
+	Name token.Token
 }
 
 // IntegerLiteral represents an expression which holds a primitive integer literal.
@@ -106,6 +106,13 @@ type BooleanLiteral struct {
 // NilLiteral represents a literal nil expression, which in turn represents the absence of a value.
 type NilLiteral struct {
 	Expression
+}
+
+// Assignment represents the assignment of a value to a variable without also declaring said variable.
+type Assignment struct {
+	Expression
+	Name  token.Token
+	Value ExpressionNode
 }
 
 // Grouping represents an expression held together as a unit.
