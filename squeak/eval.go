@@ -6,8 +6,8 @@ import (
 	"github.com/crookdc/pia/squeak/internal/ast"
 	"github.com/crookdc/pia/squeak/internal/token"
 	"io"
-	"math"
 	"reflect"
+	"strings"
 )
 
 var ErrRuntimeFault = errors.New("runtime error")
@@ -27,10 +27,7 @@ type Number struct {
 }
 
 func (i Number) String() string {
-	if i.value == math.Floor(i.value) {
-		return fmt.Sprintf("%d", int(i.value))
-	}
-	return fmt.Sprintf("%.2f", i.value)
+	return strings.TrimRight(fmt.Sprintf("%f", i.value), "0")
 }
 
 // String is an Object representing a textual value.
@@ -166,6 +163,16 @@ func (ev *Evaluator) statement(node ast.StatementNode) error {
 		}
 		ev.env.Declare(node.Name.Lexeme, val)
 		return nil
+	case ast.Block:
+		p := ev.env
+		ev.env = NewEnvironment(Parent(p))
+		for _, s := range node.Body {
+			if err := ev.statement(s); err != nil {
+				return err
+			}
+		}
+		ev.env = p
+		return nil
 	default:
 		return fmt.Errorf(
 			"%w: unexpected statement type %s",
@@ -193,6 +200,8 @@ func (ev *Evaluator) expression(node ast.ExpressionNode) (Object, error) {
 		return ev.prefix(node)
 	case ast.Infix:
 		return ev.infix(node)
+	case ast.Variable:
+		return ev.env.Resolve(node.Name.Lexeme)
 	case ast.Assignment:
 		val, err := ev.expression(node.Value)
 		if err != nil {

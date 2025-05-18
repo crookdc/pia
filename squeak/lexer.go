@@ -287,12 +287,12 @@ func (lx *Lexer) symbol() (token.Token, error) {
 		if err := lx.skip(amount(1)); err != nil {
 			return token.Null, err
 		}
-		return token.New(token.LeftCurlyBrace)
+		return token.New(token.LeftBrace)
 	case '}':
 		if err := lx.skip(amount(1)); err != nil {
 			return token.Null, err
 		}
-		return token.New(token.RightCurlyBrace)
+		return token.New(token.RightBrace)
 	case '[':
 		if err := lx.skip(amount(1)); err != nil {
 			return token.Null, err

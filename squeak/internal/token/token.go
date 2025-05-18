@@ -48,8 +48,8 @@ const (
 	Semicolon
 	LeftParenthesis
 	RightParenthesis
-	LeftCurlyBrace
-	RightCurlyBrace
+	LeftBrace
+	RightBrace
 	LeftBracket
 	RightBracket
 )
@@ -83,8 +83,8 @@ var lexemes = map[Type]string{
 	Semicolon:        ";",
 	LeftParenthesis:  "(",
 	RightParenthesis: ")",
-	LeftCurlyBrace:   "{",
-	RightCurlyBrace:  "}",
+	LeftBrace:        "{",
+	RightBrace:       "}",
 	LeftBracket:      "[",
 	RightBracket:     "]",
 }

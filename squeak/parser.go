@@ -100,6 +100,8 @@ func (ps *Parser) statement() (ast.StatementNode, error) {
 	switch pk.Type {
 	case token.Print:
 		return ps.print()
+	case token.LeftBrace:
+		return ps.block()
 	default:
 		return ps.expression()
 	}
@@ -118,6 +120,36 @@ func (ps *Parser) print() (ast.Print, error) {
 	}, nil
 }
 
+func (ps *Parser) block() (ast.Block, error) {
+	if _, err := ps.expect(token.LeftBrace); err != nil {
+		return ast.Block{}, err
+	}
+	pk, err := ps.lx.Peek()
+	if err != nil {
+		return ast.Block{}, err
+	}
+	body := make([]ast.StatementNode, 0)
+	for {
+		switch pk.Type {
+		case token.RightBrace, token.EOF:
+			ps.lx.Discard()
+			return ast.Block{
+				Body: body,
+			}, nil
+		default:
+			st, err := ps.statement()
+			if err != nil {
+				return ast.Block{}, err
+			}
+			body = append(body, st)
+			pk, err = ps.lx.Peek()
+			if err != nil {
+				return ast.Block{}, err
+			}
+		}
+	}
+}
+
 func (ps *Parser) clear() error {
 	look := true
 	for look {
@@ -126,7 +158,7 @@ func (ps *Parser) clear() error {
 			return err
 		}
 		switch nxt.Type {
-		case token.EOF, token.Semicolon, token.RightCurlyBrace:
+		case token.EOF, token.Semicolon, token.RightBrace:
 			look = false
 		default:
 		}

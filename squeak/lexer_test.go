@@ -251,7 +251,7 @@ func TestLexer_Next(t *testing.T) {
 					Lexeme: "(",
 				},
 				{
-					Type:   token.RightCurlyBrace,
+					Type:   token.RightBrace,
 					Lexeme: "}",
 				},
 				{
@@ -259,7 +259,7 @@ func TestLexer_Next(t *testing.T) {
 					Lexeme: ")",
 				},
 				{
-					Type:   token.LeftCurlyBrace,
+					Type:   token.LeftBrace,
 					Lexeme: "{",
 				},
 				{
@@ -341,7 +341,7 @@ func TestLexer_Next(t *testing.T) {
 					Lexeme: ")",
 				},
 				{
-					Type:   token.LeftCurlyBrace,
+					Type:   token.LeftBrace,
 					Lexeme: "{",
 				},
 				{
@@ -369,7 +369,7 @@ func TestLexer_Next(t *testing.T) {
 					Lexeme: ";",
 				},
 				{
-					Type:   token.RightCurlyBrace,
+					Type:   token.RightBrace,
 					Lexeme: "}",
 				},
 				{
@@ -441,7 +441,7 @@ func TestLexer_Next(t *testing.T) {
 					Lexeme: ")",
 				},
 				{
-					Type:   token.LeftCurlyBrace,
+					Type:   token.LeftBrace,
 					Lexeme: "{",
 				},
 				{
@@ -465,7 +465,7 @@ func TestLexer_Next(t *testing.T) {
 					Lexeme: ";",
 				},
 				{
-					Type:   token.RightCurlyBrace,
+					Type:   token.RightBrace,
 					Lexeme: "}",
 				},
 				{
@@ -578,7 +578,7 @@ func TestLexer_Next(t *testing.T) {
 					Lexeme: ")",
 				},
 				{
-					Type:   token.LeftCurlyBrace,
+					Type:   token.LeftBrace,
 					Lexeme: "{",
 				},
 				{
@@ -618,7 +618,7 @@ func TestLexer_Next(t *testing.T) {
 					Lexeme: ";",
 				},
 				{
-					Type:   token.RightCurlyBrace,
+					Type:   token.RightBrace,
 					Lexeme: "}",
 				},
 				{

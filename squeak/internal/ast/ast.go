@@ -79,6 +79,13 @@ type Var struct {
 	Initializer ExpressionNode
 }
 
+// Block represents a collection of statements that can be regarded as a single statement where each statement within
+// the block should be executed in order during the execution of the block itself.
+type Block struct {
+	Statement
+	Body []StatementNode
+}
+
 // Variable represents an expression in the format of just an identifier.
 type Variable struct {
 	Expression

@@ -1378,17 +1378,19 @@ func TestEvaluator_expression(t *testing.T) {
 	}
 }
 
-func TestEvaluator_Statement(t *testing.T) {
+func TestEvaluator_statement(t *testing.T) {
 	tests := []struct {
-		name string
-		stmt ast.StatementNode
+		name    string
+		stmt    ast.StatementNode
+		preload *Environment
 
 		out string
 		env *Environment
 		err error
 	}{
 		{
-			name: "print writes string object to output",
+			name:    "print writes string object to output",
+			preload: NewEnvironment(),
 			stmt: ast.Print{
 				Expression: ast.Infix{
 					Operator: token.Token{
@@ -1407,7 +1409,8 @@ func TestEvaluator_Statement(t *testing.T) {
 			env: NewEnvironment(),
 		},
 		{
-			name: "print writes whole number object to output",
+			name:    "print writes whole number object to output",
+			preload: NewEnvironment(),
 			stmt: ast.Print{
 				Expression: ast.Infix{
 					Operator: token.Token{
@@ -1422,11 +1425,12 @@ func TestEvaluator_Statement(t *testing.T) {
 					},
 				},
 			},
-			out: "45",
+			out: "45.",
 			env: NewEnvironment(),
 		},
 		{
-			name: "print writes number object to output",
+			name:    "print writes number object to output",
+			preload: NewEnvironment(),
 			stmt: ast.Print{
 				Expression: ast.Infix{
 					Operator: token.Token{
@@ -1441,11 +1445,12 @@ func TestEvaluator_Statement(t *testing.T) {
 					},
 				},
 			},
-			out: "3.33",
+			out: "3.333333",
 			env: NewEnvironment(),
 		},
 		{
-			name: "print writes boolean object to output",
+			name:    "print writes boolean object to output",
+			preload: NewEnvironment(),
 			stmt: ast.Print{
 				Expression: ast.BooleanLiteral{Boolean: true},
 			},
@@ -1453,7 +1458,8 @@ func TestEvaluator_Statement(t *testing.T) {
 			env: NewEnvironment(),
 		},
 		{
-			name: "variable declaration without initializer",
+			name:    "variable declaration without initializer",
+			preload: NewEnvironment(),
 			stmt: ast.Var{
 				Name: token.Token{
 					Type:   token.Identifier,
@@ -1463,7 +1469,8 @@ func TestEvaluator_Statement(t *testing.T) {
 			env: NewEnvironment(Prefill("name", nil)),
 		},
 		{
-			name: "variable declaration with explicit nil initializer",
+			name:    "variable declaration with explicit nil initializer",
+			preload: NewEnvironment(),
 			stmt: ast.Var{
 				Name: token.Token{
 					Type:   token.Identifier,
@@ -1474,7 +1481,8 @@ func TestEvaluator_Statement(t *testing.T) {
 			env: NewEnvironment(Prefill("name", nil)),
 		},
 		{
-			name: "variable declaration with initializer",
+			name:    "variable declaration with initializer",
+			preload: NewEnvironment(),
 			stmt: ast.Var{
 				Name: token.Token{
 					Type:   token.Identifier,
@@ -1495,6 +1503,78 @@ func TestEvaluator_Statement(t *testing.T) {
 			},
 			env: NewEnvironment(Prefill("name", String{"hellogoodbye"})),
 		},
+		{
+			name:    "block that assigns in parent scope and declares new variable in local scope",
+			preload: NewEnvironment(Prefill("name", Number{1.123})),
+			stmt: ast.Block{
+				Body: []ast.StatementNode{
+					ast.ExpressionStatement{
+						Expression: ast.Assignment{
+							Name: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "name",
+							},
+							Value: ast.FloatLiteral{
+								Float: 1556.12,
+							},
+						},
+					},
+					ast.Var{
+						Name: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "age",
+						},
+						Initializer: ast.IntegerLiteral{
+							Integer: 27,
+						},
+					},
+				},
+			},
+			env: NewEnvironment(Prefill("name", Number{1556.12})),
+		},
+		{
+			name:    "nested blocks",
+			preload: NewEnvironment(Prefill("name", Number{1.123})),
+			stmt: ast.Block{
+				Body: []ast.StatementNode{
+					ast.Print{
+						Expression: ast.Variable{
+							Name: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "name",
+							},
+						},
+					},
+					ast.Block{
+						Body: []ast.StatementNode{
+							ast.Var{
+								Name: token.Token{
+									Type:   token.Identifier,
+									Lexeme: "name",
+								},
+								Initializer: ast.StringLiteral{String: "crookdc"},
+							},
+							ast.Print{
+								Expression: ast.Variable{
+									Name: token.Token{
+										Type:   token.Identifier,
+										Lexeme: "name",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			env: NewEnvironment(Prefill("name", Number{1.123})),
+			out: "1.123crookdc",
+		},
+		{
+			name:    "empty block",
+			preload: NewEnvironment(Prefill("name", Number{1.123})),
+			stmt:    ast.Block{},
+			env:     NewEnvironment(Prefill("name", Number{1.123})),
+		},
 	}
 
 	for _, test := range tests {
@@ -1502,7 +1582,7 @@ func TestEvaluator_Statement(t *testing.T) {
 			out := bytes.NewBufferString("")
 			ev := Evaluator{
 				out: out,
-				env: NewEnvironment(),
+				env: test.preload,
 			}
 			err := ev.statement(test.stmt)
 			assert.ErrorIs(t, err, test.err)

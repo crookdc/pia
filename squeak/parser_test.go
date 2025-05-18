@@ -323,6 +323,51 @@ func TestParser_Next(t *testing.T) {
 				},
 			},
 		},
+		{
+			src: "{ a + b; a = 2.; }",
+			expected: ast.Block{
+				Body: []ast.StatementNode{
+					ast.ExpressionStatement{
+						Expression: ast.Infix{
+							Expression: ast.Expression{},
+							Operator: token.Token{
+								Type:   token.Plus,
+								Lexeme: "+",
+							},
+							LHS: ast.Variable{
+								Name: token.Token{
+									Type:   token.Identifier,
+									Lexeme: "a",
+								},
+							},
+							RHS: ast.Variable{
+								Name: token.Token{
+									Type:   token.Identifier,
+									Lexeme: "b",
+								},
+							},
+						},
+					},
+					ast.ExpressionStatement{
+						Expression: ast.Assignment{
+							Name: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "a",
+							},
+							Value: ast.FloatLiteral{
+								Float: 2.0,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			src: "{}",
+			expected: ast.Block{
+				Body: []ast.StatementNode{},
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.src, func(t *testing.T) {
