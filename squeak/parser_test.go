@@ -394,6 +394,41 @@ func TestParser_Next(t *testing.T) {
 			},
 		},
 		{
+			src: "if a if b print b; else print c;",
+			expected: ast.If{
+				Condition: ast.Variable{
+					Name: token.Token{
+						Type:   token.Identifier,
+						Lexeme: "a",
+					},
+				},
+				Then: ast.If{
+					Condition: ast.Variable{
+						Name: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "b",
+						},
+					},
+					Then: ast.Print{
+						Expression: ast.Variable{
+							Name: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "b",
+							},
+						},
+					},
+					Else: ast.Print{
+						Expression: ast.Variable{
+							Name: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "c",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			src: "{ a + b; a = 2.; }",
 			expected: ast.Block{
 				Body: []ast.StatementNode{
