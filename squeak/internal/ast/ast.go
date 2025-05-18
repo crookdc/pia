@@ -86,6 +86,14 @@ type Block struct {
 	Body []StatementNode
 }
 
+// If represents the branching structure that allows for conditionally executing a statement.
+type If struct {
+	Statement
+	Condition ExpressionNode
+	Then      StatementNode
+	Else      StatementNode
+}
+
 // Variable represents an expression in the format of just an identifier.
 type Variable struct {
 	Expression

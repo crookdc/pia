@@ -173,6 +173,18 @@ func (ev *Evaluator) statement(node ast.StatementNode) error {
 		}
 		ev.env = p
 		return nil
+	case ast.If:
+		cnd, err := ev.expression(node.Condition)
+		if err != nil {
+			return err
+		}
+		if ev.truthy(cnd) {
+			return ev.statement(node.Then)
+		}
+		if node.Else != nil {
+			return ev.statement(node.Else)
+		}
+		return nil
 	default:
 		return fmt.Errorf(
 			"%w: unexpected statement type %s",
@@ -230,22 +242,14 @@ func (ev *Evaluator) logical(node ast.Logical) (Object, error) {
 	switch node.Operator.Type {
 	case token.And:
 		if ev.falsy(left) {
-			return Boolean{false}, nil
+			return left, nil
 		}
-		right, err := ev.expression(node.RHS)
-		if err != nil {
-			return nil, err
-		}
-		return Boolean{ev.truthy(right)}, nil
+		return ev.expression(node.RHS)
 	case token.Or:
 		if ev.truthy(left) {
-			return Boolean{true}, nil
+			return left, nil
 		}
-		right, err := ev.expression(node.RHS)
-		if err != nil {
-			return nil, err
-		}
-		return Boolean{ev.truthy(right)}, nil
+		return ev.expression(node.RHS)
 	default:
 		return nil, fmt.Errorf(
 			"%w: unrecognized logical operator: %s",

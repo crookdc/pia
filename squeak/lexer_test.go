@@ -131,6 +131,24 @@ func TestLexer_Next(t *testing.T) {
 			},
 		},
 		{
+			src: "if else",
+			bl:  LexerBufferLength,
+			expected: []token.Token{
+				{
+					Type:   token.If,
+					Lexeme: "if",
+				},
+				{
+					Type:   token.Else,
+					Lexeme: "else",
+				},
+				{
+					Type:   token.EOF,
+					Lexeme: "EOF",
+				},
+			},
+		},
+		{
 			src: "120. + 13;",
 			bl:  LexerBufferLength,
 			expected: []token.Token{

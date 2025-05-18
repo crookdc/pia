@@ -23,6 +23,7 @@ const (
 	And
 	Or
 	If
+	Else
 	For
 	While
 	Return
@@ -59,6 +60,7 @@ var lexemes = map[Type]string{
 	And:              "and",
 	Or:               "or",
 	If:               "if",
+	Else:             "else",
 	For:              "for",
 	While:            "while",
 	Return:           "return",

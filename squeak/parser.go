@@ -102,6 +102,34 @@ func (ps *Parser) statement() (ast.StatementNode, error) {
 		return ps.print()
 	case token.LeftBrace:
 		return ps.block()
+	case token.If:
+		ps.lx.Discard()
+		cnd, err := ps.logical()
+		if err != nil {
+			return nil, err
+		}
+		then, err := ps.statement()
+		if err != nil {
+			return nil, err
+		}
+		pk, err := ps.lx.Peek()
+		if err != nil {
+			return nil, err
+		}
+		st := ast.If{
+			Condition: cnd,
+			Then:      then,
+			Else:      nil,
+		}
+		if pk.Type == token.Else {
+			ps.lx.Discard()
+			otherwise, err := ps.statement()
+			if err != nil {
+				return nil, err
+			}
+			st.Else = otherwise
+		}
+		return st, nil
 	default:
 		return ps.expression()
 	}
@@ -114,6 +142,12 @@ func (ps *Parser) print() (ast.Print, error) {
 	expr, err := ps.equality()
 	if err != nil {
 		return ast.Print{}, err
+	}
+	if _, err := ps.expect(token.Semicolon); err != nil {
+		return ast.Print{}, fmt.Errorf(
+			"%w: missing semicolon",
+			SyntaxError{Line: ps.lx.Line()},
+		)
 	}
 	return ast.Print{
 		Expression: expr,

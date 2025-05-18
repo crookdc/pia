@@ -324,6 +324,76 @@ func TestParser_Next(t *testing.T) {
 			},
 		},
 		{
+			src: "if a > b print a; else print b;",
+			expected: ast.If{
+				Condition: ast.Infix{
+					Operator: token.Token{
+						Type:   token.Greater,
+						Lexeme: ">",
+					},
+					LHS: ast.Variable{
+						Name: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "a",
+						},
+					},
+					RHS: ast.Variable{
+						Name: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "b",
+						},
+					},
+				},
+				Then: ast.Print{
+					Expression: ast.Variable{
+						Name: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "a",
+						},
+					},
+				},
+				Else: ast.Print{
+					Expression: ast.Variable{
+						Name: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "b",
+						},
+					},
+				},
+			},
+		},
+		{
+			src: "if a > b print a;",
+			expected: ast.If{
+				Condition: ast.Infix{
+					Operator: token.Token{
+						Type:   token.Greater,
+						Lexeme: ">",
+					},
+					LHS: ast.Variable{
+						Name: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "a",
+						},
+					},
+					RHS: ast.Variable{
+						Name: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "b",
+						},
+					},
+				},
+				Then: ast.Print{
+					Expression: ast.Variable{
+						Name: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "a",
+						},
+					},
+				},
+			},
+		},
+		{
 			src: "{ a + b; a = 2.; }",
 			expected: ast.Block{
 				Body: []ast.StatementNode{

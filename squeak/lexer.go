@@ -387,6 +387,8 @@ func (lx *Lexer) word() (token.Token, error) {
 	switch string(w) {
 	case "if":
 		return token.New(token.If)
+	case "else":
+		return token.New(token.Else)
 	case "and":
 		return token.New(token.And)
 	case "or":

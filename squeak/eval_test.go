@@ -1392,7 +1392,7 @@ func TestEvaluator_expression(t *testing.T) {
 				},
 				RHS: ast.NilLiteral{},
 			},
-			obj: Boolean{false},
+			obj: nil,
 		},
 		{
 			name: "logical and",
@@ -1406,7 +1406,7 @@ func TestEvaluator_expression(t *testing.T) {
 					Boolean: true,
 				},
 			},
-			obj: Boolean{false},
+			obj: nil,
 		},
 		{
 			name: "logical and",
@@ -1436,7 +1436,7 @@ func TestEvaluator_expression(t *testing.T) {
 					Boolean: false,
 				},
 			},
-			obj: Boolean{false},
+			obj: nil,
 		},
 		{
 			name: "logical or",
@@ -1452,7 +1452,7 @@ func TestEvaluator_expression(t *testing.T) {
 					Boolean: true,
 				},
 			},
-			obj: Boolean{true},
+			obj: Number{1},
 		},
 		{
 			name: "logical or",
@@ -1466,7 +1466,7 @@ func TestEvaluator_expression(t *testing.T) {
 				},
 				RHS: ast.NilLiteral{},
 			},
-			obj: Boolean{true},
+			obj: Number{1},
 		},
 		{
 			name: "logical or",
@@ -1496,7 +1496,7 @@ func TestEvaluator_expression(t *testing.T) {
 					Boolean: false,
 				},
 			},
-			obj: Boolean{true},
+			obj: Number{1},
 		},
 		{
 			name: "logical or",
@@ -1590,7 +1590,7 @@ func TestEvaluator_expression(t *testing.T) {
 					RHS: ast.StringLiteral{String: ""},
 				},
 			},
-			obj: Boolean{true},
+			obj: String{""},
 		},
 	}
 	for _, test := range tests {
@@ -1802,6 +1802,59 @@ func TestEvaluator_statement(t *testing.T) {
 			preload: NewEnvironment(Prefill("name", Number{1.123})),
 			stmt:    ast.Block{},
 			env:     NewEnvironment(Prefill("name", Number{1.123})),
+		},
+		{
+			name:    "if-else that evaluates to true",
+			preload: NewEnvironment(),
+			stmt: ast.If{
+				Condition: ast.BooleanLiteral{Boolean: true},
+				Then: ast.Print{
+					Expression: ast.StringLiteral{String: "TRUE"},
+				},
+				Else: ast.Print{
+					Expression: ast.StringLiteral{String: "FALSE"},
+				},
+			},
+			out: "TRUE",
+			env: NewEnvironment(),
+		},
+		{
+			name:    "if-else that evaluates to false",
+			preload: NewEnvironment(),
+			stmt: ast.If{
+				Condition: ast.BooleanLiteral{Boolean: false},
+				Then: ast.Print{
+					Expression: ast.StringLiteral{String: "TRUE"},
+				},
+				Else: ast.Print{
+					Expression: ast.StringLiteral{String: "FALSE"},
+				},
+			},
+			out: "FALSE",
+			env: NewEnvironment(),
+		},
+		{
+			name:    "if that evaluates to true",
+			preload: NewEnvironment(),
+			stmt: ast.If{
+				Condition: ast.BooleanLiteral{Boolean: true},
+				Then: ast.Print{
+					Expression: ast.StringLiteral{String: "TRUE"},
+				},
+			},
+			out: "TRUE",
+			env: NewEnvironment(),
+		},
+		{
+			name:    "if that evaluates to false",
+			preload: NewEnvironment(),
+			stmt: ast.If{
+				Condition: ast.BooleanLiteral{Boolean: false},
+				Then: ast.Print{
+					Expression: ast.StringLiteral{String: "TRUE"},
+				},
+			},
+			env: NewEnvironment(),
 		},
 	}
 
