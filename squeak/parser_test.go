@@ -368,6 +368,76 @@ func TestParser_Next(t *testing.T) {
 				Body: []ast.StatementNode{},
 			},
 		},
+		{
+			src: "1 == 1 and b;",
+			expected: ast.ExpressionStatement{
+				Expression: ast.Logical{
+					Operator: token.Token{
+						Type:   token.And,
+						Lexeme: "and",
+					},
+					LHS: ast.Infix{
+						Operator: token.Token{
+							Type:   token.Equals,
+							Lexeme: "==",
+						},
+						LHS: ast.IntegerLiteral{
+							Integer: 1,
+						},
+						RHS: ast.IntegerLiteral{
+							Integer: 1,
+						},
+					},
+					RHS: ast.Variable{
+						Name: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "b",
+						},
+					},
+				},
+			},
+		},
+		{
+			src: "1 == 1 and b or c;",
+			expected: ast.ExpressionStatement{
+				Expression: ast.Logical{
+					Operator: token.Token{
+						Type:   token.Or,
+						Lexeme: "or",
+					},
+					LHS: ast.Logical{
+						Operator: token.Token{
+							Type:   token.And,
+							Lexeme: "and",
+						},
+						LHS: ast.Infix{
+							Operator: token.Token{
+								Type:   token.Equals,
+								Lexeme: "==",
+							},
+							LHS: ast.IntegerLiteral{
+								Integer: 1,
+							},
+							RHS: ast.IntegerLiteral{
+								Integer: 1,
+							},
+						},
+						RHS: ast.Variable{
+							Name: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "b",
+							},
+						},
+					},
+					RHS: ast.Variable{
+						Name: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "c",
+						},
+					},
+				},
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.src, func(t *testing.T) {

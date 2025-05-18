@@ -141,8 +141,16 @@ type Prefix struct {
 	Target   ExpressionNode
 }
 
-// Infix represents an expression with two operands where the operator is located inbetween the operands.
+// Infix represents an expression with two operands where the operator is located in between the operands.
 type Infix struct {
+	Expression
+	Operator token.Token
+	LHS      ExpressionNode
+	RHS      ExpressionNode
+}
+
+// Logical represents a binary logical expression comprised of two operands and an operator.
+type Logical struct {
 	Expression
 	Operator token.Token
 	LHS      ExpressionNode

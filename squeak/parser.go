@@ -180,7 +180,7 @@ func (ps *Parser) expression() (ast.ExpressionStatement, error) {
 }
 
 func (ps *Parser) assignment() (ast.ExpressionNode, error) {
-	expr, err := ps.equality()
+	expr, err := ps.logical()
 	if err != nil {
 		return nil, err
 	}
@@ -207,6 +207,34 @@ func (ps *Parser) assignment() (ast.ExpressionNode, error) {
 			"%w: invalid left hand side of assignment",
 			SyntaxError{Line: ps.lx.Line()},
 		)
+	}
+}
+
+func (ps *Parser) logical() (ast.ExpressionNode, error) {
+	lhs, err := ps.equality()
+	if err != nil {
+		return nil, err
+	}
+	for {
+		pk, err := ps.lx.Peek()
+		if err != nil {
+			return nil, err
+		}
+		switch pk.Type {
+		case token.And, token.Or:
+			ps.lx.Discard()
+			rhs, err := ps.equality()
+			if err != nil {
+				return nil, err
+			}
+			lhs = ast.Logical{
+				Operator: pk,
+				LHS:      lhs,
+				RHS:      rhs,
+			}
+		default:
+			return lhs, nil
+		}
 	}
 }
 

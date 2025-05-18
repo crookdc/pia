@@ -1364,6 +1364,234 @@ func TestEvaluator_expression(t *testing.T) {
 			},
 			err: ErrRuntimeFault,
 		},
+		{
+			name: "logical and",
+			node: ast.Logical{
+				Operator: token.Token{
+					Type:   token.And,
+					Lexeme: "and",
+				},
+				LHS: ast.IntegerLiteral{
+					Integer: 1,
+				},
+				RHS: ast.BooleanLiteral{
+					Boolean: true,
+				},
+			},
+			obj: Boolean{true},
+		},
+		{
+			name: "logical and",
+			node: ast.Logical{
+				Operator: token.Token{
+					Type:   token.And,
+					Lexeme: "and",
+				},
+				LHS: ast.IntegerLiteral{
+					Integer: 1,
+				},
+				RHS: ast.NilLiteral{},
+			},
+			obj: Boolean{false},
+		},
+		{
+			name: "logical and",
+			node: ast.Logical{
+				Operator: token.Token{
+					Type:   token.And,
+					Lexeme: "and",
+				},
+				LHS: ast.NilLiteral{},
+				RHS: ast.BooleanLiteral{
+					Boolean: true,
+				},
+			},
+			obj: Boolean{false},
+		},
+		{
+			name: "logical and",
+			node: ast.Logical{
+				Operator: token.Token{
+					Type:   token.And,
+					Lexeme: "and",
+				},
+				LHS: ast.IntegerLiteral{
+					Integer: 1,
+				},
+				RHS: ast.BooleanLiteral{
+					Boolean: false,
+				},
+			},
+			obj: Boolean{false},
+		},
+		{
+			name: "logical and",
+			node: ast.Logical{
+				Operator: token.Token{
+					Type:   token.And,
+					Lexeme: "and",
+				},
+				LHS: ast.NilLiteral{},
+				RHS: ast.BooleanLiteral{
+					Boolean: false,
+				},
+			},
+			obj: Boolean{false},
+		},
+		{
+			name: "logical or",
+			node: ast.Logical{
+				Operator: token.Token{
+					Type:   token.Or,
+					Lexeme: "or",
+				},
+				LHS: ast.IntegerLiteral{
+					Integer: 1,
+				},
+				RHS: ast.BooleanLiteral{
+					Boolean: true,
+				},
+			},
+			obj: Boolean{true},
+		},
+		{
+			name: "logical or",
+			node: ast.Logical{
+				Operator: token.Token{
+					Type:   token.Or,
+					Lexeme: "or",
+				},
+				LHS: ast.IntegerLiteral{
+					Integer: 1,
+				},
+				RHS: ast.NilLiteral{},
+			},
+			obj: Boolean{true},
+		},
+		{
+			name: "logical or",
+			node: ast.Logical{
+				Operator: token.Token{
+					Type:   token.Or,
+					Lexeme: "or",
+				},
+				LHS: ast.NilLiteral{},
+				RHS: ast.BooleanLiteral{
+					Boolean: true,
+				},
+			},
+			obj: Boolean{true},
+		},
+		{
+			name: "logical or",
+			node: ast.Logical{
+				Operator: token.Token{
+					Type:   token.Or,
+					Lexeme: "or",
+				},
+				LHS: ast.IntegerLiteral{
+					Integer: 1,
+				},
+				RHS: ast.BooleanLiteral{
+					Boolean: false,
+				},
+			},
+			obj: Boolean{true},
+		},
+		{
+			name: "logical or",
+			node: ast.Logical{
+				Operator: token.Token{
+					Type:   token.Or,
+					Lexeme: "or",
+				},
+				LHS: ast.NilLiteral{},
+				RHS: ast.BooleanLiteral{
+					Boolean: false,
+				},
+			},
+			obj: Boolean{false},
+		},
+		{
+			name: "nested logical operators",
+			node: ast.Logical{
+				Operator: token.Token{
+					Type:   token.Or,
+					Lexeme: "or",
+				},
+				LHS: ast.Logical{
+					Operator: token.Token{
+						Type:   token.And,
+						Lexeme: "and",
+					},
+					LHS: ast.BooleanLiteral{
+						Boolean: true,
+					},
+					RHS: ast.BooleanLiteral{
+						Boolean: true,
+					},
+				},
+				RHS: ast.BooleanLiteral{
+					Boolean: false,
+				},
+			},
+			obj: Boolean{true},
+		},
+		{
+			name: "nested logical operators",
+			node: ast.Logical{
+				Operator: token.Token{
+					Type:   token.Or,
+					Lexeme: "or",
+				},
+				LHS: ast.Logical{
+					Operator: token.Token{
+						Type:   token.And,
+						Lexeme: "and",
+					},
+					LHS: ast.BooleanLiteral{
+						Boolean: true,
+					},
+					RHS: ast.BooleanLiteral{
+						Boolean: false,
+					},
+				},
+				RHS: ast.BooleanLiteral{
+					Boolean: false,
+				},
+			},
+			obj: Boolean{false},
+		},
+		{
+			name: "nested logical operators",
+			node: ast.Logical{
+				Operator: token.Token{
+					Type:   token.Or,
+					Lexeme: "or",
+				},
+				LHS: ast.Logical{
+					Operator: token.Token{
+						Type:   token.And,
+						Lexeme: "and",
+					},
+					LHS: ast.BooleanLiteral{
+						Boolean: true,
+					},
+					RHS: ast.BooleanLiteral{
+						Boolean: false,
+					},
+				},
+				RHS: ast.Logical{
+					Operator: token.Token{
+						Type:   token.Or,
+						Lexeme: "or",
+					},
+					LHS: ast.NilLiteral{},
+					RHS: ast.StringLiteral{String: ""},
+				},
+			},
+			obj: Boolean{true},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

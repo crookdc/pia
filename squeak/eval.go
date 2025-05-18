@@ -211,11 +211,46 @@ func (ev *Evaluator) expression(node ast.ExpressionNode) (Object, error) {
 			return nil, err
 		}
 		return val, nil
+	case ast.Logical:
+		return ev.logical(node)
 	default:
 		return nil, fmt.Errorf(
 			"%w: unexpected expression type %s",
 			ErrRuntimeFault,
 			reflect.TypeOf(node),
+		)
+	}
+}
+
+func (ev *Evaluator) logical(node ast.Logical) (Object, error) {
+	left, err := ev.expression(node.LHS)
+	if err != nil {
+		return nil, err
+	}
+	switch node.Operator.Type {
+	case token.And:
+		if ev.falsy(left) {
+			return Boolean{false}, nil
+		}
+		right, err := ev.expression(node.RHS)
+		if err != nil {
+			return nil, err
+		}
+		return Boolean{ev.truthy(right)}, nil
+	case token.Or:
+		if ev.truthy(left) {
+			return Boolean{true}, nil
+		}
+		right, err := ev.expression(node.RHS)
+		if err != nil {
+			return nil, err
+		}
+		return Boolean{ev.truthy(right)}, nil
+	default:
+		return nil, fmt.Errorf(
+			"%w: unrecognized logical operator: %s",
+			ErrRuntimeFault,
+			node.Operator.Lexeme,
 		)
 	}
 }
@@ -249,6 +284,10 @@ func (ev *Evaluator) truthy(obj Object) bool {
 	default:
 		return true
 	}
+}
+
+func (ev *Evaluator) falsy(obj Object) bool {
+	return !ev.truthy(obj)
 }
 
 func (ev *Evaluator) infix(node ast.Infix) (Object, error) {
