@@ -1856,6 +1856,84 @@ func TestEvaluator_statement(t *testing.T) {
 			},
 			env: NewEnvironment(),
 		},
+		{
+			name:    "while loop with print statements",
+			preload: NewEnvironment(),
+			stmt: ast.Block{
+				Body: []ast.StatementNode{
+					ast.Var{
+						Name: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "i",
+						},
+						Initializer: ast.IntegerLiteral{Integer: 0},
+					},
+					ast.While{
+						Condition: ast.Infix{
+							Operator: token.Token{
+								Type:   token.Less,
+								Lexeme: "<",
+							},
+							LHS: ast.Variable{
+								Name: token.Token{
+									Type:   token.Identifier,
+									Lexeme: "i",
+								},
+							},
+							RHS: ast.IntegerLiteral{
+								Integer: 5,
+							},
+						},
+						Body: ast.Block{
+							Body: []ast.StatementNode{
+								ast.Print{
+									Expression: ast.StringLiteral{
+										String: "crookdc",
+									},
+								},
+								ast.ExpressionStatement{
+									Expression: ast.Assignment{
+										Name: token.Token{
+											Type:   token.Identifier,
+											Lexeme: "i",
+										},
+										Value: ast.Infix{
+											Operator: token.Token{
+												Type:   token.Plus,
+												Lexeme: "+",
+											},
+											LHS: ast.Variable{
+												Name: token.Token{
+													Type:   token.Identifier,
+													Lexeme: "i",
+												},
+											},
+											RHS: ast.IntegerLiteral{
+												Integer: 1,
+											},
+										},
+									},
+								},
+								ast.Var{
+									Name: token.Token{
+										Type:   token.Identifier,
+										Lexeme: "iteration",
+									},
+									Initializer: ast.Variable{
+										Name: token.Token{
+											Type:   token.Identifier,
+											Lexeme: "i",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			env: NewEnvironment(),
+			out: "crookdccrookdccrookdccrookdccrookdc",
+		},
 	}
 
 	for _, test := range tests {

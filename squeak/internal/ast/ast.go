@@ -94,6 +94,15 @@ type If struct {
 	Else      StatementNode
 }
 
+// While represents the common looping control structure which causes the Squeak interpreter to continually evaluate the
+// loop Body until the Condition returns a falsy value. Through forms of de-sugaring, the Squeak for-loop is also
+// represented in part using the While loop.
+type While struct {
+	Statement
+	Condition ExpressionNode
+	Body      StatementNode
+}
+
 // Variable represents an expression in the format of just an identifier.
 type Variable struct {
 	Expression

@@ -130,6 +130,20 @@ func (ps *Parser) statement() (ast.StatementNode, error) {
 			st.Else = otherwise
 		}
 		return st, nil
+	case token.While:
+		ps.lx.Discard()
+		cnd, err := ps.logical()
+		if err != nil {
+			return nil, err
+		}
+		body, err := ps.statement()
+		if err != nil {
+			return nil, err
+		}
+		return ast.While{
+			Condition: cnd,
+			Body:      body,
+		}, nil
 	default:
 		return ps.expression()
 	}

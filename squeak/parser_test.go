@@ -468,6 +468,101 @@ func TestParser_Next(t *testing.T) {
 			},
 		},
 		{
+			src: "while a < b and b >= 3 print a;",
+			expected: ast.While{
+				Condition: ast.Logical{
+					Operator: token.Token{
+						Type:   token.And,
+						Lexeme: "and",
+					},
+					LHS: ast.Infix{
+						Operator: token.Token{
+							Type:   token.Less,
+							Lexeme: "<",
+						},
+						LHS: ast.Variable{
+							Name: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "a",
+							},
+						},
+						RHS: ast.Variable{
+							Name: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "b",
+							},
+						},
+					},
+					RHS: ast.Infix{
+						Operator: token.Token{
+							Type:   token.GreaterEqual,
+							Lexeme: ">=",
+						},
+						LHS: ast.Variable{
+							Name: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "b",
+							},
+						},
+						RHS: ast.IntegerLiteral{
+							Integer: 3,
+						},
+					},
+				},
+				Body: ast.Print{
+					Expression: ast.Variable{
+						Name: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "a",
+						},
+					},
+				},
+			},
+		},
+		{
+			src: "while a < b { print a; print b; }",
+			expected: ast.While{
+				Condition: ast.Infix{
+					Operator: token.Token{
+						Type:   token.Less,
+						Lexeme: "<",
+					},
+					LHS: ast.Variable{
+						Name: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "a",
+						},
+					},
+					RHS: ast.Variable{
+						Name: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "b",
+						},
+					},
+				},
+				Body: ast.Block{
+					Body: []ast.StatementNode{
+						ast.Print{
+							Expression: ast.Variable{
+								Name: token.Token{
+									Type:   token.Identifier,
+									Lexeme: "a",
+								},
+							},
+						},
+						ast.Print{
+							Expression: ast.Variable{
+								Name: token.Token{
+									Type:   token.Identifier,
+									Lexeme: "b",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			src: "{}",
 			expected: ast.Block{
 				Body: []ast.StatementNode{},

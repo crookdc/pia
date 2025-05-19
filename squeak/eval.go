@@ -185,6 +185,21 @@ func (ev *Evaluator) statement(node ast.StatementNode) error {
 			return ev.statement(node.Else)
 		}
 		return nil
+	case ast.While:
+		cnd, err := ev.expression(node.Condition)
+		if err != nil {
+			return err
+		}
+		for ev.truthy(cnd) {
+			if err := ev.statement(node.Body); err != nil {
+				return err
+			}
+			cnd, err = ev.expression(node.Condition)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
 	default:
 		return fmt.Errorf(
 			"%w: unexpected statement type %s",
