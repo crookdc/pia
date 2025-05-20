@@ -107,96 +107,114 @@ func (ps *Parser) statement() (ast.StatementNode, error) {
 	case token.LeftBrace:
 		return ps.block()
 	case token.If:
-		ps.lx.Discard()
-		cnd, err := ps.logical()
-		if err != nil {
-			return nil, err
-		}
-		then, err := ps.statement()
-		if err != nil {
-			return nil, err
-		}
-		pk, err := ps.lx.Peek()
-		if err != nil {
-			return nil, err
-		}
-		st := ast.If{
-			Condition: cnd,
-			Then:      then,
-			Else:      nil,
-		}
-		if pk.Type == token.Else {
-			ps.lx.Discard()
-			otherwise, err := ps.statement()
-			if err != nil {
-				return nil, err
-			}
-			st.Else = otherwise
-		}
-		return st, nil
+		return ps.ifs()
 	case token.While:
-		ps.lx.Discard()
-		cnd, err := ps.logical()
-		if err != nil {
-			return nil, err
-		}
-		body, err := ps.block()
-		if err != nil {
-			return nil, err
-		}
-		return ast.While{
-			Condition: cnd,
-			Body:      body,
-		}, nil
+		return ps.while()
 	case token.For:
-		ps.lx.Discard()
-		init, err := ps.declaration()
-		if err != nil {
-			return nil, err
-		}
-		cnd, err := ps.logical()
-		if err != nil {
-			return nil, err
-		}
-		if _, err := ps.expect(token.Semicolon); err != nil {
-			return nil, err
-		}
-		pk, err := ps.lx.Peek()
-		if err != nil {
-			return nil, err
-		}
-		var inc ast.ExpressionNode
-		switch pk.Type {
-		case token.LeftBrace:
-			inc = nil
-		default:
-			inc, err = ps.assignment()
-			if err != nil {
-				return nil, err
-			}
-		}
-		body, err := ps.block()
-		if err != nil {
-			return nil, err
-		}
-		loop := ast.While{
-			Condition: cnd,
-			Body:      body,
-		}
-		if inc != nil {
-			loop.Body.Body = append(loop.Body.Body, ast.ExpressionStatement{
-				Expression: inc,
-			})
-		}
-		return ast.Block{
-			Body: []ast.StatementNode{init, loop},
-		}, nil
+		return ps.fors()
 	case token.Semicolon:
 		ps.lx.Discard()
 		return ast.Noop{}, nil
 	default:
 		return ps.expression()
 	}
+}
+
+func (ps *Parser) while() (ast.StatementNode, error) {
+	if _, err := ps.expect(token.While); err != nil {
+		return nil, err
+	}
+	cnd, err := ps.logical()
+	if err != nil {
+		return nil, err
+	}
+	body, err := ps.block()
+	if err != nil {
+		return nil, err
+	}
+	return ast.While{
+		Condition: cnd,
+		Body:      body,
+	}, nil
+}
+
+func (ps *Parser) fors() (ast.StatementNode, error) {
+	if _, err := ps.expect(token.For); err != nil {
+		return nil, err
+	}
+	init, err := ps.declaration()
+	if err != nil {
+		return nil, err
+	}
+	cnd, err := ps.logical()
+	if err != nil {
+		return nil, err
+	}
+	if _, err := ps.expect(token.Semicolon); err != nil {
+		return nil, err
+	}
+	pk, err := ps.lx.Peek()
+	if err != nil {
+		return nil, err
+	}
+	var inc ast.ExpressionNode
+	switch pk.Type {
+	case token.LeftBrace:
+		inc = nil
+	default:
+		inc, err = ps.assignment()
+		if err != nil {
+			return nil, err
+		}
+	}
+	body, err := ps.block()
+	if err != nil {
+		return nil, err
+	}
+	loop := ast.While{
+		Condition: cnd,
+		Body:      body,
+	}
+	if inc != nil {
+		loop.Body.Body = append(loop.Body.Body, ast.ExpressionStatement{
+			Expression: inc,
+		})
+	}
+	return ast.Block{
+		Body: []ast.StatementNode{init, loop},
+	}, nil
+}
+
+func (ps *Parser) ifs() (ast.If, error) {
+	if _, err := ps.expect(token.If); err != nil {
+		return ast.If{}, err
+	}
+	cnd, err := ps.logical()
+	if err != nil {
+		return ast.If{}, err
+	}
+	then, err := ps.statement()
+	if err != nil {
+		return ast.If{}, err
+	}
+	pk, err := ps.lx.Peek()
+	if err != nil {
+		return ast.If{}, err
+	}
+	st := ast.If{
+		Condition: cnd,
+		Then:      then,
+		Else:      nil,
+	}
+	if pk.Type == token.Else {
+		ps.lx.Discard()
+		otherwise, err := ps.statement()
+		if err != nil {
+			return ast.If{}, err
+		}
+		st.Else = otherwise
+	}
+	return st, nil
 }
 
 func (ps *Parser) print() (ast.Print, error) {
