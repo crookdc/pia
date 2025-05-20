@@ -71,9 +71,9 @@ type Print struct {
 	Expression ExpressionNode
 }
 
-// Var represents a variable declaration with an optional initializer. Since Initializer is optional it must always be
+// Declaration represents a variable declaration with an optional initializer. Since Initializer is optional it must always be
 // nil-checked before use.
-type Var struct {
+type Declaration struct {
 	Statement
 	Name        token.Token
 	Initializer ExpressionNode
@@ -100,7 +100,13 @@ type If struct {
 type While struct {
 	Statement
 	Condition ExpressionNode
-	Body      StatementNode
+	Body      Block
+}
+
+// Noop represents a statement that should be ignored by the interpreter. Unlike other statements, the Noop statement
+// does not have any side effect.
+type Noop struct {
+	Statement
 }
 
 // Variable represents an expression in the format of just an identifier.

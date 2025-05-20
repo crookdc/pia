@@ -152,7 +152,7 @@ func (ev *Evaluator) statement(node ast.StatementNode) error {
 		}
 		_, err = io.WriteString(ev.out, obj.String())
 		return err
-	case ast.Var:
+	case ast.Declaration:
 		if node.Initializer == nil {
 			ev.env.Declare(node.Name.Lexeme, nil)
 			return nil
@@ -199,6 +199,9 @@ func (ev *Evaluator) statement(node ast.StatementNode) error {
 				return err
 			}
 		}
+		return nil
+	case ast.Noop:
+		// In the future it might be a good idea to restructure the AST so that it does not contain any [ast.Noop].
 		return nil
 	default:
 		return fmt.Errorf(

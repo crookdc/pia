@@ -62,31 +62,35 @@ func (ps *Parser) declaration() (ast.StatementNode, error) {
 	}
 }
 
-func (ps *Parser) variable() (ast.Var, error) {
+func (ps *Parser) variable() (ast.Declaration, error) {
 	if _, err := ps.expect(token.Var); err != nil {
-		return ast.Var{}, err
+		return ast.Declaration{}, err
 	}
 	name, err := ps.expect(token.Identifier)
 	if err != nil {
-		return ast.Var{}, err
+		return ast.Declaration{}, err
 	}
-	stmt := ast.Var{
+	stmt := ast.Declaration{
 		Name:        name,
 		Initializer: nil,
 	}
 	pk, err := ps.lx.Peek()
 	if err != nil {
-		return ast.Var{}, err
+		return ast.Declaration{}, err
 	}
 	if pk.Type == token.Semicolon {
+		ps.lx.Discard()
 		return stmt, nil
 	}
 	if _, err := ps.expect(token.Assign); err != nil {
-		return ast.Var{}, err
+		return ast.Declaration{}, err
 	}
 	init, err := ps.equality()
 	if err != nil {
-		return ast.Var{}, err
+		return ast.Declaration{}, err
+	}
+	if _, err := ps.expect(token.Semicolon); err != nil {
+		return ast.Declaration{}, err
 	}
 	stmt.Initializer = init
 	return stmt, nil
@@ -136,7 +140,7 @@ func (ps *Parser) statement() (ast.StatementNode, error) {
 		if err != nil {
 			return nil, err
 		}
-		body, err := ps.statement()
+		body, err := ps.block()
 		if err != nil {
 			return nil, err
 		}
@@ -144,6 +148,52 @@ func (ps *Parser) statement() (ast.StatementNode, error) {
 			Condition: cnd,
 			Body:      body,
 		}, nil
+	case token.For:
+		ps.lx.Discard()
+		init, err := ps.declaration()
+		if err != nil {
+			return nil, err
+		}
+		cnd, err := ps.logical()
+		if err != nil {
+			return nil, err
+		}
+		if _, err := ps.expect(token.Semicolon); err != nil {
+			return nil, err
+		}
+		pk, err := ps.lx.Peek()
+		if err != nil {
+			return nil, err
+		}
+		var inc ast.ExpressionNode
+		switch pk.Type {
+		case token.LeftBrace:
+			inc = nil
+		default:
+			inc, err = ps.assignment()
+			if err != nil {
+				return nil, err
+			}
+		}
+		body, err := ps.block()
+		if err != nil {
+			return nil, err
+		}
+		loop := ast.While{
+			Condition: cnd,
+			Body:      body,
+		}
+		if inc != nil {
+			loop.Body.Body = append(loop.Body.Body, ast.ExpressionStatement{
+				Expression: inc,
+			})
+		}
+		return ast.Block{
+			Body: []ast.StatementNode{init, loop},
+		}, nil
+	case token.Semicolon:
+		ps.lx.Discard()
+		return ast.Noop{}, nil
 	default:
 		return ps.expression()
 	}

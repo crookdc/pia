@@ -1688,7 +1688,7 @@ func TestEvaluator_statement(t *testing.T) {
 		{
 			name:    "variable declaration without initializer",
 			preload: NewEnvironment(),
-			stmt: ast.Var{
+			stmt: ast.Declaration{
 				Name: token.Token{
 					Type:   token.Identifier,
 					Lexeme: "name",
@@ -1699,7 +1699,7 @@ func TestEvaluator_statement(t *testing.T) {
 		{
 			name:    "variable declaration with explicit nil initializer",
 			preload: NewEnvironment(),
-			stmt: ast.Var{
+			stmt: ast.Declaration{
 				Name: token.Token{
 					Type:   token.Identifier,
 					Lexeme: "name",
@@ -1711,7 +1711,7 @@ func TestEvaluator_statement(t *testing.T) {
 		{
 			name:    "variable declaration with initializer",
 			preload: NewEnvironment(),
-			stmt: ast.Var{
+			stmt: ast.Declaration{
 				Name: token.Token{
 					Type:   token.Identifier,
 					Lexeme: "name",
@@ -1747,7 +1747,7 @@ func TestEvaluator_statement(t *testing.T) {
 							},
 						},
 					},
-					ast.Var{
+					ast.Declaration{
 						Name: token.Token{
 							Type:   token.Identifier,
 							Lexeme: "age",
@@ -1775,7 +1775,7 @@ func TestEvaluator_statement(t *testing.T) {
 					},
 					ast.Block{
 						Body: []ast.StatementNode{
-							ast.Var{
+							ast.Declaration{
 								Name: token.Token{
 									Type:   token.Identifier,
 									Lexeme: "name",
@@ -1857,11 +1857,17 @@ func TestEvaluator_statement(t *testing.T) {
 			env: NewEnvironment(),
 		},
 		{
+			name:    "noop is ignored",
+			preload: NewEnvironment(),
+			stmt:    ast.Noop{},
+			env:     NewEnvironment(),
+		},
+		{
 			name:    "while loop with print statements",
 			preload: NewEnvironment(),
 			stmt: ast.Block{
 				Body: []ast.StatementNode{
-					ast.Var{
+					ast.Declaration{
 						Name: token.Token{
 							Type:   token.Identifier,
 							Lexeme: "i",
@@ -1914,7 +1920,7 @@ func TestEvaluator_statement(t *testing.T) {
 										},
 									},
 								},
-								ast.Var{
+								ast.Declaration{
 									Name: token.Token{
 										Type:   token.Identifier,
 										Lexeme: "iteration",
@@ -1957,7 +1963,7 @@ func TestEvaluator_statement(t *testing.T) {
 			env: NewEnvironment(),
 		}
 
-		err := ev.statement(ast.Var{
+		err := ev.statement(ast.Declaration{
 			Name: token.Token{
 				Type:   token.Identifier,
 				Lexeme: "name",
