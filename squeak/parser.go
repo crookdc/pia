@@ -484,7 +484,59 @@ func (ps *Parser) prefix() (ast.ExpressionNode, error) {
 			Target:   expr,
 		}, nil
 	default:
-		return ps.primary()
+		return ps.call()
+	}
+}
+
+func (ps *Parser) call() (ast.ExpressionNode, error) {
+	expr, err := ps.primary()
+	if err != nil {
+		return nil, err
+	}
+	pk, err := ps.lx.Peek()
+	if err != nil {
+		return nil, err
+	}
+	for pk.Type == token.LeftParenthesis {
+		args, err := ps.list(token.LeftParenthesis, token.RightParenthesis)
+		if err != nil {
+			return nil, err
+		}
+		expr = ast.Call{
+			Callee:   expr,
+			Operator: pk,
+			Args:     args,
+		}
+		pk, err = ps.lx.Peek()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return expr, nil
+}
+
+func (ps *Parser) list(start, end token.Type) (exps []ast.ExpressionNode, err error) {
+	if _, err := ps.expect(start); err != nil {
+		return nil, err
+	}
+	for {
+		pk, err := ps.lx.Peek()
+		if err != nil {
+			return nil, err
+		}
+		switch pk.Type {
+		case end:
+			ps.lx.Discard()
+			return exps, nil
+		case token.Comma:
+			ps.lx.Discard()
+		default:
+			expr, err := ps.equality()
+			if err != nil {
+				return nil, err
+			}
+			exps = append(exps, expr)
+		}
 	}
 }
 

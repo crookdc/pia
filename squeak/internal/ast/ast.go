@@ -179,3 +179,11 @@ type Logical struct {
 	LHS      ExpressionNode
 	RHS      ExpressionNode
 }
+
+// Call represents an invocation of a function identified by the result of evaluating Callee.
+type Call struct {
+	Expression
+	Callee   ExpressionNode
+	Operator token.Token
+	Args     []ExpressionNode
+}

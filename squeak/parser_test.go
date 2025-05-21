@@ -324,6 +324,119 @@ func TestParser_Next(t *testing.T) {
 			},
 		},
 		{
+			src: "run();",
+			expected: ast.ExpressionStatement{
+				Expression: ast.Call{
+					Callee: ast.Variable{
+						Name: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "run",
+						},
+					},
+					Operator: token.Token{
+						Type:   token.LeftParenthesis,
+						Lexeme: "(",
+					},
+					Args: nil,
+				},
+			},
+		},
+		{
+			src: "run(5 + 1002, n);",
+			expected: ast.ExpressionStatement{
+				Expression: ast.Call{
+					Callee: ast.Variable{
+						Name: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "run",
+						},
+					},
+					Operator: token.Token{
+						Type:   token.LeftParenthesis,
+						Lexeme: "(",
+					},
+					Args: []ast.ExpressionNode{
+						ast.Infix{
+							Operator: token.Token{
+								Type:   token.Plus,
+								Lexeme: "+",
+							},
+							LHS: ast.IntegerLiteral{
+								Integer: 5,
+							},
+							RHS: ast.IntegerLiteral{
+								Integer: 1002,
+							},
+						},
+						ast.Variable{
+							Name: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "n",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			src: "factory()(5 + 1002, n)(n);",
+			expected: ast.ExpressionStatement{
+				Expression: ast.Call{
+					Callee: ast.Call{
+						Callee: ast.Call{
+							Callee: ast.Variable{
+								Name: token.Token{
+									Type:   token.Identifier,
+									Lexeme: "factory",
+								},
+							},
+							Operator: token.Token{
+								Type:   token.LeftParenthesis,
+								Lexeme: "(",
+							},
+							Args: nil,
+						},
+						Operator: token.Token{
+							Type:   token.LeftParenthesis,
+							Lexeme: "(",
+						},
+						Args: []ast.ExpressionNode{
+							ast.Infix{
+								Operator: token.Token{
+									Type:   token.Plus,
+									Lexeme: "+",
+								},
+								LHS: ast.IntegerLiteral{
+									Integer: 5,
+								},
+								RHS: ast.IntegerLiteral{
+									Integer: 1002,
+								},
+							},
+							ast.Variable{
+								Name: token.Token{
+									Type:   token.Identifier,
+									Lexeme: "n",
+								},
+							},
+						},
+					},
+					Operator: token.Token{
+						Type:   token.LeftParenthesis,
+						Lexeme: "(",
+					},
+					Args: []ast.ExpressionNode{
+						ast.Variable{
+							Name: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "n",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			src:      ";",
 			expected: ast.Noop{},
 		},
