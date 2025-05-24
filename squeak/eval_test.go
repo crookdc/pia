@@ -1617,75 +1617,6 @@ func TestEvaluator_statement(t *testing.T) {
 		err error
 	}{
 		{
-			name:    "print writes string object to output",
-			preload: NewEnvironment(),
-			stmt: ast.Print{
-				Expression: ast.Infix{
-					Operator: token.Token{
-						Type:   token.Plus,
-						Lexeme: "+",
-					},
-					LHS: ast.StringLiteral{
-						String: "hello",
-					},
-					RHS: ast.StringLiteral{
-						String: " world",
-					},
-				},
-			},
-			out: "hello world",
-			env: NewEnvironment(),
-		},
-		{
-			name:    "print writes whole number object to output",
-			preload: NewEnvironment(),
-			stmt: ast.Print{
-				Expression: ast.Infix{
-					Operator: token.Token{
-						Type:   token.Plus,
-						Lexeme: "+",
-					},
-					LHS: ast.IntegerLiteral{
-						Integer: 15,
-					},
-					RHS: ast.IntegerLiteral{
-						Integer: 30,
-					},
-				},
-			},
-			out: "45.",
-			env: NewEnvironment(),
-		},
-		{
-			name:    "print writes number object to output",
-			preload: NewEnvironment(),
-			stmt: ast.Print{
-				Expression: ast.Infix{
-					Operator: token.Token{
-						Type:   token.Slash,
-						Lexeme: "/",
-					},
-					LHS: ast.IntegerLiteral{
-						Integer: 10,
-					},
-					RHS: ast.IntegerLiteral{
-						Integer: 3,
-					},
-				},
-			},
-			out: "3.333333",
-			env: NewEnvironment(),
-		},
-		{
-			name:    "print writes boolean object to output",
-			preload: NewEnvironment(),
-			stmt: ast.Print{
-				Expression: ast.BooleanLiteral{Boolean: true},
-			},
-			out: "true",
-			env: NewEnvironment(),
-		},
-		{
 			name:    "variable declaration without initializer",
 			preload: NewEnvironment(),
 			stmt: ast.Declaration{
@@ -1761,43 +1692,6 @@ func TestEvaluator_statement(t *testing.T) {
 			env: NewEnvironment(Prefill("name", Number{1556.12})),
 		},
 		{
-			name:    "nested blocks",
-			preload: NewEnvironment(Prefill("name", Number{1.123})),
-			stmt: ast.Block{
-				Body: []ast.StatementNode{
-					ast.Print{
-						Expression: ast.Variable{
-							Name: token.Token{
-								Type:   token.Identifier,
-								Lexeme: "name",
-							},
-						},
-					},
-					ast.Block{
-						Body: []ast.StatementNode{
-							ast.Declaration{
-								Name: token.Token{
-									Type:   token.Identifier,
-									Lexeme: "name",
-								},
-								Initializer: ast.StringLiteral{String: "crookdc"},
-							},
-							ast.Print{
-								Expression: ast.Variable{
-									Name: token.Token{
-										Type:   token.Identifier,
-										Lexeme: "name",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			env: NewEnvironment(Prefill("name", Number{1.123})),
-			out: "1.123crookdc",
-		},
-		{
 			name:    "empty block",
 			preload: NewEnvironment(Prefill("name", Number{1.123})),
 			stmt:    ast.Block{},
@@ -1808,50 +1702,71 @@ func TestEvaluator_statement(t *testing.T) {
 			preload: NewEnvironment(),
 			stmt: ast.If{
 				Condition: ast.BooleanLiteral{Boolean: true},
-				Then: ast.Print{
-					Expression: ast.StringLiteral{String: "TRUE"},
+				Then: ast.Declaration{
+					Name: token.Token{
+						Type:   token.Identifier,
+						Lexeme: "result",
+					},
+					Initializer: ast.BooleanLiteral{Boolean: true},
 				},
-				Else: ast.Print{
-					Expression: ast.StringLiteral{String: "FALSE"},
+				Else: ast.Declaration{
+					Name: token.Token{
+						Type:   token.Identifier,
+						Lexeme: "result",
+					},
+					Initializer: ast.BooleanLiteral{Boolean: false},
 				},
 			},
-			out: "TRUE",
-			env: NewEnvironment(),
+			env: NewEnvironment(Prefill("result", Boolean{true})),
 		},
 		{
 			name:    "if-else that evaluates to false",
 			preload: NewEnvironment(),
 			stmt: ast.If{
 				Condition: ast.BooleanLiteral{Boolean: false},
-				Then: ast.Print{
-					Expression: ast.StringLiteral{String: "TRUE"},
+				Then: ast.Declaration{
+					Name: token.Token{
+						Type:   token.Identifier,
+						Lexeme: "result",
+					},
+					Initializer: ast.BooleanLiteral{Boolean: true},
 				},
-				Else: ast.Print{
-					Expression: ast.StringLiteral{String: "FALSE"},
+				Else: ast.Declaration{
+					Name: token.Token{
+						Type:   token.Identifier,
+						Lexeme: "result",
+					},
+					Initializer: ast.BooleanLiteral{Boolean: false},
 				},
 			},
-			out: "FALSE",
-			env: NewEnvironment(),
+			env: NewEnvironment(Prefill("result", Boolean{false})),
 		},
 		{
 			name:    "if that evaluates to true",
 			preload: NewEnvironment(),
 			stmt: ast.If{
 				Condition: ast.BooleanLiteral{Boolean: true},
-				Then: ast.Print{
-					Expression: ast.StringLiteral{String: "TRUE"},
+				Then: ast.Declaration{
+					Name: token.Token{
+						Type:   token.Identifier,
+						Lexeme: "result",
+					},
+					Initializer: ast.BooleanLiteral{Boolean: true},
 				},
 			},
-			out: "TRUE",
-			env: NewEnvironment(),
+			env: NewEnvironment(Prefill("result", Boolean{true})),
 		},
 		{
 			name:    "if that evaluates to false",
 			preload: NewEnvironment(),
 			stmt: ast.If{
 				Condition: ast.BooleanLiteral{Boolean: false},
-				Then: ast.Print{
-					Expression: ast.StringLiteral{String: "TRUE"},
+				Then: ast.Declaration{
+					Name: token.Token{
+						Type:   token.Identifier,
+						Lexeme: "result",
+					},
+					Initializer: ast.BooleanLiteral{Boolean: true},
 				},
 			},
 			env: NewEnvironment(),
@@ -1863,17 +1778,10 @@ func TestEvaluator_statement(t *testing.T) {
 			env:     NewEnvironment(),
 		},
 		{
-			name:    "while loop with print statements",
-			preload: NewEnvironment(),
+			name:    "while loop",
+			preload: NewEnvironment(Prefill("i", Number{1})),
 			stmt: ast.Block{
 				Body: []ast.StatementNode{
-					ast.Declaration{
-						Name: token.Token{
-							Type:   token.Identifier,
-							Lexeme: "i",
-						},
-						Initializer: ast.IntegerLiteral{Integer: 0},
-					},
 					ast.While{
 						Condition: ast.Infix{
 							Operator: token.Token{
@@ -1892,11 +1800,6 @@ func TestEvaluator_statement(t *testing.T) {
 						},
 						Body: ast.Block{
 							Body: []ast.StatementNode{
-								ast.Print{
-									Expression: ast.StringLiteral{
-										String: "crookdc",
-									},
-								},
 								ast.ExpressionStatement{
 									Expression: ast.Assignment{
 										Name: token.Token{
@@ -1937,8 +1840,7 @@ func TestEvaluator_statement(t *testing.T) {
 					},
 				},
 			},
-			env: NewEnvironment(),
-			out: "crookdccrookdccrookdccrookdccrookdc",
+			env: NewEnvironment(Prefill("i", Number{5})),
 		},
 	}
 

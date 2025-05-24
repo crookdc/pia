@@ -65,12 +65,6 @@ type ExpressionStatement struct {
 	Expression ExpressionNode
 }
 
-// Print represents a request from the running script to print the [squeak.Object] evaluated from Expression.
-type Print struct {
-	Statement
-	Expression ExpressionNode
-}
-
 // Declaration represents a variable declaration with an optional initializer. Since Initializer is optional it must always be
 // nil-checked before use.
 type Declaration struct {

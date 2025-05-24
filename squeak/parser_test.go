@@ -226,14 +226,6 @@ func TestParser_Next(t *testing.T) {
 			},
 		},
 		{
-			src: "print \"hello world\";",
-			expected: ast.Print{
-				Expression: ast.StringLiteral{
-					String: "hello world",
-				},
-			},
-		},
-		{
 			src: "",
 			err: io.EOF,
 		},
@@ -454,7 +446,7 @@ func TestParser_Next(t *testing.T) {
 		{
 			src: `
 			for var i = 0; i < 3; i = i + 1 {
-				print i;
+				print(i);
 			}
 			`,
 			expected: ast.Block{
@@ -486,11 +478,25 @@ func TestParser_Next(t *testing.T) {
 						},
 						Body: ast.Block{
 							Body: []ast.StatementNode{
-								ast.Print{
-									Expression: ast.Variable{
-										Name: token.Token{
-											Type:   token.Identifier,
-											Lexeme: "i",
+								ast.ExpressionStatement{
+									Expression: ast.Call{
+										Callee: ast.Variable{
+											Name: token.Token{
+												Type:   token.Identifier,
+												Lexeme: "print",
+											},
+										},
+										Operator: token.Token{
+											Type:   token.LeftParenthesis,
+											Lexeme: "(",
+										},
+										Args: []ast.ExpressionNode{
+											ast.Variable{
+												Name: token.Token{
+													Type:   token.Identifier,
+													Lexeme: "i",
+												},
+											},
 										},
 									},
 								},
@@ -526,7 +532,7 @@ func TestParser_Next(t *testing.T) {
 		{
 			src: `
 			for ; i < 3; i = i + 1 {
-				print i;
+				print(i);
 			}
 			`,
 			expected: ast.Block{
@@ -550,11 +556,25 @@ func TestParser_Next(t *testing.T) {
 						},
 						Body: ast.Block{
 							Body: []ast.StatementNode{
-								ast.Print{
-									Expression: ast.Variable{
-										Name: token.Token{
-											Type:   token.Identifier,
-											Lexeme: "i",
+								ast.ExpressionStatement{
+									Expression: ast.Call{
+										Callee: ast.Variable{
+											Name: token.Token{
+												Type:   token.Identifier,
+												Lexeme: "print",
+											},
+										},
+										Operator: token.Token{
+											Type:   token.LeftParenthesis,
+											Lexeme: "(",
+										},
+										Args: []ast.ExpressionNode{
+											ast.Variable{
+												Name: token.Token{
+													Type:   token.Identifier,
+													Lexeme: "i",
+												},
+											},
 										},
 									},
 								},
@@ -590,7 +610,7 @@ func TestParser_Next(t *testing.T) {
 		{
 			src: `
 			for ; i < 3; {
-				print i;
+				print(i);
 			}
 			`,
 			expected: ast.Block{
@@ -614,11 +634,25 @@ func TestParser_Next(t *testing.T) {
 						},
 						Body: ast.Block{
 							Body: []ast.StatementNode{
-								ast.Print{
-									Expression: ast.Variable{
-										Name: token.Token{
-											Type:   token.Identifier,
-											Lexeme: "i",
+								ast.ExpressionStatement{
+									Expression: ast.Call{
+										Callee: ast.Variable{
+											Name: token.Token{
+												Type:   token.Identifier,
+												Lexeme: "print",
+											},
+										},
+										Operator: token.Token{
+											Type:   token.LeftParenthesis,
+											Lexeme: "(",
+										},
+										Args: []ast.ExpressionNode{
+											ast.Variable{
+												Name: token.Token{
+													Type:   token.Identifier,
+													Lexeme: "i",
+												},
+											},
 										},
 									},
 								},
@@ -631,7 +665,7 @@ func TestParser_Next(t *testing.T) {
 		{
 			src: `
 			for var i = 0; i < 3; {
-				print i;
+				print(i);
 			}
 			`,
 			expected: ast.Block{
@@ -663,11 +697,25 @@ func TestParser_Next(t *testing.T) {
 						},
 						Body: ast.Block{
 							Body: []ast.StatementNode{
-								ast.Print{
-									Expression: ast.Variable{
-										Name: token.Token{
-											Type:   token.Identifier,
-											Lexeme: "i",
+								ast.ExpressionStatement{
+									Expression: ast.Call{
+										Callee: ast.Variable{
+											Name: token.Token{
+												Type:   token.Identifier,
+												Lexeme: "print",
+											},
+										},
+										Operator: token.Token{
+											Type:   token.LeftParenthesis,
+											Lexeme: "(",
+										},
+										Args: []ast.ExpressionNode{
+											ast.Variable{
+												Name: token.Token{
+													Type:   token.Identifier,
+													Lexeme: "i",
+												},
+											},
 										},
 									},
 								},
@@ -678,7 +726,7 @@ func TestParser_Next(t *testing.T) {
 			},
 		},
 		{
-			src: "if a > b print a; else print b;",
+			src: "if a > b print(a); else print(b);",
 			expected: ast.If{
 				Condition: ast.Infix{
 					Operator: token.Token{
@@ -698,26 +746,54 @@ func TestParser_Next(t *testing.T) {
 						},
 					},
 				},
-				Then: ast.Print{
-					Expression: ast.Variable{
-						Name: token.Token{
-							Type:   token.Identifier,
-							Lexeme: "a",
+				Then: ast.ExpressionStatement{
+					Expression: ast.Call{
+						Callee: ast.Variable{
+							Name: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "print",
+							},
+						},
+						Operator: token.Token{
+							Type:   token.LeftParenthesis,
+							Lexeme: "(",
+						},
+						Args: []ast.ExpressionNode{
+							ast.Variable{
+								Name: token.Token{
+									Type:   token.Identifier,
+									Lexeme: "a",
+								},
+							},
 						},
 					},
 				},
-				Else: ast.Print{
-					Expression: ast.Variable{
-						Name: token.Token{
-							Type:   token.Identifier,
-							Lexeme: "b",
+				Else: ast.ExpressionStatement{
+					Expression: ast.Call{
+						Callee: ast.Variable{
+							Name: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "print",
+							},
+						},
+						Operator: token.Token{
+							Type:   token.LeftParenthesis,
+							Lexeme: "(",
+						},
+						Args: []ast.ExpressionNode{
+							ast.Variable{
+								Name: token.Token{
+									Type:   token.Identifier,
+									Lexeme: "b",
+								},
+							},
 						},
 					},
 				},
 			},
 		},
 		{
-			src: "if a > b print a;",
+			src: "if a > b print(a);",
 			expected: ast.If{
 				Condition: ast.Infix{
 					Operator: token.Token{
@@ -737,18 +813,32 @@ func TestParser_Next(t *testing.T) {
 						},
 					},
 				},
-				Then: ast.Print{
-					Expression: ast.Variable{
-						Name: token.Token{
-							Type:   token.Identifier,
-							Lexeme: "a",
+				Then: ast.ExpressionStatement{
+					Expression: ast.Call{
+						Callee: ast.Variable{
+							Name: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "print",
+							},
+						},
+						Operator: token.Token{
+							Type:   token.LeftParenthesis,
+							Lexeme: "(",
+						},
+						Args: []ast.ExpressionNode{
+							ast.Variable{
+								Name: token.Token{
+									Type:   token.Identifier,
+									Lexeme: "a",
+								},
+							},
 						},
 					},
 				},
 			},
 		},
 		{
-			src: "if a if b print b; else print c;",
+			src: "if a if b print(b); else print(c);",
 			expected: ast.If{
 				Condition: ast.Variable{
 					Name: token.Token{
@@ -763,19 +853,47 @@ func TestParser_Next(t *testing.T) {
 							Lexeme: "b",
 						},
 					},
-					Then: ast.Print{
-						Expression: ast.Variable{
-							Name: token.Token{
-								Type:   token.Identifier,
-								Lexeme: "b",
+					Then: ast.ExpressionStatement{
+						Expression: ast.Call{
+							Callee: ast.Variable{
+								Name: token.Token{
+									Type:   token.Identifier,
+									Lexeme: "print",
+								},
+							},
+							Operator: token.Token{
+								Type:   token.LeftParenthesis,
+								Lexeme: "(",
+							},
+							Args: []ast.ExpressionNode{
+								ast.Variable{
+									Name: token.Token{
+										Type:   token.Identifier,
+										Lexeme: "b",
+									},
+								},
 							},
 						},
 					},
-					Else: ast.Print{
-						Expression: ast.Variable{
-							Name: token.Token{
-								Type:   token.Identifier,
-								Lexeme: "c",
+					Else: ast.ExpressionStatement{
+						Expression: ast.Call{
+							Callee: ast.Variable{
+								Name: token.Token{
+									Type:   token.Identifier,
+									Lexeme: "print",
+								},
+							},
+							Operator: token.Token{
+								Type:   token.LeftParenthesis,
+								Lexeme: "(",
+							},
+							Args: []ast.ExpressionNode{
+								ast.Variable{
+									Name: token.Token{
+										Type:   token.Identifier,
+										Lexeme: "c",
+									},
+								},
 							},
 						},
 					},
@@ -822,7 +940,7 @@ func TestParser_Next(t *testing.T) {
 			},
 		},
 		{
-			src: "while a < b and b >= 3 { print a; }",
+			src: "while a < b and b >= 3 { print(a); }",
 			expected: ast.While{
 				Condition: ast.Logical{
 					Operator: token.Token{
@@ -865,11 +983,25 @@ func TestParser_Next(t *testing.T) {
 				},
 				Body: ast.Block{
 					Body: []ast.StatementNode{
-						ast.Print{
-							Expression: ast.Variable{
-								Name: token.Token{
-									Type:   token.Identifier,
-									Lexeme: "a",
+						ast.ExpressionStatement{
+							Expression: ast.Call{
+								Callee: ast.Variable{
+									Name: token.Token{
+										Type:   token.Identifier,
+										Lexeme: "print",
+									},
+								},
+								Operator: token.Token{
+									Type:   token.LeftParenthesis,
+									Lexeme: "(",
+								},
+								Args: []ast.ExpressionNode{
+									ast.Variable{
+										Name: token.Token{
+											Type:   token.Identifier,
+											Lexeme: "a",
+										},
+									},
 								},
 							},
 						},
@@ -878,7 +1010,7 @@ func TestParser_Next(t *testing.T) {
 			},
 		},
 		{
-			src: "while a < b { print a; print b; }",
+			src: "while a < b { print(a); print(b); }",
 			expected: ast.While{
 				Condition: ast.Infix{
 					Operator: token.Token{
@@ -900,19 +1032,47 @@ func TestParser_Next(t *testing.T) {
 				},
 				Body: ast.Block{
 					Body: []ast.StatementNode{
-						ast.Print{
-							Expression: ast.Variable{
-								Name: token.Token{
-									Type:   token.Identifier,
-									Lexeme: "a",
+						ast.ExpressionStatement{
+							Expression: ast.Call{
+								Callee: ast.Variable{
+									Name: token.Token{
+										Type:   token.Identifier,
+										Lexeme: "print",
+									},
+								},
+								Operator: token.Token{
+									Type:   token.LeftParenthesis,
+									Lexeme: "(",
+								},
+								Args: []ast.ExpressionNode{
+									ast.Variable{
+										Name: token.Token{
+											Type:   token.Identifier,
+											Lexeme: "a",
+										},
+									},
 								},
 							},
 						},
-						ast.Print{
-							Expression: ast.Variable{
-								Name: token.Token{
-									Type:   token.Identifier,
-									Lexeme: "b",
+						ast.ExpressionStatement{
+							Expression: ast.Call{
+								Callee: ast.Variable{
+									Name: token.Token{
+										Type:   token.Identifier,
+										Lexeme: "print",
+									},
+								},
+								Operator: token.Token{
+									Type:   token.LeftParenthesis,
+									Lexeme: "(",
+								},
+								Args: []ast.ExpressionNode{
+									ast.Variable{
+										Name: token.Token{
+											Type:   token.Identifier,
+											Lexeme: "b",
+										},
+									},
 								},
 							},
 						},

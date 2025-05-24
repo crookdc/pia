@@ -29,7 +29,6 @@ const (
 	Return
 	Function
 	Var
-	Print
 	Nil
 
 	Less
@@ -66,7 +65,6 @@ var lexemes = map[Type]string{
 	Return:           "return",
 	Function:         "func",
 	Var:              "var",
-	Print:            "print",
 	Nil:              "nil",
 	Less:             "<",
 	LessEqual:        "<=",

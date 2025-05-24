@@ -102,8 +102,6 @@ func (ps *Parser) statement() (ast.StatementNode, error) {
 		return nil, err
 	}
 	switch pk.Type {
-	case token.Print:
-		return ps.print()
 	case token.LeftBrace:
 		return ps.block()
 	case token.If:
@@ -215,25 +213,6 @@ func (ps *Parser) ifs() (ast.If, error) {
 		st.Else = otherwise
 	}
 	return st, nil
-}
-
-func (ps *Parser) print() (ast.Print, error) {
-	if _, err := ps.expect(token.Print); err != nil {
-		return ast.Print{}, err
-	}
-	expr, err := ps.equality()
-	if err != nil {
-		return ast.Print{}, err
-	}
-	if _, err := ps.expect(token.Semicolon); err != nil {
-		return ast.Print{}, fmt.Errorf(
-			"%w: missing semicolon",
-			SyntaxError{Line: ps.lx.Line()},
-		)
-	}
-	return ast.Print{
-		Expression: expr,
-	}, nil
 }
 
 func (ps *Parser) block() (ast.Block, error) {

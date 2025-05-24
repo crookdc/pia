@@ -219,16 +219,24 @@ func TestLexer_Next(t *testing.T) {
 			},
 		},
 		{
-			src: "print 15;",
+			src: "print(15);",
 			bl:  LexerBufferLength,
 			expected: []token.Token{
 				{
-					Type:   token.Print,
+					Type:   token.Identifier,
 					Lexeme: "print",
+				},
+				{
+					Type:   token.LeftParenthesis,
+					Lexeme: "(",
 				},
 				{
 					Type:   token.Integer,
 					Lexeme: "15",
+				},
+				{
+					Type:   token.RightParenthesis,
+					Lexeme: ")",
 				},
 				{
 					Type:   token.Semicolon,

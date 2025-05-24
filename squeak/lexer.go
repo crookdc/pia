@@ -403,8 +403,6 @@ func (lx *Lexer) word() (token.Token, error) {
 		return token.New(token.Function)
 	case "var":
 		return token.New(token.Var)
-	case "print":
-		return token.New(token.Print)
 	case "nil":
 		return token.New(token.Nil)
 	case "true", "false":

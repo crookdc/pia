@@ -145,13 +145,6 @@ func (ev *Evaluator) statement(node ast.StatementNode) error {
 	case ast.ExpressionStatement:
 		_, err := ev.expression(node.Expression)
 		return err
-	case ast.Print:
-		obj, err := ev.expression(node.Expression)
-		if err != nil {
-			return err
-		}
-		_, err = io.WriteString(ev.out, obj.String())
-		return err
 	case ast.Declaration:
 		if node.Initializer == nil {
 			ev.env.Declare(node.Name.Lexeme, nil)
