@@ -1699,124 +1699,6 @@ func TestInterpreter_statement(t *testing.T) {
 			env:     NewEnvironment(Prefill("name", Number{1.123})),
 		},
 		{
-			name:    "function",
-			preload: NewEnvironment(Prefill("print", PrintBuiltin{})),
-			stmt: ast.Function{
-				Name: token.Token{
-					Type:   token.Identifier,
-					Lexeme: "add",
-				},
-				Params: []token.Token{
-					{
-						Type:   token.Identifier,
-						Lexeme: "a",
-					},
-					{
-						Type:   token.Identifier,
-						Lexeme: "b",
-					},
-				},
-				Body: ast.Block{
-					Body: []ast.StatementNode{
-						ast.ExpressionStatement{
-							Expression: ast.Call{
-								Callee: ast.Variable{
-									Name: token.Token{
-										Type:   token.Identifier,
-										Lexeme: "print",
-									},
-								},
-								Operator: token.Token{
-									Type:   token.LeftParenthesis,
-									Lexeme: "(",
-								},
-								Args: []ast.ExpressionNode{
-									ast.Infix{
-										Operator: token.Token{
-											Type:   token.Plus,
-											Lexeme: "+",
-										},
-										LHS: ast.Variable{
-											Name: token.Token{
-												Type:   token.Identifier,
-												Lexeme: "a",
-											},
-										},
-										RHS: ast.Variable{
-											Name: token.Token{
-												Type:   token.Identifier,
-												Lexeme: "b",
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			env: NewEnvironment(
-				Prefill("print", PrintBuiltin{}),
-				Prefill("add", Function{
-					Declaration: ast.Function{
-						Name: token.Token{
-							Type:   token.Identifier,
-							Lexeme: "add",
-						},
-						Params: []token.Token{
-							{
-								Type:   token.Identifier,
-								Lexeme: "a",
-							},
-							{
-								Type:   token.Identifier,
-								Lexeme: "b",
-							},
-						},
-						Body: ast.Block{
-							Body: []ast.StatementNode{
-								ast.ExpressionStatement{
-									Expression: ast.Call{
-										Callee: ast.Variable{
-											Name: token.Token{
-												Type:   token.Identifier,
-												Lexeme: "print",
-											},
-										},
-										Operator: token.Token{
-											Type:   token.LeftParenthesis,
-											Lexeme: "(",
-										},
-										Args: []ast.ExpressionNode{
-											ast.Infix{
-												Operator: token.Token{
-													Type:   token.Plus,
-													Lexeme: "+",
-												},
-												LHS: ast.Variable{
-													Name: token.Token{
-														Type:   token.Identifier,
-														Lexeme: "a",
-													},
-												},
-												RHS: ast.Variable{
-													Name: token.Token{
-														Type:   token.Identifier,
-														Lexeme: "b",
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-				),
-			),
-		},
-		{
 			name:    "if-else that evaluates to true",
 			preload: NewEnvironment(),
 			stmt: ast.If{
@@ -2008,6 +1890,48 @@ func TestInterpreter_statement(t *testing.T) {
 		second, err := in.scope.Resolve("second")
 		assert.Nil(t, err)
 		assert.Equal(t, Number{100}, second)
+	})
+
+	t.Run("closure within a function", func(t *testing.T) {
+		src := `
+		function random(n) {
+			function add(a) {
+				return n + a;
+			}
+			return add(10);
+		}
+		var test = random(100);
+		`
+		program, err := ParseString(src)
+		assert.Nil(t, err)
+		in := NewInterpreter(nil)
+		for _, stmt := range program {
+			_, err := in.execute(stmt)
+			assert.Nil(t, err)
+		}
+		first, err := in.scope.Resolve("test")
+		assert.Nil(t, err)
+		assert.Equal(t, Number{110}, first)
+	})
+
+	t.Run("global closure", func(t *testing.T) {
+		src := `
+		var adder = 1000.;
+		function random(n) {
+			return adder + n;
+		}
+		var test = random(100);
+		`
+		program, err := ParseString(src)
+		assert.Nil(t, err)
+		in := NewInterpreter(nil)
+		for _, stmt := range program {
+			_, err := in.execute(stmt)
+			assert.Nil(t, err)
+		}
+		first, err := in.scope.Resolve("test")
+		assert.Nil(t, err)
+		assert.Equal(t, Number{1100}, first)
 	})
 
 	t.Run("variable declaration followed by assignment", func(t *testing.T) {

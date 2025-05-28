@@ -135,7 +135,10 @@ func (in *Interpreter) execute(stmt ast.StatementNode) (*unwinder, error) {
 		// In the future it might be a good idea to restructure the AST so that it does not contain any [ast.Noop].
 		return nil, nil
 	case ast.Function:
-		in.scope.Declare(stmt.Name.Lexeme, Function{Declaration: stmt})
+		in.scope.Declare(stmt.Name.Lexeme, Function{
+			declaration: stmt,
+			closure:     in.scope,
+		})
 		return nil, nil
 	case ast.Return, ast.Break, ast.Continue:
 		// Perhaps these three types, which all share the common behaviour of unwinding the call stack of the

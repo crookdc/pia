@@ -22,23 +22,24 @@ type Callable interface {
 
 // Function is the callable equivalent of [ast.Function].
 type Function struct {
-	Declaration ast.Function
+	declaration ast.Function
+	closure     *Environment
 }
 
 func (f Function) String() string {
-	return fmt.Sprintf("function:%s", f.Declaration.Name.Lexeme)
+	return fmt.Sprintf("function:%s", f.declaration.Name.Lexeme)
 }
 
 func (f Function) Arity() int {
-	return len(f.Declaration.Params)
+	return len(f.declaration.Params)
 }
 
 func (f Function) Call(in *Interpreter, objs ...Object) (Object, error) {
-	scope := NewEnvironment(Parent(in.global))
-	for i, param := range f.Declaration.Params {
+	scope := NewEnvironment(Parent(f.closure))
+	for i, param := range f.declaration.Params {
 		scope.Declare(param.Lexeme, objs[i])
 	}
-	uw, err := in.block(scope, f.Declaration.Body.Body)
+	uw, err := in.block(scope, f.declaration.Body.Body)
 	if err != nil {
 		return nil, err
 	}
