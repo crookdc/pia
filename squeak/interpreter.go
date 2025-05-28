@@ -7,90 +7,13 @@ import (
 	"github.com/crookdc/pia/squeak/token"
 	"io"
 	"reflect"
-	"strings"
 )
 
 var ErrRuntimeFault = errors.New("runtime error")
 
-type Unwinding struct {
-	Source token.Token
-	Value  Object
-}
-
-// Object is a broad interface for any data that a Squeak script can process. It does not provide any interface beyond
-// the standard library fmt.Stringer, but passing around types of this interface around the interpreter obfuscates the
-// meaning behind the value. Hence, this interface is largely just for clearer naming.
-type Object interface {
-	fmt.Stringer
-}
-
-type Callable interface {
-	Object
-	Arity() int
-	Call(*Interpreter, ...Object) (Object, error)
-}
-
-// Function is the callable equivalent of [ast.Function].
-type Function struct {
-	Declaration ast.Function
-}
-
-func (f Function) String() string {
-	return fmt.Sprintf("function:%s", f.Declaration.Name.Lexeme)
-}
-
-func (f Function) Arity() int {
-	return len(f.Declaration.Params)
-}
-
-func (f Function) Call(in *Interpreter, objs ...Object) (Object, error) {
-	scope := NewEnvironment(Parent(in.global))
-	for i, param := range f.Declaration.Params {
-		scope.Declare(param.Lexeme, objs[i])
-	}
-	uw, err := in.block(scope, f.Declaration.Body.Body)
-	if err != nil {
-		return nil, err
-	}
-	if uw == nil {
-		return nil, nil
-	}
-	if uw.Source.Type != token.Return {
-		return nil, fmt.Errorf("%w: unexpected unwinding source %s", ErrRuntimeFault, uw.Source.Lexeme)
-	}
-	return uw.Value, nil
-}
-
-// Number is an Object representing a numerical value internally represented as a float64. In Squeak, the notion of
-// integers only exists in the lexical and parsing phase. During evaluation, all numerical objects are represented with
-// this struct.
-type Number struct {
-	value float64
-}
-
-func (i Number) String() string {
-	return strings.TrimRight(fmt.Sprintf("%f", i.value), "0")
-}
-
-// String is an Object representing a textual value.
-type String struct {
-	value string
-}
-
-func (s String) String() string {
-	return s.value
-}
-
-// Boolean is an Object representing a boolean value.
-type Boolean struct {
-	value bool
-}
-
-func (b Boolean) String() string {
-	if b.value {
-		return "true"
-	}
-	return "false"
+type unwinder struct {
+	source token.Token
+	value  Object
 }
 
 type EnvironmentOpt func(*Environment)
@@ -139,7 +62,7 @@ func (env *Environment) Resolve(k string) (Object, error) {
 	if env.parent != nil {
 		return env.parent.Resolve(k)
 	}
-	return nil, fmt.Errorf("%w: cannot resolve key %s", ErrRuntimeFault, k)
+	return nil, fmt.Errorf("%w: cannot resolve key: %s", ErrRuntimeFault, k)
 }
 
 // Declare sets the provided value for the provided key in the immediate scope.
@@ -159,7 +82,7 @@ func (env *Environment) Assign(k string, v Object) error {
 	if env.parent != nil {
 		return env.parent.Assign(k, v)
 	}
-	return fmt.Errorf("%w: cannot resolve assignment target", ErrRuntimeFault)
+	return fmt.Errorf("%w: cannot resolve assignment target: %s", ErrRuntimeFault, k)
 }
 
 // NewInterpreter constructs an interpreter with a prefilled runtime in its global scope. The caller is responsible for
@@ -194,107 +117,136 @@ func (in *Interpreter) Execute(program []ast.StatementNode) error {
 // statement executes the provided statement node within the current context of the interpreter. Statements do not
 // generally evaluate to a value. Some statements such as [ast.Return] changes the control flow drastically, those cases
 // are not directly handled by this method. Instead, whenever an unwinding statement is encountered then a non-nil value
-// of Unwinding is returned which is expected to be processed properly by some caller in the call stack.
-func (in *Interpreter) statement(node ast.StatementNode) (*Unwinding, error) {
-	switch node := node.(type) {
+// of unwinder is returned which is expected to be processed properly by some caller in the call stack.
+func (in *Interpreter) statement(stmt ast.StatementNode) (*unwinder, error) {
+	switch stmt := stmt.(type) {
 	case ast.ExpressionStatement:
-		_, err := in.expression(node.Expression)
+		_, err := in.expression(stmt.Expression)
 		return nil, err
 	case ast.Declaration:
-		if node.Initializer == nil {
-			in.scope.Declare(node.Name.Lexeme, nil)
-			return nil, nil
-		}
-		val, err := in.expression(node.Initializer)
-		if err != nil {
-			return nil, err
-		}
-		in.scope.Declare(node.Name.Lexeme, val)
-		return nil, nil
+		return nil, in.declaration(stmt)
 	case ast.Block:
-		return in.block(NewEnvironment(Parent(in.scope)), node.Body)
+		return in.block(NewEnvironment(Parent(in.scope)), stmt.Body)
 	case ast.If:
-		cnd, err := in.expression(node.Condition)
-		if err != nil {
-			return nil, err
-		}
-		if in.truthy(cnd) {
-			return in.statement(node.Then)
-		}
-		if node.Else != nil {
-			return in.statement(node.Else)
-		}
-		return nil, nil
+		return in.branching(stmt)
 	case ast.While:
-		cnd, err := in.expression(node.Condition)
-		if err != nil {
-			return nil, err
-		}
-		for in.truthy(cnd) {
-			uw, err := in.statement(node.Body)
-			if err != nil {
-				return nil, err
-			}
-			if uw != nil {
-				if uw.Source.Type == token.Break {
-					break
-				}
-				if uw.Source.Type != token.Continue {
-					return uw, nil
-				}
-			}
-			cnd, err = in.expression(node.Condition)
-			if err != nil {
-				return nil, err
-			}
-		}
-		return nil, nil
+		return in.loop(stmt)
 	case ast.Noop:
 		// In the future it might be a good idea to restructure the AST so that it does not contain any [ast.Noop].
 		return nil, nil
 	case ast.Function:
-		in.scope.Declare(node.Name.Lexeme, Function{Declaration: node})
+		in.scope.Declare(stmt.Name.Lexeme, Function{Declaration: stmt})
 		return nil, nil
+	case ast.Return, ast.Break, ast.Continue:
+		// Perhaps these three types, which all share the common behaviour of unwinding the call stack of the
+		// interpreter in one way or the other should be grouped with another 'subtype' of [ast.Statement] such as for
+		// example ast.Unwinder. However, for as long as we only have three of these statement types I do not see any
+		// harm in handling them directly like we do now rather than abstracting things away. On the contrary, I believe
+		// that abstracting it away prematurely would just cause confusion.
+		return in.unwinder(stmt)
+	default:
+		return nil, fmt.Errorf(
+			"%w: unexpected statement type: %s",
+			ErrRuntimeFault,
+			reflect.TypeOf(stmt),
+		)
+	}
+}
+
+func (in *Interpreter) declaration(stmt ast.Declaration) error {
+	if stmt.Initializer == nil {
+		in.scope.Declare(stmt.Name.Lexeme, nil)
+		return nil
+	}
+	val, err := in.expression(stmt.Initializer)
+	if err != nil {
+		return err
+	}
+	in.scope.Declare(stmt.Name.Lexeme, val)
+	return nil
+}
+
+func (in *Interpreter) branching(stmt ast.If) (*unwinder, error) {
+	cnd, err := in.expression(stmt.Condition)
+	if err != nil {
+		return nil, err
+	}
+	if in.truthy(cnd) {
+		return in.statement(stmt.Then)
+	}
+	if stmt.Else != nil {
+		return in.statement(stmt.Else)
+	}
+	return nil, nil
+}
+
+func (in *Interpreter) loop(stmt ast.While) (*unwinder, error) {
+	cnd, err := in.expression(stmt.Condition)
+	if err != nil {
+		return nil, err
+	}
+	for in.truthy(cnd) {
+		uw, err := in.statement(stmt.Body)
+		if err != nil {
+			return nil, err
+		}
+		if uw != nil {
+			if uw.source.Type == token.Break {
+				break
+			}
+			if uw.source.Type != token.Continue {
+				return uw, nil
+			}
+		}
+		cnd, err = in.expression(stmt.Condition)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return nil, nil
+}
+
+func (in *Interpreter) unwinder(stmt ast.StatementNode) (*unwinder, error) {
+	switch stmt := stmt.(type) {
 	case ast.Return:
-		uw := &Unwinding{
-			Source: token.Token{
+		uw := &unwinder{
+			source: token.Token{
 				Type:   token.Return,
 				Lexeme: "return",
 			},
 		}
-		if node.Expression == nil {
+		if stmt.Expression == nil {
 			return uw, nil
 		}
-		val, err := in.expression(node.Expression)
+		// The return statement is the only unwinding statement that can also evaluate an expression which shall be
+		// returned to the caller. If the return statement does indeed contain an expression then it is set on the value
+		// field in the unwinder value.
+		val, err := in.expression(stmt.Expression)
 		if err != nil {
 			return nil, err
 		}
-		uw.Value = val
+		uw.value = val
 		return uw, nil
 	case ast.Break:
-		return &Unwinding{
-			Source: token.Token{
+		return &unwinder{
+			source: token.Token{
 				Type:   token.Break,
 				Lexeme: "break",
 			},
 		}, nil
 	case ast.Continue:
-		return &Unwinding{
-			Source: token.Token{
+		return &unwinder{
+			source: token.Token{
 				Type:   token.Continue,
 				Lexeme: "continue",
 			},
 		}, nil
 	default:
-		return nil, fmt.Errorf(
-			"%w: unexpected statement type %s",
-			ErrRuntimeFault,
-			reflect.TypeOf(node),
-		)
+		panic(fmt.Errorf("unwinder executor called with invalid statement type: %t", stmt))
 	}
 }
 
-func (in *Interpreter) block(scope *Environment, block []ast.StatementNode) (*Unwinding, error) {
+func (in *Interpreter) block(scope *Environment, block []ast.StatementNode) (*unwinder, error) {
 	prev := in.scope
 	defer func() {
 		in.scope = prev
@@ -312,44 +264,44 @@ func (in *Interpreter) block(scope *Environment, block []ast.StatementNode) (*Un
 	return nil, nil
 }
 
-func (in *Interpreter) expression(node ast.ExpressionNode) (Object, error) {
-	switch node := node.(type) {
+func (in *Interpreter) expression(expr ast.ExpressionNode) (Object, error) {
+	switch expr := expr.(type) {
 	case ast.IntegerLiteral:
-		return Number{float64(node.Integer)}, nil
+		return Number{float64(expr.Integer)}, nil
 	case ast.FloatLiteral:
-		return Number{node.Float}, nil
+		return Number{expr.Float}, nil
 	case ast.StringLiteral:
-		return String{node.String}, nil
+		return String{expr.String}, nil
 	case ast.BooleanLiteral:
-		return Boolean{node.Boolean}, nil
+		return Boolean{expr.Boolean}, nil
 	case ast.NilLiteral:
 		return nil, nil
 	case ast.Grouping:
-		return in.expression(node.Group)
+		return in.expression(expr.Group)
 	case ast.Prefix:
-		return in.prefix(node)
+		return in.prefix(expr)
 	case ast.Infix:
-		return in.infix(node)
+		return in.infix(expr)
 	case ast.Variable:
-		return in.scope.Resolve(node.Name.Lexeme)
+		return in.scope.Resolve(expr.Name.Lexeme)
 	case ast.Assignment:
-		val, err := in.expression(node.Value)
+		val, err := in.expression(expr.Value)
 		if err != nil {
 			return nil, err
 		}
-		if err := in.scope.Assign(node.Name.Lexeme, val); err != nil {
+		if err := in.scope.Assign(expr.Name.Lexeme, val); err != nil {
 			return nil, err
 		}
 		return val, nil
 	case ast.Logical:
-		return in.logical(node)
+		return in.logical(expr)
 	case ast.Call:
-		return in.call(node)
+		return in.call(expr)
 	default:
 		return nil, fmt.Errorf(
-			"%w: unexpected expression type %s",
+			"%w: unexpected expression type: %s",
 			ErrRuntimeFault,
-			reflect.TypeOf(node),
+			reflect.TypeOf(expr),
 		)
 	}
 }
@@ -419,7 +371,7 @@ func (in *Interpreter) prefix(node ast.Prefix) (Object, error) {
 		return in.multiply(obj, Number{-1})
 	default:
 		return nil, fmt.Errorf(
-			"%w: unexpected prefix operator %s",
+			"%w: unexpected prefix operator: %s",
 			ErrRuntimeFault,
 			node.Operator.Lexeme,
 		)
@@ -462,7 +414,7 @@ func (in *Interpreter) infix(node ast.Infix) (Object, error) {
 			return in.add(lhs, rhs)
 		default:
 			return nil, fmt.Errorf(
-				"%w: invalid addition operand type %s",
+				"%w: invalid addition operand type: %s",
 				ErrRuntimeFault,
 				reflect.TypeOf(lhs),
 			)
@@ -503,7 +455,7 @@ func (in *Interpreter) infix(node ast.Infix) (Object, error) {
 		return eq, err
 	default:
 		return nil, fmt.Errorf(
-			"%w: unexpected infix operator %s",
+			"%w: unexpected infix operator: %s",
 			ErrRuntimeFault,
 			node.Operator.Lexeme,
 		)

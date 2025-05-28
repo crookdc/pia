@@ -1613,7 +1613,7 @@ func TestInterpreter_statement(t *testing.T) {
 		preload *Environment
 
 		out string
-		uw  *Unwinding
+		uw  *unwinder
 		env *Environment
 		err error
 	}{
