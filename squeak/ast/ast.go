@@ -1,6 +1,6 @@
 package ast
 
-import "github.com/crookdc/pia/squeak/internal/token"
+import "github.com/crookdc/pia/squeak/token"
 
 // Node represent any type of node in an AST. It does not define any functional behaviours. This is by design as the
 // Node abstraction is little more than a means of categorizing data. It is not considered incorrect to implement the
@@ -100,6 +100,31 @@ type While struct {
 // Noop represents a statement that should be ignored by the interpreter. Unlike other statements, the Noop statement
 // does not have any side effect.
 type Noop struct {
+	Statement
+}
+
+// Function represents a stored function in a Squeak script.
+type Function struct {
+	Statement
+	Name   token.Token
+	Params []token.Token
+	Body   Block
+}
+
+// Return represents a statement which allows a value from within a block to be returned to the caller of said block.
+type Return struct {
+	Statement
+	Expression ExpressionNode
+}
+
+// Break represents a break statement, which immediately stops the execution of a loop.
+type Break struct {
+	Statement
+}
+
+// Continue represents a continue statement, which skips the remainder of the loop body for the current iteration and
+// jumps immediately to the next iteration of the loop.
+type Continue struct {
 	Statement
 }
 

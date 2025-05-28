@@ -3,7 +3,7 @@ package squeak
 import (
 	"errors"
 	"fmt"
-	"github.com/crookdc/pia/squeak/internal/token"
+	"github.com/crookdc/pia/squeak/token"
 	"io"
 	"unicode"
 )
@@ -393,13 +393,15 @@ func (lx *Lexer) word() (token.Token, error) {
 		return token.New(token.And)
 	case "or":
 		return token.New(token.Or)
-	case "for":
-		return token.New(token.For)
 	case "while":
 		return token.New(token.While)
 	case "return":
 		return token.New(token.Return)
-	case "func":
+	case "break":
+		return token.New(token.Break)
+	case "continue":
+		return token.New(token.Continue)
+	case "function":
 		return token.New(token.Function)
 	case "var":
 		return token.New(token.Var)

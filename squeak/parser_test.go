@@ -1,8 +1,8 @@
 package squeak
 
 import (
-	"github.com/crookdc/pia/squeak/internal/ast"
-	"github.com/crookdc/pia/squeak/internal/token"
+	"github.com/crookdc/pia/squeak/ast"
+	"github.com/crookdc/pia/squeak/token"
 	"github.com/stretchr/testify/assert"
 	"io"
 	"strings"
@@ -23,6 +23,99 @@ func TestParser_Next(t *testing.T) {
 						Type:   token.Identifier,
 						Lexeme: "a",
 					},
+				},
+			},
+		},
+		{
+			src: "{ break; continue; }",
+			expected: ast.Block{
+				Body: []ast.StatementNode{
+					ast.Break{},
+					ast.Continue{},
+				},
+			},
+		},
+		{
+			src: `
+			function add(a, b) {
+				print(a + b);
+				return 42.;
+			}
+			`,
+			expected: ast.Function{
+				Name: token.Token{
+					Type:   token.Identifier,
+					Lexeme: "add",
+				},
+				Params: []token.Token{
+					{
+						Type:   token.Identifier,
+						Lexeme: "a",
+					},
+					{
+						Type:   token.Identifier,
+						Lexeme: "b",
+					},
+				},
+				Body: ast.Block{
+					Body: []ast.StatementNode{
+						ast.ExpressionStatement{
+							Expression: ast.Call{
+								Callee: ast.Variable{
+									Name: token.Token{
+										Type:   token.Identifier,
+										Lexeme: "print",
+									},
+								},
+								Operator: token.Token{
+									Type:   token.LeftParenthesis,
+									Lexeme: "(",
+								},
+								Args: []ast.ExpressionNode{
+									ast.Infix{
+										Operator: token.Token{
+											Type:   token.Plus,
+											Lexeme: "+",
+										},
+										LHS: ast.Variable{
+											Name: token.Token{
+												Type:   token.Identifier,
+												Lexeme: "a",
+											},
+										},
+										RHS: ast.Variable{
+											Name: token.Token{
+												Type:   token.Identifier,
+												Lexeme: "b",
+											},
+										},
+									},
+								},
+							},
+						},
+						ast.Return{
+							Expression: ast.FloatLiteral{
+								Float: 42,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			src: `
+			function clock() {
+				# This is where we would put some logic!
+			}
+			`,
+			expected: ast.Function{
+				Name: token.Token{
+					Type:   token.Identifier,
+					Lexeme: "clock",
+				},
+				Params: []token.Token{},
+				Body: ast.Block{
+					Body: []ast.StatementNode{},
 				},
 			},
 		},
@@ -329,7 +422,7 @@ func TestParser_Next(t *testing.T) {
 						Type:   token.LeftParenthesis,
 						Lexeme: "(",
 					},
-					Args: nil,
+					Args: []ast.ExpressionNode{},
 				},
 			},
 		},
@@ -386,7 +479,7 @@ func TestParser_Next(t *testing.T) {
 								Type:   token.LeftParenthesis,
 								Lexeme: "(",
 							},
-							Args: nil,
+							Args: []ast.ExpressionNode{},
 						},
 						Operator: token.Token{
 							Type:   token.LeftParenthesis,
@@ -440,288 +533,6 @@ func TestParser_Next(t *testing.T) {
 				},
 				Body: ast.Block{
 					Body: []ast.StatementNode{},
-				},
-			},
-		},
-		{
-			src: `
-			for var i = 0; i < 3; i = i + 1 {
-				print(i);
-			}
-			`,
-			expected: ast.Block{
-				Body: []ast.StatementNode{
-					ast.Declaration{
-						Name: token.Token{
-							Type:   token.Identifier,
-							Lexeme: "i",
-						},
-						Initializer: ast.IntegerLiteral{
-							Integer: 0,
-						},
-					},
-					ast.While{
-						Condition: ast.Infix{
-							Operator: token.Token{
-								Type:   token.Less,
-								Lexeme: "<",
-							},
-							LHS: ast.Variable{
-								Name: token.Token{
-									Type:   token.Identifier,
-									Lexeme: "i",
-								},
-							},
-							RHS: ast.IntegerLiteral{
-								Integer: 3,
-							},
-						},
-						Body: ast.Block{
-							Body: []ast.StatementNode{
-								ast.ExpressionStatement{
-									Expression: ast.Call{
-										Callee: ast.Variable{
-											Name: token.Token{
-												Type:   token.Identifier,
-												Lexeme: "print",
-											},
-										},
-										Operator: token.Token{
-											Type:   token.LeftParenthesis,
-											Lexeme: "(",
-										},
-										Args: []ast.ExpressionNode{
-											ast.Variable{
-												Name: token.Token{
-													Type:   token.Identifier,
-													Lexeme: "i",
-												},
-											},
-										},
-									},
-								},
-								ast.ExpressionStatement{
-									Expression: ast.Assignment{
-										Name: token.Token{
-											Type:   token.Identifier,
-											Lexeme: "i",
-										},
-										Value: ast.Infix{
-											Operator: token.Token{
-												Type:   token.Plus,
-												Lexeme: "+",
-											},
-											LHS: ast.Variable{
-												Name: token.Token{
-													Type:   token.Identifier,
-													Lexeme: "i",
-												},
-											},
-											RHS: ast.IntegerLiteral{
-												Integer: 1,
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			src: `
-			for ; i < 3; i = i + 1 {
-				print(i);
-			}
-			`,
-			expected: ast.Block{
-				Body: []ast.StatementNode{
-					ast.Noop{},
-					ast.While{
-						Condition: ast.Infix{
-							Operator: token.Token{
-								Type:   token.Less,
-								Lexeme: "<",
-							},
-							LHS: ast.Variable{
-								Name: token.Token{
-									Type:   token.Identifier,
-									Lexeme: "i",
-								},
-							},
-							RHS: ast.IntegerLiteral{
-								Integer: 3,
-							},
-						},
-						Body: ast.Block{
-							Body: []ast.StatementNode{
-								ast.ExpressionStatement{
-									Expression: ast.Call{
-										Callee: ast.Variable{
-											Name: token.Token{
-												Type:   token.Identifier,
-												Lexeme: "print",
-											},
-										},
-										Operator: token.Token{
-											Type:   token.LeftParenthesis,
-											Lexeme: "(",
-										},
-										Args: []ast.ExpressionNode{
-											ast.Variable{
-												Name: token.Token{
-													Type:   token.Identifier,
-													Lexeme: "i",
-												},
-											},
-										},
-									},
-								},
-								ast.ExpressionStatement{
-									Expression: ast.Assignment{
-										Name: token.Token{
-											Type:   token.Identifier,
-											Lexeme: "i",
-										},
-										Value: ast.Infix{
-											Operator: token.Token{
-												Type:   token.Plus,
-												Lexeme: "+",
-											},
-											LHS: ast.Variable{
-												Name: token.Token{
-													Type:   token.Identifier,
-													Lexeme: "i",
-												},
-											},
-											RHS: ast.IntegerLiteral{
-												Integer: 1,
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			src: `
-			for ; i < 3; {
-				print(i);
-			}
-			`,
-			expected: ast.Block{
-				Body: []ast.StatementNode{
-					ast.Noop{},
-					ast.While{
-						Condition: ast.Infix{
-							Operator: token.Token{
-								Type:   token.Less,
-								Lexeme: "<",
-							},
-							LHS: ast.Variable{
-								Name: token.Token{
-									Type:   token.Identifier,
-									Lexeme: "i",
-								},
-							},
-							RHS: ast.IntegerLiteral{
-								Integer: 3,
-							},
-						},
-						Body: ast.Block{
-							Body: []ast.StatementNode{
-								ast.ExpressionStatement{
-									Expression: ast.Call{
-										Callee: ast.Variable{
-											Name: token.Token{
-												Type:   token.Identifier,
-												Lexeme: "print",
-											},
-										},
-										Operator: token.Token{
-											Type:   token.LeftParenthesis,
-											Lexeme: "(",
-										},
-										Args: []ast.ExpressionNode{
-											ast.Variable{
-												Name: token.Token{
-													Type:   token.Identifier,
-													Lexeme: "i",
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			src: `
-			for var i = 0; i < 3; {
-				print(i);
-			}
-			`,
-			expected: ast.Block{
-				Body: []ast.StatementNode{
-					ast.Declaration{
-						Name: token.Token{
-							Type:   token.Identifier,
-							Lexeme: "i",
-						},
-						Initializer: ast.IntegerLiteral{
-							Integer: 0,
-						},
-					},
-					ast.While{
-						Condition: ast.Infix{
-							Operator: token.Token{
-								Type:   token.Less,
-								Lexeme: "<",
-							},
-							LHS: ast.Variable{
-								Name: token.Token{
-									Type:   token.Identifier,
-									Lexeme: "i",
-								},
-							},
-							RHS: ast.IntegerLiteral{
-								Integer: 3,
-							},
-						},
-						Body: ast.Block{
-							Body: []ast.StatementNode{
-								ast.ExpressionStatement{
-									Expression: ast.Call{
-										Callee: ast.Variable{
-											Name: token.Token{
-												Type:   token.Identifier,
-												Lexeme: "print",
-											},
-										},
-										Operator: token.Token{
-											Type:   token.LeftParenthesis,
-											Lexeme: "(",
-										},
-										Args: []ast.ExpressionNode{
-											ast.Variable{
-												Name: token.Token{
-													Type:   token.Identifier,
-													Lexeme: "i",
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
 				},
 			},
 		},

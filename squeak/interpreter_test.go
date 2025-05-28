@@ -2,13 +2,13 @@ package squeak
 
 import (
 	"bytes"
-	"github.com/crookdc/pia/squeak/internal/ast"
-	"github.com/crookdc/pia/squeak/internal/token"
+	"github.com/crookdc/pia/squeak/ast"
+	"github.com/crookdc/pia/squeak/token"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-func TestEvaluator_expression(t *testing.T) {
+func TestInterpreter_expression(t *testing.T) {
 	tests := []struct {
 		name string
 		node ast.ExpressionNode
@@ -1595,7 +1595,7 @@ func TestEvaluator_expression(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			obj, err := (&Evaluator{}).expression(test.node)
+			obj, err := (&Interpreter{}).expression(test.node)
 			assert.ErrorIs(t, err, test.err)
 			if err == nil {
 				// The returned value is only interesting if the returned error is nil. If the error is not nil then the
@@ -1606,13 +1606,14 @@ func TestEvaluator_expression(t *testing.T) {
 	}
 }
 
-func TestEvaluator_statement(t *testing.T) {
+func TestInterpreter_statement(t *testing.T) {
 	tests := []struct {
 		name    string
 		stmt    ast.StatementNode
 		preload *Environment
 
 		out string
+		uw  *Unwinding
 		env *Environment
 		err error
 	}{
@@ -1696,6 +1697,124 @@ func TestEvaluator_statement(t *testing.T) {
 			preload: NewEnvironment(Prefill("name", Number{1.123})),
 			stmt:    ast.Block{},
 			env:     NewEnvironment(Prefill("name", Number{1.123})),
+		},
+		{
+			name:    "function",
+			preload: NewEnvironment(Prefill("print", PrintBuiltin{})),
+			stmt: ast.Function{
+				Name: token.Token{
+					Type:   token.Identifier,
+					Lexeme: "add",
+				},
+				Params: []token.Token{
+					{
+						Type:   token.Identifier,
+						Lexeme: "a",
+					},
+					{
+						Type:   token.Identifier,
+						Lexeme: "b",
+					},
+				},
+				Body: ast.Block{
+					Body: []ast.StatementNode{
+						ast.ExpressionStatement{
+							Expression: ast.Call{
+								Callee: ast.Variable{
+									Name: token.Token{
+										Type:   token.Identifier,
+										Lexeme: "print",
+									},
+								},
+								Operator: token.Token{
+									Type:   token.LeftParenthesis,
+									Lexeme: "(",
+								},
+								Args: []ast.ExpressionNode{
+									ast.Infix{
+										Operator: token.Token{
+											Type:   token.Plus,
+											Lexeme: "+",
+										},
+										LHS: ast.Variable{
+											Name: token.Token{
+												Type:   token.Identifier,
+												Lexeme: "a",
+											},
+										},
+										RHS: ast.Variable{
+											Name: token.Token{
+												Type:   token.Identifier,
+												Lexeme: "b",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			env: NewEnvironment(
+				Prefill("print", PrintBuiltin{}),
+				Prefill("add", Function{
+					Declaration: ast.Function{
+						Name: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "add",
+						},
+						Params: []token.Token{
+							{
+								Type:   token.Identifier,
+								Lexeme: "a",
+							},
+							{
+								Type:   token.Identifier,
+								Lexeme: "b",
+							},
+						},
+						Body: ast.Block{
+							Body: []ast.StatementNode{
+								ast.ExpressionStatement{
+									Expression: ast.Call{
+										Callee: ast.Variable{
+											Name: token.Token{
+												Type:   token.Identifier,
+												Lexeme: "print",
+											},
+										},
+										Operator: token.Token{
+											Type:   token.LeftParenthesis,
+											Lexeme: "(",
+										},
+										Args: []ast.ExpressionNode{
+											ast.Infix{
+												Operator: token.Token{
+													Type:   token.Plus,
+													Lexeme: "+",
+												},
+												LHS: ast.Variable{
+													Name: token.Token{
+														Type:   token.Identifier,
+														Lexeme: "a",
+													},
+												},
+												RHS: ast.Variable{
+													Name: token.Token{
+														Type:   token.Identifier,
+														Lexeme: "b",
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				),
+			),
 		},
 		{
 			name:    "if-else that evaluates to true",
@@ -1847,25 +1966,58 @@ func TestEvaluator_statement(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			out := bytes.NewBufferString("")
-			ev := Evaluator{
-				out: out,
-				env: test.preload,
+			ev := Interpreter{
+				out:   out,
+				scope: test.preload,
 			}
-			err := ev.statement(test.stmt)
+			uw, err := ev.statement(test.stmt)
+			assert.Equal(t, test.uw, uw)
 			assert.ErrorIs(t, err, test.err)
 			assert.Equal(t, test.out, out.String())
-			assert.Equal(t, test.env, ev.env)
+			assert.Equal(t, test.env, ev.scope)
 		})
 	}
 
+	t.Run("return statement nested into deep scoping", func(t *testing.T) {
+		src := `
+		function random(n) {
+			if n < 10 {
+				var i = 0;
+				while i < 10 {
+					if i == 5 {
+						return i;
+					}
+					i = i + 1;
+				}
+			} 
+			return 100;
+		}
+		var first = random(0);
+		var second = random(10);
+		`
+		program, err := ParseString(src)
+		assert.Nil(t, err)
+		in := NewInterpreter(nil)
+		for _, stmt := range program {
+			_, err := in.statement(stmt)
+			assert.Nil(t, err)
+		}
+		first, err := in.scope.Resolve("first")
+		assert.Nil(t, err)
+		assert.Equal(t, Number{5}, first)
+		second, err := in.scope.Resolve("second")
+		assert.Nil(t, err)
+		assert.Equal(t, Number{100}, second)
+	})
+
 	t.Run("variable declaration followed by assignment", func(t *testing.T) {
 		out := bytes.NewBufferString("")
-		ev := Evaluator{
-			out: out,
-			env: NewEnvironment(),
+		ev := Interpreter{
+			out:   out,
+			scope: NewEnvironment(),
 		}
 
-		err := ev.statement(ast.Declaration{
+		_, err := ev.statement(ast.Declaration{
 			Name: token.Token{
 				Type:   token.Identifier,
 				Lexeme: "name",
@@ -1875,11 +2027,11 @@ func TestEvaluator_statement(t *testing.T) {
 			},
 		})
 		assert.Nil(t, err)
-		val, err := ev.env.Resolve("name")
+		val, err := ev.scope.Resolve("name")
 		assert.Nil(t, err)
 		assert.Equal(t, val, String{"hello world"})
 
-		err = ev.statement(ast.ExpressionStatement{
+		_, err = ev.statement(ast.ExpressionStatement{
 			Expression: ast.Assignment{
 				Name: token.Token{
 					Type:   token.Identifier,
@@ -1891,7 +2043,7 @@ func TestEvaluator_statement(t *testing.T) {
 			},
 		})
 		assert.Nil(t, err)
-		val, err = ev.env.Resolve("name")
+		val, err = ev.scope.Resolve("name")
 		assert.Equal(t, val, String{"goodbye"})
 	})
 }

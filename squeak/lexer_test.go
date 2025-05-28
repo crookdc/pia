@@ -2,7 +2,7 @@ package squeak
 
 import (
 	"errors"
-	"github.com/crookdc/pia/squeak/internal/token"
+	"github.com/crookdc/pia/squeak/token"
 	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
@@ -83,6 +83,110 @@ func TestLexer_Next(t *testing.T) {
 				{
 					Type:   token.Semicolon,
 					Lexeme: ";",
+				},
+				{
+					Type:   token.EOF,
+					Lexeme: "EOF",
+				},
+			},
+		},
+		{
+			src: "break; continue;",
+			bl:  LexerBufferLength,
+			expected: []token.Token{
+				{
+					Type:   token.Break,
+					Lexeme: "break",
+				},
+				{
+					Type:   token.Semicolon,
+					Lexeme: ";",
+				},
+				{
+					Type:   token.Continue,
+					Lexeme: "continue",
+				},
+				{
+					Type:   token.Semicolon,
+					Lexeme: ";",
+				},
+				{
+					Type:   token.EOF,
+					Lexeme: "EOF",
+				},
+			},
+		},
+		{
+			src: `
+			function add(a, b) {
+				print(a + b);
+			}
+			`,
+			bl: LexerBufferLength,
+			expected: []token.Token{
+				{
+					Type:   token.Function,
+					Lexeme: "function",
+				},
+				{
+					Type:   token.Identifier,
+					Lexeme: "add",
+				},
+				{
+					Type:   token.LeftParenthesis,
+					Lexeme: "(",
+				},
+				{
+					Type:   token.Identifier,
+					Lexeme: "a",
+				},
+				{
+					Type:   token.Comma,
+					Lexeme: ",",
+				},
+				{
+					Type:   token.Identifier,
+					Lexeme: "b",
+				},
+				{
+					Type:   token.RightParenthesis,
+					Lexeme: ")",
+				},
+				{
+					Type:   token.LeftBrace,
+					Lexeme: "{",
+				},
+				{
+					Type:   token.Identifier,
+					Lexeme: "print",
+				},
+				{
+					Type:   token.LeftParenthesis,
+					Lexeme: "(",
+				},
+				{
+					Type:   token.Identifier,
+					Lexeme: "a",
+				},
+				{
+					Type:   token.Plus,
+					Lexeme: "+",
+				},
+				{
+					Type:   token.Identifier,
+					Lexeme: "b",
+				},
+				{
+					Type:   token.RightParenthesis,
+					Lexeme: ")",
+				},
+				{
+					Type:   token.Semicolon,
+					Lexeme: ";",
+				},
+				{
+					Type:   token.RightBrace,
+					Lexeme: "}",
 				},
 				{
 					Type:   token.EOF,
@@ -559,7 +663,7 @@ func TestLexer_Next(t *testing.T) {
 		{
 			src: `
 			# This function reports whether both a and b are positive
-			var pos = func(a, b) {
+			var pos = function(a, b) {
 				# Holy cow, this is a comment isn't it!
 				return a > 0 and b > 0;
 			};
@@ -581,7 +685,7 @@ func TestLexer_Next(t *testing.T) {
 				},
 				{
 					Type:   token.Function,
-					Lexeme: "func",
+					Lexeme: "function",
 				},
 				{
 					Type:   token.LeftParenthesis,

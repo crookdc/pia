@@ -24,9 +24,10 @@ const (
 	Or
 	If
 	Else
-	For
 	While
 	Return
+	Break
+	Continue
 	Function
 	Var
 	Nil
@@ -60,10 +61,11 @@ var lexemes = map[Type]string{
 	Or:               "or",
 	If:               "if",
 	Else:             "else",
-	For:              "for",
 	While:            "while",
 	Return:           "return",
-	Function:         "func",
+	Break:            "break",
+	Continue:         "continue",
+	Function:         "function",
 	Var:              "var",
 	Nil:              "nil",
 	Less:             "<",

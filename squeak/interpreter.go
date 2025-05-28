@@ -3,8 +3,8 @@ package squeak
 import (
 	"errors"
 	"fmt"
-	"github.com/crookdc/pia/squeak/internal/ast"
-	"github.com/crookdc/pia/squeak/internal/token"
+	"github.com/crookdc/pia/squeak/ast"
+	"github.com/crookdc/pia/squeak/token"
 	"io"
 	"reflect"
 	"strings"
@@ -12,11 +12,53 @@ import (
 
 var ErrRuntimeFault = errors.New("runtime error")
 
+type Unwinding struct {
+	Source token.Token
+	Value  Object
+}
+
 // Object is a broad interface for any data that a Squeak script can process. It does not provide any interface beyond
 // the standard library fmt.Stringer, but passing around types of this interface around the interpreter obfuscates the
 // meaning behind the value. Hence, this interface is largely just for clearer naming.
 type Object interface {
 	fmt.Stringer
+}
+
+type Callable interface {
+	Object
+	Arity() int
+	Call(*Interpreter, ...Object) (Object, error)
+}
+
+// Function is the callable equivalent of [ast.Function].
+type Function struct {
+	Declaration ast.Function
+}
+
+func (f Function) String() string {
+	return fmt.Sprintf("function:%s", f.Declaration.Name.Lexeme)
+}
+
+func (f Function) Arity() int {
+	return len(f.Declaration.Params)
+}
+
+func (f Function) Call(in *Interpreter, objs ...Object) (Object, error) {
+	scope := NewEnvironment(Parent(in.global))
+	for i, param := range f.Declaration.Params {
+		scope.Declare(param.Lexeme, objs[i])
+	}
+	uw, err := in.block(scope, f.Declaration.Body.Body)
+	if err != nil {
+		return nil, err
+	}
+	if uw == nil {
+		return nil, nil
+	}
+	if uw.Source.Type != token.Return {
+		return nil, fmt.Errorf("%w: unexpected unwinding source %s", ErrRuntimeFault, uw.Source.Lexeme)
+	}
+	return uw.Value, nil
 }
 
 // Number is an Object representing a numerical value internally represented as a float64. In Squeak, the notion of
@@ -120,84 +162,127 @@ func (env *Environment) Assign(k string, v Object) error {
 	return fmt.Errorf("%w: cannot resolve assignment target", ErrRuntimeFault)
 }
 
-type Evaluator struct {
-	env *Environment
-	out io.Writer
-}
-
-func (ev *Evaluator) Evaluate(node ast.Node) (Object, error) {
-	switch node := node.(type) {
-	case ast.StatementNode:
-		return nil, ev.statement(node)
-	case ast.ExpressionNode:
-		return ev.expression(node)
-	default:
-		return nil, fmt.Errorf(
-			"%w: unexpected node type %s",
-			ErrRuntimeFault,
-			reflect.TypeOf(node),
-		)
+// NewInterpreter constructs an interpreter with a prefilled runtime in its global scope. The caller is responsible for
+// supplying a valid [io.Writer] which is used as the standard output stream. While the caller is allowed to provide a
+// nil [io.Writer], it is discouraged as any usage of the standard output will result in a panic.
+func NewInterpreter(out io.Writer) *Interpreter {
+	global := NewEnvironment(
+		Prefill("print", PrintBuiltin{}),
+	)
+	return &Interpreter{
+		global: global,
+		scope:  global,
+		out:    out,
 	}
 }
 
-func (ev *Evaluator) statement(node ast.StatementNode) error {
+type Interpreter struct {
+	global *Environment
+	scope  *Environment
+	out    io.Writer
+}
+
+func (in *Interpreter) Execute(stmt ast.StatementNode) error {
+	_, err := in.statement(stmt)
+	return err
+}
+
+// statement executes the provided statement node within the current context of the interpreter. Statements do not
+// generally evaluate to a value. Some statements such as [ast.Return] changes the control flow drastically, those cases
+// are not directly handled by this method. Instead, whenever an unwinding statement is encountered then a non-nil value
+// of Unwinding is returned which is expected to be processed properly by some caller in the call stack.
+func (in *Interpreter) statement(node ast.StatementNode) (*Unwinding, error) {
 	switch node := node.(type) {
 	case ast.ExpressionStatement:
-		_, err := ev.expression(node.Expression)
-		return err
+		_, err := in.expression(node.Expression)
+		return nil, err
 	case ast.Declaration:
 		if node.Initializer == nil {
-			ev.env.Declare(node.Name.Lexeme, nil)
-			return nil
+			in.scope.Declare(node.Name.Lexeme, nil)
+			return nil, nil
 		}
-		val, err := ev.expression(node.Initializer)
+		val, err := in.expression(node.Initializer)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		ev.env.Declare(node.Name.Lexeme, val)
-		return nil
+		in.scope.Declare(node.Name.Lexeme, val)
+		return nil, nil
 	case ast.Block:
-		p := ev.env
-		ev.env = NewEnvironment(Parent(p))
-		for _, s := range node.Body {
-			if err := ev.statement(s); err != nil {
-				return err
-			}
-		}
-		ev.env = p
-		return nil
+		return in.block(NewEnvironment(Parent(in.scope)), node.Body)
 	case ast.If:
-		cnd, err := ev.expression(node.Condition)
+		cnd, err := in.expression(node.Condition)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		if ev.truthy(cnd) {
-			return ev.statement(node.Then)
+		if in.truthy(cnd) {
+			return in.statement(node.Then)
 		}
 		if node.Else != nil {
-			return ev.statement(node.Else)
+			return in.statement(node.Else)
 		}
-		return nil
+		return nil, nil
 	case ast.While:
-		cnd, err := ev.expression(node.Condition)
+		cnd, err := in.expression(node.Condition)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		for ev.truthy(cnd) {
-			if err := ev.statement(node.Body); err != nil {
-				return err
-			}
-			cnd, err = ev.expression(node.Condition)
+		for in.truthy(cnd) {
+			uw, err := in.statement(node.Body)
 			if err != nil {
-				return err
+				return nil, err
+			}
+			if uw != nil {
+				if uw.Source.Type == token.Break {
+					break
+				}
+				if uw.Source.Type != token.Continue {
+					return uw, nil
+				}
+			}
+			cnd, err = in.expression(node.Condition)
+			if err != nil {
+				return nil, err
 			}
 		}
-		return nil
+		return nil, nil
 	case ast.Noop:
 		// In the future it might be a good idea to restructure the AST so that it does not contain any [ast.Noop].
-		return nil
+		return nil, nil
+	case ast.Function:
+		in.scope.Declare(node.Name.Lexeme, Function{Declaration: node})
+		return nil, nil
+	case ast.Return:
+		uw := &Unwinding{
+			Source: token.Token{
+				Type:   token.Return,
+				Lexeme: "return",
+			},
+		}
+		if node.Expression == nil {
+			return uw, nil
+		}
+		val, err := in.expression(node.Expression)
+		if err != nil {
+			return nil, err
+		}
+		uw.Value = val
+		return uw, nil
+	case ast.Break:
+		return &Unwinding{
+			Source: token.Token{
+				Type:   token.Break,
+				Lexeme: "break",
+			},
+		}, nil
+	case ast.Continue:
+		return &Unwinding{
+			Source: token.Token{
+				Type:   token.Continue,
+				Lexeme: "continue",
+			},
+		}, nil
 	default:
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"%w: unexpected statement type %s",
 			ErrRuntimeFault,
 			reflect.TypeOf(node),
@@ -205,7 +290,25 @@ func (ev *Evaluator) statement(node ast.StatementNode) error {
 	}
 }
 
-func (ev *Evaluator) expression(node ast.ExpressionNode) (Object, error) {
+func (in *Interpreter) block(scope *Environment, block []ast.StatementNode) (*Unwinding, error) {
+	prev := in.scope
+	defer func() {
+		in.scope = prev
+	}()
+	in.scope = scope
+	for _, stmt := range block {
+		uw, err := in.statement(stmt)
+		if err != nil {
+			return nil, err
+		}
+		if uw != nil {
+			return uw, nil
+		}
+	}
+	return nil, nil
+}
+
+func (in *Interpreter) expression(node ast.ExpressionNode) (Object, error) {
 	switch node := node.(type) {
 	case ast.IntegerLiteral:
 		return Number{float64(node.Integer)}, nil
@@ -218,24 +321,26 @@ func (ev *Evaluator) expression(node ast.ExpressionNode) (Object, error) {
 	case ast.NilLiteral:
 		return nil, nil
 	case ast.Grouping:
-		return ev.expression(node.Group)
+		return in.expression(node.Group)
 	case ast.Prefix:
-		return ev.prefix(node)
+		return in.prefix(node)
 	case ast.Infix:
-		return ev.infix(node)
+		return in.infix(node)
 	case ast.Variable:
-		return ev.env.Resolve(node.Name.Lexeme)
+		return in.scope.Resolve(node.Name.Lexeme)
 	case ast.Assignment:
-		val, err := ev.expression(node.Value)
+		val, err := in.expression(node.Value)
 		if err != nil {
 			return nil, err
 		}
-		if err := ev.env.Assign(node.Name.Lexeme, val); err != nil {
+		if err := in.scope.Assign(node.Name.Lexeme, val); err != nil {
 			return nil, err
 		}
 		return val, nil
 	case ast.Logical:
-		return ev.logical(node)
+		return in.logical(node)
+	case ast.Call:
+		return in.call(node)
 	default:
 		return nil, fmt.Errorf(
 			"%w: unexpected expression type %s",
@@ -245,22 +350,50 @@ func (ev *Evaluator) expression(node ast.ExpressionNode) (Object, error) {
 	}
 }
 
-func (ev *Evaluator) logical(node ast.Logical) (Object, error) {
-	left, err := ev.expression(node.LHS)
+func (in *Interpreter) call(node ast.Call) (Object, error) {
+	fn, err := in.expression(node.Callee)
+	if err != nil {
+		return nil, err
+	}
+	switch fn := fn.(type) {
+	case Callable:
+		if fn.Arity() != len(node.Args) {
+			return nil, fmt.Errorf(
+				"function accepts %d parameters but was provided %d arguments",
+				fn.Arity(),
+				len(node.Args),
+			)
+		}
+		var args []Object
+		for _, expr := range node.Args {
+			arg, err := in.expression(expr)
+			if err != nil {
+				return nil, err
+			}
+			args = append(args, arg)
+		}
+		return fn.Call(in, args...)
+	default:
+		return nil, fmt.Errorf("tried to call non-callable: %s", fn)
+	}
+}
+
+func (in *Interpreter) logical(node ast.Logical) (Object, error) {
+	left, err := in.expression(node.LHS)
 	if err != nil {
 		return nil, err
 	}
 	switch node.Operator.Type {
 	case token.And:
-		if ev.falsy(left) {
+		if in.falsy(left) {
 			return left, nil
 		}
-		return ev.expression(node.RHS)
+		return in.expression(node.RHS)
 	case token.Or:
-		if ev.truthy(left) {
+		if in.truthy(left) {
 			return left, nil
 		}
-		return ev.expression(node.RHS)
+		return in.expression(node.RHS)
 	default:
 		return nil, fmt.Errorf(
 			"%w: unrecognized logical operator: %s",
@@ -270,16 +403,16 @@ func (ev *Evaluator) logical(node ast.Logical) (Object, error) {
 	}
 }
 
-func (ev *Evaluator) prefix(node ast.Prefix) (Object, error) {
-	obj, err := ev.expression(node.Target)
+func (in *Interpreter) prefix(node ast.Prefix) (Object, error) {
+	obj, err := in.expression(node.Target)
 	if err != nil {
 		return nil, err
 	}
 	switch node.Operator.Type {
 	case token.Bang:
-		return Boolean{!ev.truthy(obj)}, nil
+		return Boolean{!in.truthy(obj)}, nil
 	case token.Minus:
-		return ev.multiply(obj, Number{-1})
+		return in.multiply(obj, Number{-1})
 	default:
 		return nil, fmt.Errorf(
 			"%w: unexpected prefix operator %s",
@@ -289,7 +422,7 @@ func (ev *Evaluator) prefix(node ast.Prefix) (Object, error) {
 	}
 }
 
-func (ev *Evaluator) truthy(obj Object) bool {
+func (in *Interpreter) truthy(obj Object) bool {
 	if obj == nil {
 		return false
 	}
@@ -301,16 +434,16 @@ func (ev *Evaluator) truthy(obj Object) bool {
 	}
 }
 
-func (ev *Evaluator) falsy(obj Object) bool {
-	return !ev.truthy(obj)
+func (in *Interpreter) falsy(obj Object) bool {
+	return !in.truthy(obj)
 }
 
-func (ev *Evaluator) infix(node ast.Infix) (Object, error) {
-	lhs, err := ev.expression(node.LHS)
+func (in *Interpreter) infix(node ast.Infix) (Object, error) {
+	lhs, err := in.expression(node.LHS)
 	if err != nil {
 		return nil, err
 	}
-	rhs, err := ev.expression(node.RHS)
+	rhs, err := in.expression(node.RHS)
 	if err != nil {
 		return nil, err
 	}
@@ -320,9 +453,9 @@ func (ev *Evaluator) infix(node ast.Infix) (Object, error) {
 		// considered a concatenation or an addition of numbers.
 		switch lhs := lhs.(type) {
 		case String:
-			return ev.concat(lhs, rhs)
+			return in.concat(lhs, rhs)
 		case Number:
-			return ev.add(lhs, rhs)
+			return in.add(lhs, rhs)
 		default:
 			return nil, fmt.Errorf(
 				"%w: invalid addition operand type %s",
@@ -331,37 +464,37 @@ func (ev *Evaluator) infix(node ast.Infix) (Object, error) {
 			)
 		}
 	case token.Minus:
-		return ev.subtract(lhs, rhs)
+		return in.subtract(lhs, rhs)
 	case token.Asterisk:
-		return ev.multiply(lhs, rhs)
+		return in.multiply(lhs, rhs)
 	case token.Slash:
-		return ev.divide(lhs, rhs)
+		return in.divide(lhs, rhs)
 	case token.Less:
-		return ev.isLessThan(lhs, rhs)
+		return in.isLessThan(lhs, rhs)
 	case token.LessEqual:
-		lt, err := ev.isLessThan(lhs, rhs)
+		lt, err := in.isLessThan(lhs, rhs)
 		if err != nil {
 			return nil, err
 		}
 		if lt.value {
 			return lt, nil
 		}
-		return ev.isEqual(lhs, rhs)
+		return in.isEqual(lhs, rhs)
 	case token.Greater:
-		return ev.isGreaterThan(lhs, rhs)
+		return in.isGreaterThan(lhs, rhs)
 	case token.GreaterEqual:
-		gt, err := ev.isGreaterThan(lhs, rhs)
+		gt, err := in.isGreaterThan(lhs, rhs)
 		if err != nil {
 			return nil, err
 		}
 		if gt.value {
 			return gt, nil
 		}
-		return ev.isEqual(lhs, rhs)
+		return in.isEqual(lhs, rhs)
 	case token.Equals:
-		return ev.isEqual(lhs, rhs)
+		return in.isEqual(lhs, rhs)
 	case token.NotEquals:
-		eq, err := ev.isEqual(lhs, rhs)
+		eq, err := in.isEqual(lhs, rhs)
 		eq.value = !eq.value
 		return eq, err
 	default:
@@ -373,7 +506,7 @@ func (ev *Evaluator) infix(node ast.Infix) (Object, error) {
 	}
 }
 
-func (ev *Evaluator) concat(lhs, rhs Object) (String, error) {
+func (in *Interpreter) concat(lhs, rhs Object) (String, error) {
 	lhn, ok := lhs.(String)
 	if !ok {
 		return String{}, fmt.Errorf("%w: %s is not a string", ErrRuntimeFault, reflect.TypeOf(lhs))
@@ -385,7 +518,7 @@ func (ev *Evaluator) concat(lhs, rhs Object) (String, error) {
 	return String{lhn.value + rhn.value}, nil
 }
 
-func (ev *Evaluator) add(lhs, rhs Object) (Number, error) {
+func (in *Interpreter) add(lhs, rhs Object) (Number, error) {
 	lhn, ok := lhs.(Number)
 	if !ok {
 		return Number{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(lhs))
@@ -397,7 +530,7 @@ func (ev *Evaluator) add(lhs, rhs Object) (Number, error) {
 	return Number{lhn.value + rhn.value}, nil
 }
 
-func (ev *Evaluator) subtract(lhs, rhs Object) (Number, error) {
+func (in *Interpreter) subtract(lhs, rhs Object) (Number, error) {
 	lhn, ok := lhs.(Number)
 	if !ok {
 		return Number{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(lhs))
@@ -409,7 +542,7 @@ func (ev *Evaluator) subtract(lhs, rhs Object) (Number, error) {
 	return Number{lhn.value - rhn.value}, nil
 }
 
-func (ev *Evaluator) multiply(lhs, rhs Object) (Number, error) {
+func (in *Interpreter) multiply(lhs, rhs Object) (Number, error) {
 	lhn, ok := lhs.(Number)
 	if !ok {
 		return Number{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(lhs))
@@ -421,7 +554,7 @@ func (ev *Evaluator) multiply(lhs, rhs Object) (Number, error) {
 	return Number{lhn.value * rhn.value}, nil
 }
 
-func (ev *Evaluator) divide(lhs, rhs Object) (Number, error) {
+func (in *Interpreter) divide(lhs, rhs Object) (Number, error) {
 	lhn, ok := lhs.(Number)
 	if !ok {
 		return Number{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(lhs))
@@ -437,7 +570,7 @@ func (ev *Evaluator) divide(lhs, rhs Object) (Number, error) {
 	return Number{lhn.value / rhn.value}, nil
 }
 
-func (ev *Evaluator) isLessThan(lhs, rhs Object) (Boolean, error) {
+func (in *Interpreter) isLessThan(lhs, rhs Object) (Boolean, error) {
 	lhn, ok := lhs.(Number)
 	if !ok {
 		return Boolean{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(lhs))
@@ -449,7 +582,7 @@ func (ev *Evaluator) isLessThan(lhs, rhs Object) (Boolean, error) {
 	return Boolean{lhn.value < rhn.value}, nil
 }
 
-func (ev *Evaluator) isGreaterThan(lhs, rhs Object) (Boolean, error) {
+func (in *Interpreter) isGreaterThan(lhs, rhs Object) (Boolean, error) {
 	lhn, ok := lhs.(Number)
 	if !ok {
 		return Boolean{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(lhs))
@@ -461,7 +594,7 @@ func (ev *Evaluator) isGreaterThan(lhs, rhs Object) (Boolean, error) {
 	return Boolean{lhn.value > rhn.value}, nil
 }
 
-func (ev *Evaluator) isEqual(lhs, rhs Object) (Boolean, error) {
+func (in *Interpreter) isEqual(lhs, rhs Object) (Boolean, error) {
 	if lhs == nil && rhs == nil {
 		return Boolean{true}, nil
 	}

@@ -3,10 +3,11 @@ package squeak
 import (
 	"errors"
 	"fmt"
-	"github.com/crookdc/pia/squeak/internal/ast"
-	"github.com/crookdc/pia/squeak/internal/token"
+	"github.com/crookdc/pia/squeak/ast"
+	"github.com/crookdc/pia/squeak/token"
 	"io"
 	"strconv"
+	"strings"
 )
 
 type SyntaxError struct {
@@ -15,6 +16,30 @@ type SyntaxError struct {
 
 func (s SyntaxError) Error() string {
 	return fmt.Sprintf("syntax error on line %d", s.Line)
+}
+
+// ParseString reads src all the way through and builds an AST containing multiple statements from it.
+func ParseString(src string) ([]ast.StatementNode, error) {
+	lx, err := NewLexer(strings.NewReader(src))
+	if err != nil {
+		return nil, err
+	}
+	plx, err := NewPeekingLexer(lx)
+	if err != nil {
+		return nil, err
+	}
+	program := make([]ast.StatementNode, 0)
+	ps := NewParser(plx)
+	for {
+		stmt, err := ps.Next()
+		if errors.Is(err, io.EOF) {
+			return program, nil
+		}
+		if err != nil {
+			return nil, err
+		}
+		program = append(program, stmt)
+	}
 }
 
 func NewParser(lx *PeekingLexer) *Parser {
@@ -108,11 +133,62 @@ func (ps *Parser) statement() (ast.StatementNode, error) {
 		return ps.ifs()
 	case token.While:
 		return ps.while()
-	case token.For:
-		return ps.fors()
 	case token.Semicolon:
 		ps.lx.Discard()
 		return ast.Noop{}, nil
+	case token.Function:
+		ps.lx.Discard()
+		name, err := ps.expect(token.Identifier)
+		if err != nil {
+			return nil, err
+		}
+		params, err := ps.tokens(token.LeftParenthesis, token.RightParenthesis)
+		if err != nil {
+			return nil, err
+		}
+		body, err := ps.block()
+		if err != nil {
+			return nil, err
+		}
+		return ast.Function{
+			Name:   name,
+			Params: params,
+			Body:   body,
+		}, nil
+	case token.Return:
+		ps.lx.Discard()
+		pk, err := ps.lx.Peek()
+		if err != nil {
+			return nil, err
+		}
+		switch pk.Type {
+		case token.Semicolon:
+			return ast.Return{}, nil
+		default:
+			expr, err := ps.logical()
+			if err != nil {
+				return nil, err
+			}
+			if _, err := ps.expect(token.Semicolon); err != nil {
+				return nil, err
+			}
+			return ast.Return{
+				Statement:  ast.Statement{},
+				Expression: expr,
+			}, nil
+		}
+	case token.Break:
+		ps.lx.Discard()
+		if _, err := ps.expect(token.Semicolon); err != nil {
+			return nil, err
+		}
+		return ast.Break{}, nil
+	case token.Continue:
+		ps.lx.Discard()
+		if _, err := ps.expect(token.Semicolon); err != nil {
+			return nil, err
+		}
+		return ast.Continue{}, nil
 	default:
 		return ps.expression()
 	}
@@ -133,53 +209,6 @@ func (ps *Parser) while() (ast.StatementNode, error) {
 	return ast.While{
 		Condition: cnd,
 		Body:      body,
-	}, nil
-}
-
-func (ps *Parser) fors() (ast.StatementNode, error) {
-	if _, err := ps.expect(token.For); err != nil {
-		return nil, err
-	}
-	init, err := ps.declaration()
-	if err != nil {
-		return nil, err
-	}
-	cnd, err := ps.logical()
-	if err != nil {
-		return nil, err
-	}
-	if _, err := ps.expect(token.Semicolon); err != nil {
-		return nil, err
-	}
-	pk, err := ps.lx.Peek()
-	if err != nil {
-		return nil, err
-	}
-	var inc ast.ExpressionNode
-	switch pk.Type {
-	case token.LeftBrace:
-		inc = nil
-	default:
-		inc, err = ps.assignment()
-		if err != nil {
-			return nil, err
-		}
-	}
-	body, err := ps.block()
-	if err != nil {
-		return nil, err
-	}
-	loop := ast.While{
-		Condition: cnd,
-		Body:      body,
-	}
-	if inc != nil {
-		loop.Body.Body = append(loop.Body.Body, ast.ExpressionStatement{
-			Expression: inc,
-		})
-	}
-	return ast.Block{
-		Body: []ast.StatementNode{init, loop},
 	}, nil
 }
 
@@ -232,7 +261,7 @@ func (ps *Parser) block() (ast.Block, error) {
 				Body: body,
 			}, nil
 		default:
-			st, err := ps.statement()
+			st, err := ps.declaration()
 			if err != nil {
 				return ast.Block{}, err
 			}
@@ -477,7 +506,7 @@ func (ps *Parser) call() (ast.ExpressionNode, error) {
 		return nil, err
 	}
 	for pk.Type == token.LeftParenthesis {
-		args, err := ps.list(token.LeftParenthesis, token.RightParenthesis)
+		args, err := ps.expressions(token.LeftParenthesis, token.RightParenthesis)
 		if err != nil {
 			return nil, err
 		}
@@ -494,7 +523,8 @@ func (ps *Parser) call() (ast.ExpressionNode, error) {
 	return expr, nil
 }
 
-func (ps *Parser) list(start, end token.Type) (exps []ast.ExpressionNode, err error) {
+func (ps *Parser) expressions(start, end token.Type) (exps []ast.ExpressionNode, err error) {
+	exps = make([]ast.ExpressionNode, 0)
 	if _, err := ps.expect(start); err != nil {
 		return nil, err
 	}
@@ -519,6 +549,28 @@ func (ps *Parser) list(start, end token.Type) (exps []ast.ExpressionNode, err er
 	}
 }
 
+func (ps *Parser) tokens(start, end token.Type) (tokens []token.Token, err error) {
+	tokens = make([]token.Token, 0)
+	if _, err := ps.expect(start); err != nil {
+		return nil, err
+	}
+	for {
+		pk, err := ps.lx.Peek()
+		if err != nil {
+			return nil, err
+		}
+		switch pk.Type {
+		case end:
+			ps.lx.Discard()
+			return tokens, nil
+		case token.Comma:
+			ps.lx.Discard()
+		default:
+			tokens = append(tokens, pk)
+			ps.lx.Discard()
+		}
+	}
+}
 func (ps *Parser) primary() (ast.ExpressionNode, error) {
 	nxt, err := ps.lx.Next()
 	if err != nil {
