@@ -5,7 +5,6 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/crookdc/pia/squeak"
-	"github.com/crookdc/pia/squeak/ast"
 	"strings"
 )
 
@@ -45,7 +44,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
 		case tea.KeyEnter:
-			n, err := m.parse(m.prompt.Value())
+			n, err := squeak.ParseString(m.prompt.Value())
 			if err != nil {
 				m.err = err
 				break
@@ -68,18 +67,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 	m.prompt, cmd = m.prompt.Update(msg)
 	return m, cmd
-}
-
-func (m model) parse(src string) (ast.StatementNode, error) {
-	lx, err := squeak.NewLexer(strings.NewReader(src))
-	if err != nil {
-		return nil, err
-	}
-	plx, err := squeak.NewPeekingLexer(lx)
-	if err != nil {
-		return nil, err
-	}
-	return squeak.NewParser(plx).Next()
 }
 
 func (m model) View() string {

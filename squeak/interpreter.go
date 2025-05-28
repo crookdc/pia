@@ -182,9 +182,13 @@ type Interpreter struct {
 	out    io.Writer
 }
 
-func (in *Interpreter) Execute(stmt ast.StatementNode) error {
-	_, err := in.statement(stmt)
-	return err
+func (in *Interpreter) Execute(program []ast.StatementNode) error {
+	for _, stmt := range program {
+		if _, err := in.statement(stmt); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // statement executes the provided statement node within the current context of the interpreter. Statements do not

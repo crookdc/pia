@@ -1,12 +1,9 @@
 package main
 
 import (
-	"bytes"
-	"errors"
 	"flag"
 	"github.com/crookdc/pia/cmd/pia/internal/repl"
 	"github.com/crookdc/pia/squeak"
-	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -40,26 +37,9 @@ func evaluate(file string) error {
 	if err != nil {
 		return err
 	}
-	lx, err := squeak.NewLexer(bytes.NewReader(src))
+	program, err := squeak.ParseString(string(src))
 	if err != nil {
 		return err
 	}
-	plx, err := squeak.NewPeekingLexer(lx)
-	if err != nil {
-		return err
-	}
-	in := squeak.NewInterpreter(os.Stdout)
-	ps := squeak.NewParser(plx)
-	for {
-		nxt, err := ps.Next()
-		if errors.Is(err, io.EOF) {
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-		if err := in.Execute(nxt); err != nil {
-			return err
-		}
-	}
+	return squeak.NewInterpreter(os.Stdout).Execute(program)
 }
