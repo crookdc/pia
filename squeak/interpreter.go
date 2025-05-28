@@ -146,9 +146,9 @@ func (in *Interpreter) statement(stmt ast.StatementNode) (*unwinder, error) {
 		return in.unwinder(stmt)
 	default:
 		return nil, fmt.Errorf(
-			"%w: unexpected statement type: %s",
+			"%w: unexpected statement type: %T",
 			ErrRuntimeFault,
-			reflect.TypeOf(stmt),
+			stmt,
 		)
 	}
 }
@@ -242,7 +242,7 @@ func (in *Interpreter) unwinder(stmt ast.StatementNode) (*unwinder, error) {
 			},
 		}, nil
 	default:
-		panic(fmt.Errorf("unwinder executor called with invalid statement type: %t", stmt))
+		panic(fmt.Errorf("unwinder executor called with invalid statement type: %T", stmt))
 	}
 }
 
@@ -299,9 +299,9 @@ func (in *Interpreter) expression(expr ast.ExpressionNode) (Object, error) {
 		return in.call(expr)
 	default:
 		return nil, fmt.Errorf(
-			"%w: unexpected expression type: %s",
+			"%w: unexpected expression type: %T",
 			ErrRuntimeFault,
-			reflect.TypeOf(expr),
+			expr,
 		)
 	}
 }
@@ -414,9 +414,9 @@ func (in *Interpreter) infix(node ast.Infix) (Object, error) {
 			return in.add(lhs, rhs)
 		default:
 			return nil, fmt.Errorf(
-				"%w: invalid addition operand type: %s",
+				"%w: invalid addition operand type: %T",
 				ErrRuntimeFault,
-				reflect.TypeOf(lhs),
+				lhs,
 			)
 		}
 	case token.Minus:
@@ -465,11 +465,11 @@ func (in *Interpreter) infix(node ast.Infix) (Object, error) {
 func (in *Interpreter) concat(lhs, rhs Object) (String, error) {
 	lhn, ok := lhs.(String)
 	if !ok {
-		return String{}, fmt.Errorf("%w: %s is not a string", ErrRuntimeFault, reflect.TypeOf(lhs))
+		return String{}, fmt.Errorf("%w: %T is not a string", ErrRuntimeFault, lhs)
 	}
 	rhn, ok := rhs.(String)
 	if !ok {
-		return String{}, fmt.Errorf("%w: %s is not a string", ErrRuntimeFault, reflect.TypeOf(rhs))
+		return String{}, fmt.Errorf("%w: %T is not a string", ErrRuntimeFault, rhs)
 	}
 	return String{lhn.value + rhn.value}, nil
 }
@@ -477,11 +477,11 @@ func (in *Interpreter) concat(lhs, rhs Object) (String, error) {
 func (in *Interpreter) add(lhs, rhs Object) (Number, error) {
 	lhn, ok := lhs.(Number)
 	if !ok {
-		return Number{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(lhs))
+		return Number{}, fmt.Errorf("%w: %T is not a number", ErrRuntimeFault, lhs)
 	}
 	rhn, ok := rhs.(Number)
 	if !ok {
-		return Number{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(rhs))
+		return Number{}, fmt.Errorf("%w: %T is not a number", ErrRuntimeFault, rhs)
 	}
 	return Number{lhn.value + rhn.value}, nil
 }
@@ -489,11 +489,11 @@ func (in *Interpreter) add(lhs, rhs Object) (Number, error) {
 func (in *Interpreter) subtract(lhs, rhs Object) (Number, error) {
 	lhn, ok := lhs.(Number)
 	if !ok {
-		return Number{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(lhs))
+		return Number{}, fmt.Errorf("%w: %T is not a number", ErrRuntimeFault, lhs)
 	}
 	rhn, ok := rhs.(Number)
 	if !ok {
-		return Number{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(rhs))
+		return Number{}, fmt.Errorf("%w: %T is not a number", ErrRuntimeFault, rhs)
 	}
 	return Number{lhn.value - rhn.value}, nil
 }
@@ -501,11 +501,11 @@ func (in *Interpreter) subtract(lhs, rhs Object) (Number, error) {
 func (in *Interpreter) multiply(lhs, rhs Object) (Number, error) {
 	lhn, ok := lhs.(Number)
 	if !ok {
-		return Number{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(lhs))
+		return Number{}, fmt.Errorf("%w: %T is not a number", ErrRuntimeFault, lhs)
 	}
 	rhn, ok := rhs.(Number)
 	if !ok {
-		return Number{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(rhs))
+		return Number{}, fmt.Errorf("%w: %T is not a number", ErrRuntimeFault, rhs)
 	}
 	return Number{lhn.value * rhn.value}, nil
 }
@@ -513,11 +513,11 @@ func (in *Interpreter) multiply(lhs, rhs Object) (Number, error) {
 func (in *Interpreter) divide(lhs, rhs Object) (Number, error) {
 	lhn, ok := lhs.(Number)
 	if !ok {
-		return Number{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(lhs))
+		return Number{}, fmt.Errorf("%w: %T is not a number", ErrRuntimeFault, lhs)
 	}
 	rhn, ok := rhs.(Number)
 	if !ok {
-		return Number{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(rhs))
+		return Number{}, fmt.Errorf("%w: %T is not a number", ErrRuntimeFault, rhs)
 	}
 	if rhn.value == 0 {
 		// Division by zero is undefined and counts as an erroneous input.
@@ -529,11 +529,11 @@ func (in *Interpreter) divide(lhs, rhs Object) (Number, error) {
 func (in *Interpreter) isLessThan(lhs, rhs Object) (Boolean, error) {
 	lhn, ok := lhs.(Number)
 	if !ok {
-		return Boolean{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(lhs))
+		return Boolean{}, fmt.Errorf("%w: %T is not a number", ErrRuntimeFault, lhs)
 	}
 	rhn, ok := rhs.(Number)
 	if !ok {
-		return Boolean{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(rhs))
+		return Boolean{}, fmt.Errorf("%w: %T is not a number", ErrRuntimeFault, rhs)
 	}
 	return Boolean{lhn.value < rhn.value}, nil
 }
@@ -541,11 +541,11 @@ func (in *Interpreter) isLessThan(lhs, rhs Object) (Boolean, error) {
 func (in *Interpreter) isGreaterThan(lhs, rhs Object) (Boolean, error) {
 	lhn, ok := lhs.(Number)
 	if !ok {
-		return Boolean{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(lhs))
+		return Boolean{}, fmt.Errorf("%w: %T is not a number", ErrRuntimeFault, lhs)
 	}
 	rhn, ok := rhs.(Number)
 	if !ok {
-		return Boolean{}, fmt.Errorf("%w: %s is not a number", ErrRuntimeFault, reflect.TypeOf(rhs))
+		return Boolean{}, fmt.Errorf("%w: %T is not a number", ErrRuntimeFault, rhs)
 	}
 	return Boolean{lhn.value > rhn.value}, nil
 }
@@ -556,10 +556,10 @@ func (in *Interpreter) isEqual(lhs, rhs Object) (Boolean, error) {
 	}
 	if reflect.TypeOf(lhs) != reflect.TypeOf(rhs) {
 		return Boolean{}, fmt.Errorf(
-			"%w: cannot compare equality between %s with %s",
+			"%w: cannot compare equality between %T with %T",
 			ErrRuntimeFault,
-			reflect.TypeOf(lhs),
-			reflect.TypeOf(rhs),
+			lhs,
+			rhs,
 		)
 	}
 	return Boolean{lhs == rhs}, nil
