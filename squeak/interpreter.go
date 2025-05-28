@@ -107,21 +107,21 @@ type Interpreter struct {
 
 func (in *Interpreter) Execute(program []ast.StatementNode) error {
 	for _, stmt := range program {
-		if _, err := in.statement(stmt); err != nil {
+		if _, err := in.execute(stmt); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-// statement executes the provided statement node within the current context of the interpreter. Statements do not
-// generally evaluate to a value. Some statements such as [ast.Return] changes the control flow drastically, those cases
-// are not directly handled by this method. Instead, whenever an unwinding statement is encountered then a non-nil value
-// of unwinder is returned which is expected to be processed properly by some caller in the call stack.
-func (in *Interpreter) statement(stmt ast.StatementNode) (*unwinder, error) {
+// execute runs the provided statement node within the current context of the interpreter. Statements do not generally
+// evaluate to a value. Some statements such as [ast.Return] changes the control flow drastically, those cases are not
+// handled by this method. Instead, whenever an unwinding statement is encountered then a non-nil value of unwinder is
+// returned which is expected to be processed properly by some caller in the call stack.
+func (in *Interpreter) execute(stmt ast.StatementNode) (*unwinder, error) {
 	switch stmt := stmt.(type) {
 	case ast.ExpressionStatement:
-		_, err := in.expression(stmt.Expression)
+		_, err := in.evaluate(stmt.Expression)
 		return nil, err
 	case ast.Declaration:
 		return nil, in.declaration(stmt)
@@ -158,7 +158,7 @@ func (in *Interpreter) declaration(stmt ast.Declaration) error {
 		in.scope.Declare(stmt.Name.Lexeme, nil)
 		return nil
 	}
-	val, err := in.expression(stmt.Initializer)
+	val, err := in.evaluate(stmt.Initializer)
 	if err != nil {
 		return err
 	}
@@ -167,26 +167,26 @@ func (in *Interpreter) declaration(stmt ast.Declaration) error {
 }
 
 func (in *Interpreter) branching(stmt ast.If) (*unwinder, error) {
-	cnd, err := in.expression(stmt.Condition)
+	cnd, err := in.evaluate(stmt.Condition)
 	if err != nil {
 		return nil, err
 	}
 	if in.truthy(cnd) {
-		return in.statement(stmt.Then)
+		return in.execute(stmt.Then)
 	}
 	if stmt.Else != nil {
-		return in.statement(stmt.Else)
+		return in.execute(stmt.Else)
 	}
 	return nil, nil
 }
 
 func (in *Interpreter) loop(stmt ast.While) (*unwinder, error) {
-	cnd, err := in.expression(stmt.Condition)
+	cnd, err := in.evaluate(stmt.Condition)
 	if err != nil {
 		return nil, err
 	}
 	for in.truthy(cnd) {
-		uw, err := in.statement(stmt.Body)
+		uw, err := in.execute(stmt.Body)
 		if err != nil {
 			return nil, err
 		}
@@ -198,7 +198,7 @@ func (in *Interpreter) loop(stmt ast.While) (*unwinder, error) {
 				return uw, nil
 			}
 		}
-		cnd, err = in.expression(stmt.Condition)
+		cnd, err = in.evaluate(stmt.Condition)
 		if err != nil {
 			return nil, err
 		}
@@ -218,10 +218,10 @@ func (in *Interpreter) unwinder(stmt ast.StatementNode) (*unwinder, error) {
 		if stmt.Expression == nil {
 			return uw, nil
 		}
-		// The return statement is the only unwinding statement that can also evaluate an expression which shall be
-		// returned to the caller. If the return statement does indeed contain an expression then it is set on the value
+		// The return statement is the only unwinding statement that can also evaluate an evaluate which shall be
+		// returned to the caller. If the return statement does indeed contain an evaluate then it is set on the value
 		// field in the unwinder value.
-		val, err := in.expression(stmt.Expression)
+		val, err := in.evaluate(stmt.Expression)
 		if err != nil {
 			return nil, err
 		}
@@ -253,7 +253,7 @@ func (in *Interpreter) block(scope *Environment, block []ast.StatementNode) (*un
 	}()
 	in.scope = scope
 	for _, stmt := range block {
-		uw, err := in.statement(stmt)
+		uw, err := in.execute(stmt)
 		if err != nil {
 			return nil, err
 		}
@@ -264,7 +264,7 @@ func (in *Interpreter) block(scope *Environment, block []ast.StatementNode) (*un
 	return nil, nil
 }
 
-func (in *Interpreter) expression(expr ast.ExpressionNode) (Object, error) {
+func (in *Interpreter) evaluate(expr ast.ExpressionNode) (Object, error) {
 	switch expr := expr.(type) {
 	case ast.IntegerLiteral:
 		return Number{float64(expr.Integer)}, nil
@@ -277,7 +277,7 @@ func (in *Interpreter) expression(expr ast.ExpressionNode) (Object, error) {
 	case ast.NilLiteral:
 		return nil, nil
 	case ast.Grouping:
-		return in.expression(expr.Group)
+		return in.evaluate(expr.Group)
 	case ast.Prefix:
 		return in.prefix(expr)
 	case ast.Infix:
@@ -285,7 +285,7 @@ func (in *Interpreter) expression(expr ast.ExpressionNode) (Object, error) {
 	case ast.Variable:
 		return in.scope.Resolve(expr.Name.Lexeme)
 	case ast.Assignment:
-		val, err := in.expression(expr.Value)
+		val, err := in.evaluate(expr.Value)
 		if err != nil {
 			return nil, err
 		}
@@ -299,7 +299,7 @@ func (in *Interpreter) expression(expr ast.ExpressionNode) (Object, error) {
 		return in.call(expr)
 	default:
 		return nil, fmt.Errorf(
-			"%w: unexpected expression type: %T",
+			"%w: unexpected evaluate type: %T",
 			ErrRuntimeFault,
 			expr,
 		)
@@ -307,7 +307,7 @@ func (in *Interpreter) expression(expr ast.ExpressionNode) (Object, error) {
 }
 
 func (in *Interpreter) call(node ast.Call) (Object, error) {
-	fn, err := in.expression(node.Callee)
+	fn, err := in.evaluate(node.Callee)
 	if err != nil {
 		return nil, err
 	}
@@ -322,7 +322,7 @@ func (in *Interpreter) call(node ast.Call) (Object, error) {
 		}
 		var args []Object
 		for _, expr := range node.Args {
-			arg, err := in.expression(expr)
+			arg, err := in.evaluate(expr)
 			if err != nil {
 				return nil, err
 			}
@@ -335,7 +335,7 @@ func (in *Interpreter) call(node ast.Call) (Object, error) {
 }
 
 func (in *Interpreter) logical(node ast.Logical) (Object, error) {
-	left, err := in.expression(node.LHS)
+	left, err := in.evaluate(node.LHS)
 	if err != nil {
 		return nil, err
 	}
@@ -344,12 +344,12 @@ func (in *Interpreter) logical(node ast.Logical) (Object, error) {
 		if in.falsy(left) {
 			return left, nil
 		}
-		return in.expression(node.RHS)
+		return in.evaluate(node.RHS)
 	case token.Or:
 		if in.truthy(left) {
 			return left, nil
 		}
-		return in.expression(node.RHS)
+		return in.evaluate(node.RHS)
 	default:
 		return nil, fmt.Errorf(
 			"%w: unrecognized logical operator: %s",
@@ -360,7 +360,7 @@ func (in *Interpreter) logical(node ast.Logical) (Object, error) {
 }
 
 func (in *Interpreter) prefix(node ast.Prefix) (Object, error) {
-	obj, err := in.expression(node.Target)
+	obj, err := in.evaluate(node.Target)
 	if err != nil {
 		return nil, err
 	}
@@ -395,17 +395,17 @@ func (in *Interpreter) falsy(obj Object) bool {
 }
 
 func (in *Interpreter) infix(node ast.Infix) (Object, error) {
-	lhs, err := in.expression(node.LHS)
+	lhs, err := in.evaluate(node.LHS)
 	if err != nil {
 		return nil, err
 	}
-	rhs, err := in.expression(node.RHS)
+	rhs, err := in.evaluate(node.RHS)
 	if err != nil {
 		return nil, err
 	}
 	switch node.Operator.Type {
 	case token.Plus:
-		// Addition evaluation lets the left hand side expression operand control whether the addition should be
+		// Addition evaluation lets the left hand side evaluate operand control whether the addition should be
 		// considered a concatenation or an addition of numbers.
 		switch lhs := lhs.(type) {
 		case String:

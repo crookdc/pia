@@ -986,7 +986,7 @@ func TestParser_Next(t *testing.T) {
 
 	t.Run("clears current statement if error occurs", func(t *testing.T) {
 		src := `
-		a +/ b; # This line contains an invalid expression 
+		a +/ b; # This line contains an invalid evaluate 
 		a + b;`
 		lx, err := NewLexer(strings.NewReader(src))
 		assert.Nil(t, err)

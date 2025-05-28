@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestInterpreter_expression(t *testing.T) {
+func TestInterpreter_evaluate(t *testing.T) {
 	tests := []struct {
 		name string
 		node ast.ExpressionNode
@@ -1595,7 +1595,7 @@ func TestInterpreter_expression(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			obj, err := (&Interpreter{}).expression(test.node)
+			obj, err := (&Interpreter{}).evaluate(test.node)
 			assert.ErrorIs(t, err, test.err)
 			if err == nil {
 				// The returned value is only interesting if the returned error is nil. If the error is not nil then the
@@ -1970,7 +1970,7 @@ func TestInterpreter_statement(t *testing.T) {
 				out:   out,
 				scope: test.preload,
 			}
-			uw, err := ev.statement(test.stmt)
+			uw, err := ev.execute(test.stmt)
 			assert.Equal(t, test.uw, uw)
 			assert.ErrorIs(t, err, test.err)
 			assert.Equal(t, test.out, out.String())
@@ -1999,7 +1999,7 @@ func TestInterpreter_statement(t *testing.T) {
 		assert.Nil(t, err)
 		in := NewInterpreter(nil)
 		for _, stmt := range program {
-			_, err := in.statement(stmt)
+			_, err := in.execute(stmt)
 			assert.Nil(t, err)
 		}
 		first, err := in.scope.Resolve("first")
@@ -2017,7 +2017,7 @@ func TestInterpreter_statement(t *testing.T) {
 			scope: NewEnvironment(),
 		}
 
-		_, err := ev.statement(ast.Declaration{
+		_, err := ev.execute(ast.Declaration{
 			Name: token.Token{
 				Type:   token.Identifier,
 				Lexeme: "name",
@@ -2031,7 +2031,7 @@ func TestInterpreter_statement(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, val, String{"hello world"})
 
-		_, err = ev.statement(ast.ExpressionStatement{
+		_, err = ev.execute(ast.ExpressionStatement{
 			Expression: ast.Assignment{
 				Name: token.Token{
 					Type:   token.Identifier,
