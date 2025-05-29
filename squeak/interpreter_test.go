@@ -107,7 +107,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 				},
 				Target: ast.BooleanLiteral{Boolean: true},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "negation of string",
@@ -118,7 +118,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 				},
 				Target: ast.StringLiteral{String: "hello world¡@234"},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "negation of a number",
@@ -238,7 +238,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Integer: 1234,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "mixed addition operand types",
@@ -254,7 +254,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					String: "crookdc",
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "invalid operand addition type",
@@ -270,7 +270,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Boolean: false,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "invalid and mixed addition operand types",
@@ -286,7 +286,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Integer: 12345,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "subtraction of numbers",
@@ -340,7 +340,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					String: "kdc",
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "subtraction with booleans",
@@ -356,7 +356,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Boolean: true,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "mixed subtraction with valid and invalid operand types",
@@ -372,7 +372,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Boolean: true,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "multiplication of numbers",
@@ -426,7 +426,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					String: "kdc",
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "multiplication with booleans",
@@ -442,7 +442,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Boolean: true,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "mixed multiplication with valid and invalid operand types",
@@ -458,7 +458,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Boolean: true,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "division of numbers",
@@ -528,7 +528,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					String: "kdc",
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "division with booleans",
@@ -544,7 +544,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Boolean: true,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "mixed division with valid and invalid operand types",
@@ -560,7 +560,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Boolean: true,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "comparing less than with numbers",
@@ -624,7 +624,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Boolean: false,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "comparing less than with strings",
@@ -640,7 +640,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					String: "lackluster",
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "comparing less than with string and boolean",
@@ -656,7 +656,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Boolean: true,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "comparing less than with string and number",
@@ -672,7 +672,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Integer: 12,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "comparing less than with boolean and number",
@@ -688,7 +688,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Integer: 12,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "comparing greater than with numbers",
@@ -752,7 +752,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Boolean: false,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "comparing greater than with strings",
@@ -768,7 +768,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					String: "lackluster",
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "comparing greater than with string and boolean",
@@ -784,7 +784,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Boolean: true,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "comparing greater than with string and number",
@@ -800,7 +800,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Integer: 12,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "comparing greater than with boolean and number",
@@ -816,7 +816,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Integer: 12,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "comparing equals with numbers",
@@ -928,7 +928,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Boolean: true,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "comparing equals with string and number",
@@ -944,7 +944,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Integer: 12,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "comparing equals with boolean and number",
@@ -960,7 +960,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Integer: 12,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "comparing not equals with numbers",
@@ -1072,7 +1072,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Boolean: true,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "comparing not equals with string and number",
@@ -1088,7 +1088,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Integer: 12,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "comparing not equals with boolean and number",
@@ -1104,7 +1104,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Integer: 12,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 
 		{
@@ -1169,7 +1169,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Boolean: false,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "comparing less equals with strings",
@@ -1185,7 +1185,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					String: "lackluster",
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "comparing less equals with string and boolean",
@@ -1201,7 +1201,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Boolean: true,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "comparing less equals with string and number",
@@ -1217,7 +1217,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Integer: 12,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "comparing less equals with boolean and number",
@@ -1233,7 +1233,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Integer: 12,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 
 		{
@@ -1298,7 +1298,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Boolean: false,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "comparing greater equals with strings",
@@ -1314,7 +1314,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					String: "lackluster",
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "comparing greater equals with string and boolean",
@@ -1330,7 +1330,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Boolean: true,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "comparing greater equals with string and number",
@@ -1346,7 +1346,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Integer: 12,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "comparing greater equals with boolean and number",
@@ -1362,7 +1362,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Integer: 12,
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrUnrecognizedOperandType,
 		},
 		{
 			name: "logical and",
@@ -1604,6 +1604,11 @@ func TestInterpreter_evaluate(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("unrecognized expression", func(t *testing.T) {
+		_, err := (&Interpreter{}).evaluate(nil)
+		assert.ErrorIs(t, err, ErrUnrecognizedExpression)
+	})
 }
 
 func TestInterpreter_Execute(t *testing.T) {
@@ -2078,7 +2083,7 @@ func TestEnvironment_Resolve(t *testing.T) {
 				},
 			},
 			key: "name",
-			err: ErrRuntimeFault,
+			err: ErrObjectNotDeclared,
 		},
 		{
 			name: "key is available in parent scope",
@@ -2185,7 +2190,7 @@ func TestEnvironment_Assign(t *testing.T) {
 					"age": Number{27.5},
 				},
 			},
-			err: ErrRuntimeFault,
+			err: ErrObjectNotDeclared,
 		},
 		{
 			name: "key is available in parent scope",

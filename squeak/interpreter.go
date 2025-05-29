@@ -10,8 +10,13 @@ import (
 )
 
 var (
-	ErrRuntimeFault = errors.New("runtime error")
-	ErrNotCallable  = fmt.Errorf("%w: not callable", ErrRuntimeFault)
+	ErrRuntimeFault            = errors.New("runtime error")
+	ErrNotCallable             = fmt.Errorf("%w: not callable", ErrRuntimeFault)
+	ErrUnrecognizedExpression  = fmt.Errorf("%w: unrecognized expression", ErrRuntimeFault)
+	ErrUnrecognizedStatement   = fmt.Errorf("%w: unrecognized statement", ErrRuntimeFault)
+	ErrUnrecognizedOperator    = fmt.Errorf("%w: unrecognized operator", ErrRuntimeFault)
+	ErrObjectNotDeclared       = fmt.Errorf("%w: variable not declared", ErrRuntimeFault)
+	ErrUnrecognizedOperandType = fmt.Errorf("%w: unrecognized operand type", ErrRuntimeFault)
 )
 
 type unwinder struct {
@@ -65,7 +70,7 @@ func (env *Environment) Resolve(k string) (Object, error) {
 	if env.parent != nil {
 		return env.parent.Resolve(k)
 	}
-	return nil, fmt.Errorf("%w: cannot resolve key: %s", ErrRuntimeFault, k)
+	return nil, fmt.Errorf("%w: %s", ErrObjectNotDeclared, k)
 }
 
 // Declare sets the provided value for the provided key in the immediate scope.
@@ -85,7 +90,7 @@ func (env *Environment) Assign(k string, v Object) error {
 	if env.parent != nil {
 		return env.parent.Assign(k, v)
 	}
-	return fmt.Errorf("%w: cannot resolve assignment target: %s", ErrRuntimeFault, k)
+	return fmt.Errorf("%w: %s", ErrObjectNotDeclared, k)
 }
 
 // NewInterpreter constructs an interpreter with a prefilled runtime in its global scope. The caller is responsible for
@@ -157,11 +162,7 @@ func (in *Interpreter) execute(stmt ast.StatementNode) (*unwinder, error) {
 		// that abstracting it away prematurely would just cause confusion.
 		return in.unwinder(stmt)
 	default:
-		return nil, fmt.Errorf(
-			"%w: unexpected statement type: %T",
-			ErrRuntimeFault,
-			stmt,
-		)
+		return nil, fmt.Errorf("%w: %T", ErrUnrecognizedStatement, stmt)
 	}
 }
 
@@ -310,11 +311,7 @@ func (in *Interpreter) evaluate(expr ast.ExpressionNode) (Object, error) {
 	case ast.Call:
 		return in.call(expr)
 	default:
-		return nil, fmt.Errorf(
-			"%w: unexpected evaluate type: %T",
-			ErrRuntimeFault,
-			expr,
-		)
+		return nil, fmt.Errorf("%w: %T", ErrUnrecognizedExpression, expr)
 	}
 }
 
@@ -363,11 +360,7 @@ func (in *Interpreter) logical(node ast.Logical) (Object, error) {
 		}
 		return in.evaluate(node.RHS)
 	default:
-		return nil, fmt.Errorf(
-			"%w: unrecognized logical operator: %s",
-			ErrRuntimeFault,
-			node.Operator.Lexeme,
-		)
+		return nil, fmt.Errorf("%w: %s as logical operator", ErrUnrecognizedOperator, node.Operator.Lexeme)
 	}
 }
 
@@ -382,11 +375,7 @@ func (in *Interpreter) prefix(node ast.Prefix) (Object, error) {
 	case token.Minus:
 		return in.multiply(obj, Number{-1})
 	default:
-		return nil, fmt.Errorf(
-			"%w: unexpected prefix operator: %s",
-			ErrRuntimeFault,
-			node.Operator.Lexeme,
-		)
+		return nil, fmt.Errorf("%w: %s as prefix operator", ErrUnrecognizedOperator, node.Operator.Lexeme)
 	}
 }
 
@@ -426,8 +415,8 @@ func (in *Interpreter) infix(node ast.Infix) (Object, error) {
 			return in.add(lhs, rhs)
 		default:
 			return nil, fmt.Errorf(
-				"%w: invalid addition operand type: %T",
-				ErrRuntimeFault,
+				"%w: cannot add %T",
+				ErrUnrecognizedOperandType,
 				lhs,
 			)
 		}
@@ -466,22 +455,18 @@ func (in *Interpreter) infix(node ast.Infix) (Object, error) {
 		eq.value = !eq.value
 		return eq, err
 	default:
-		return nil, fmt.Errorf(
-			"%w: unexpected infix operator: %s",
-			ErrRuntimeFault,
-			node.Operator.Lexeme,
-		)
+		return nil, fmt.Errorf("%w: %s as infix operator", ErrUnrecognizedOperator, node.Operator.Lexeme)
 	}
 }
 
 func (in *Interpreter) concat(lhs, rhs Object) (String, error) {
 	lhn, ok := lhs.(String)
 	if !ok {
-		return String{}, fmt.Errorf("%w: %T is not a string", ErrRuntimeFault, lhs)
+		return String{}, fmt.Errorf("%w: %T is not a String", ErrUnrecognizedOperandType, lhs)
 	}
 	rhn, ok := rhs.(String)
 	if !ok {
-		return String{}, fmt.Errorf("%w: %T is not a string", ErrRuntimeFault, rhs)
+		return String{}, fmt.Errorf("%w: %T is not a String", ErrUnrecognizedOperandType, rhs)
 	}
 	return String{lhn.value + rhn.value}, nil
 }
@@ -489,11 +474,11 @@ func (in *Interpreter) concat(lhs, rhs Object) (String, error) {
 func (in *Interpreter) add(lhs, rhs Object) (Number, error) {
 	lhn, ok := lhs.(Number)
 	if !ok {
-		return Number{}, fmt.Errorf("%w: %T is not a number", ErrRuntimeFault, lhs)
+		return Number{}, fmt.Errorf("%w: %T is not a Number", ErrUnrecognizedOperandType, lhs)
 	}
 	rhn, ok := rhs.(Number)
 	if !ok {
-		return Number{}, fmt.Errorf("%w: %T is not a number", ErrRuntimeFault, rhs)
+		return Number{}, fmt.Errorf("%w: %T is not a Number", ErrUnrecognizedOperandType, rhs)
 	}
 	return Number{lhn.value + rhn.value}, nil
 }
@@ -501,11 +486,11 @@ func (in *Interpreter) add(lhs, rhs Object) (Number, error) {
 func (in *Interpreter) subtract(lhs, rhs Object) (Number, error) {
 	lhn, ok := lhs.(Number)
 	if !ok {
-		return Number{}, fmt.Errorf("%w: %T is not a number", ErrRuntimeFault, lhs)
+		return Number{}, fmt.Errorf("%w: %T is not a Number", ErrUnrecognizedOperandType, lhs)
 	}
 	rhn, ok := rhs.(Number)
 	if !ok {
-		return Number{}, fmt.Errorf("%w: %T is not a number", ErrRuntimeFault, rhs)
+		return Number{}, fmt.Errorf("%w: %T is not a Number", ErrUnrecognizedOperandType, rhs)
 	}
 	return Number{lhn.value - rhn.value}, nil
 }
@@ -513,11 +498,11 @@ func (in *Interpreter) subtract(lhs, rhs Object) (Number, error) {
 func (in *Interpreter) multiply(lhs, rhs Object) (Number, error) {
 	lhn, ok := lhs.(Number)
 	if !ok {
-		return Number{}, fmt.Errorf("%w: %T is not a number", ErrRuntimeFault, lhs)
+		return Number{}, fmt.Errorf("%w: %T is not a Number", ErrUnrecognizedOperandType, lhs)
 	}
 	rhn, ok := rhs.(Number)
 	if !ok {
-		return Number{}, fmt.Errorf("%w: %T is not a number", ErrRuntimeFault, rhs)
+		return Number{}, fmt.Errorf("%w: %T is not a Number", ErrUnrecognizedOperandType, rhs)
 	}
 	return Number{lhn.value * rhn.value}, nil
 }
@@ -525,11 +510,11 @@ func (in *Interpreter) multiply(lhs, rhs Object) (Number, error) {
 func (in *Interpreter) divide(lhs, rhs Object) (Number, error) {
 	lhn, ok := lhs.(Number)
 	if !ok {
-		return Number{}, fmt.Errorf("%w: %T is not a number", ErrRuntimeFault, lhs)
+		return Number{}, fmt.Errorf("%w: %T is not a Number", ErrUnrecognizedOperandType, lhs)
 	}
 	rhn, ok := rhs.(Number)
 	if !ok {
-		return Number{}, fmt.Errorf("%w: %T is not a number", ErrRuntimeFault, rhs)
+		return Number{}, fmt.Errorf("%w: %T is not a Number", ErrUnrecognizedOperandType, rhs)
 	}
 	if rhn.value == 0 {
 		// Division by zero is undefined and counts as an erroneous input.
@@ -541,11 +526,11 @@ func (in *Interpreter) divide(lhs, rhs Object) (Number, error) {
 func (in *Interpreter) isLessThan(lhs, rhs Object) (Boolean, error) {
 	lhn, ok := lhs.(Number)
 	if !ok {
-		return Boolean{}, fmt.Errorf("%w: %T is not a number", ErrRuntimeFault, lhs)
+		return Boolean{}, fmt.Errorf("%w: %T is not a Number", ErrUnrecognizedOperandType, lhs)
 	}
 	rhn, ok := rhs.(Number)
 	if !ok {
-		return Boolean{}, fmt.Errorf("%w: %T is not a number", ErrRuntimeFault, rhs)
+		return Boolean{}, fmt.Errorf("%w: %T is not a Number", ErrUnrecognizedOperandType, rhs)
 	}
 	return Boolean{lhn.value < rhn.value}, nil
 }
@@ -553,11 +538,11 @@ func (in *Interpreter) isLessThan(lhs, rhs Object) (Boolean, error) {
 func (in *Interpreter) isGreaterThan(lhs, rhs Object) (Boolean, error) {
 	lhn, ok := lhs.(Number)
 	if !ok {
-		return Boolean{}, fmt.Errorf("%w: %T is not a number", ErrRuntimeFault, lhs)
+		return Boolean{}, fmt.Errorf("%w: %T is not a Number", ErrUnrecognizedOperandType, lhs)
 	}
 	rhn, ok := rhs.(Number)
 	if !ok {
-		return Boolean{}, fmt.Errorf("%w: %T is not a number", ErrRuntimeFault, rhs)
+		return Boolean{}, fmt.Errorf("%w: %T is not a Number", ErrUnrecognizedOperandType, rhs)
 	}
 	return Boolean{lhn.value > rhn.value}, nil
 }
@@ -569,7 +554,7 @@ func (in *Interpreter) isEqual(lhs, rhs Object) (Boolean, error) {
 	if reflect.TypeOf(lhs) != reflect.TypeOf(rhs) {
 		return Boolean{}, fmt.Errorf(
 			"%w: cannot compare equality between %T with %T",
-			ErrRuntimeFault,
+			ErrUnrecognizedOperandType,
 			lhs,
 			rhs,
 		)
