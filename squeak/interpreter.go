@@ -17,6 +17,7 @@ var (
 	ErrUnrecognizedOperator    = fmt.Errorf("%w: unrecognized operator", ErrRuntimeFault)
 	ErrObjectNotDeclared       = fmt.Errorf("%w: variable not declared", ErrRuntimeFault)
 	ErrUnrecognizedOperandType = fmt.Errorf("%w: unrecognized operand type", ErrRuntimeFault)
+	ErrIllegalArgument         = fmt.Errorf("%w: illegal argument", ErrRuntimeFault)
 )
 
 type unwinder struct {
@@ -518,7 +519,7 @@ func (in *Interpreter) divide(lhs, rhs Object) (Number, error) {
 	}
 	if rhn.value == 0 {
 		// Division by zero is undefined and counts as an erroneous input.
-		return Number{}, fmt.Errorf("%w: tried to divide by zero", ErrRuntimeFault)
+		return Number{}, fmt.Errorf("%w: division by zero", ErrIllegalArgument)
 	}
 	return Number{lhn.value / rhn.value}, nil
 }

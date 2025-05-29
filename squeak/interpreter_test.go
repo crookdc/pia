@@ -493,6 +493,22 @@ func TestInterpreter_evaluate(t *testing.T) {
 			obj: Number{2.5},
 		},
 		{
+			name: "division by zero",
+			node: ast.Infix{
+				Operator: token.Token{
+					Type:   token.Slash,
+					Lexeme: "/",
+				},
+				LHS: ast.IntegerLiteral{
+					Integer: 5,
+				},
+				RHS: ast.IntegerLiteral{
+					Integer: 0,
+				},
+			},
+			err: ErrIllegalArgument,
+		},
+		{
 			name: "division with negative number",
 			node: ast.Infix{
 				Operator: token.Token{
