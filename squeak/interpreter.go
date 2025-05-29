@@ -9,7 +9,10 @@ import (
 	"reflect"
 )
 
-var ErrRuntimeFault = errors.New("runtime error")
+var (
+	ErrRuntimeFault = errors.New("runtime error")
+	ErrNotCallable  = fmt.Errorf("%w: not callable", ErrRuntimeFault)
+)
 
 type unwinder struct {
 	source token.Token
@@ -113,7 +116,7 @@ func (in *Interpreter) Execute(program []ast.StatementNode) error {
 		}
 		if uw != nil {
 			// Unwinders should never bubble up all the way here, if they have then that means the unwinder never passed
-			// through a caller that could correctly handle it which is erroneous.
+			// through a caller that could correctly handle it, which is considered an erroneous state.
 			return fmt.Errorf("%w: unexpected unwinder: %s", ErrRuntimeFault, uw.source.Lexeme)
 		}
 	}
@@ -339,7 +342,7 @@ func (in *Interpreter) call(node ast.Call) (Object, error) {
 		}
 		return fn.Call(in, args...)
 	default:
-		return nil, fmt.Errorf("tried to call non-callable: %s", fn)
+		return nil, fmt.Errorf("%w: %s", ErrNotCallable, fn)
 	}
 }
 

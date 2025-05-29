@@ -1793,6 +1793,72 @@ func TestInterpreter_Execute(t *testing.T) {
 			env:     NewEnvironment(),
 		},
 		{
+			name:    "calling a Number",
+			preload: NewEnvironment(Prefill("not_callable", Number{1})),
+			program: []ast.StatementNode{
+				ast.ExpressionStatement{
+					Expression: ast.Call{
+						Callee: ast.Variable{
+							Name: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "not_callable",
+							},
+						},
+						Operator: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "(",
+						},
+					},
+				},
+			},
+			err: ErrNotCallable,
+			env: NewEnvironment(Prefill("not_callable", Number{1})),
+		},
+		{
+			name:    "calling a String",
+			preload: NewEnvironment(Prefill("not_callable", String{"string"})),
+			program: []ast.StatementNode{
+				ast.ExpressionStatement{
+					Expression: ast.Call{
+						Callee: ast.Variable{
+							Name: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "not_callable",
+							},
+						},
+						Operator: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "(",
+						},
+					},
+				},
+			},
+			err: ErrNotCallable,
+			env: NewEnvironment(Prefill("not_callable", String{"string"})),
+		},
+		{
+			name:    "calling a boolean",
+			preload: NewEnvironment(Prefill("not_callable", Boolean{true})),
+			program: []ast.StatementNode{
+				ast.ExpressionStatement{
+					Expression: ast.Call{
+						Callee: ast.Variable{
+							Name: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "not_callable",
+							},
+						},
+						Operator: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "(",
+						},
+					},
+				},
+			},
+			err: ErrNotCallable,
+			env: NewEnvironment(Prefill("not_callable", Boolean{true})),
+		},
+		{
 			name:    "while loop",
 			preload: NewEnvironment(Prefill("i", Number{1})),
 			program: []ast.StatementNode{
