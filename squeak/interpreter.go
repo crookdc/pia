@@ -107,8 +107,14 @@ type Interpreter struct {
 
 func (in *Interpreter) Execute(program []ast.StatementNode) error {
 	for _, stmt := range program {
-		if _, err := in.execute(stmt); err != nil {
+		uw, err := in.execute(stmt)
+		if err != nil {
 			return err
+		}
+		if uw != nil {
+			// Unwinders should never bubble up all the way here, if they have then that means the unwinder never passed
+			// through a caller that could correctly handle it which is erroneous.
+			return fmt.Errorf("%w: unexpected unwinder: %s", ErrRuntimeFault, uw.source.Lexeme)
 		}
 	}
 	return nil

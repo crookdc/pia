@@ -1606,10 +1606,10 @@ func TestInterpreter_evaluate(t *testing.T) {
 	}
 }
 
-func TestInterpreter_statement(t *testing.T) {
+func TestInterpreter_Execute(t *testing.T) {
 	tests := []struct {
 		name    string
-		stmt    ast.StatementNode
+		program []ast.StatementNode
 		preload *Environment
 
 		out string
@@ -1618,32 +1618,46 @@ func TestInterpreter_statement(t *testing.T) {
 		err error
 	}{
 		{
+			name:    "continue outside of loop",
+			preload: NewEnvironment(),
+			program: []ast.StatementNode{ast.Continue{}},
+			err:     ErrRuntimeFault,
+			env:     NewEnvironment(),
+		},
+		{
+			name:    "break outside of loop",
+			preload: NewEnvironment(),
+			program: []ast.StatementNode{ast.Break{}},
+			err:     ErrRuntimeFault,
+			env:     NewEnvironment(),
+		},
+		{
 			name:    "variable declaration without initializer",
 			preload: NewEnvironment(),
-			stmt: ast.Declaration{
+			program: []ast.StatementNode{ast.Declaration{
 				Name: token.Token{
 					Type:   token.Identifier,
 					Lexeme: "name",
 				},
-			},
+			}},
 			env: NewEnvironment(Prefill("name", nil)),
 		},
 		{
 			name:    "variable declaration with explicit nil initializer",
 			preload: NewEnvironment(),
-			stmt: ast.Declaration{
+			program: []ast.StatementNode{ast.Declaration{
 				Name: token.Token{
 					Type:   token.Identifier,
 					Lexeme: "name",
 				},
 				Initializer: ast.NilLiteral{},
-			},
+			}},
 			env: NewEnvironment(Prefill("name", nil)),
 		},
 		{
 			name:    "variable declaration with initializer",
 			preload: NewEnvironment(),
-			stmt: ast.Declaration{
+			program: []ast.StatementNode{ast.Declaration{
 				Name: token.Token{
 					Type:   token.Identifier,
 					Lexeme: "name",
@@ -1660,13 +1674,13 @@ func TestInterpreter_statement(t *testing.T) {
 						String: "goodbye",
 					},
 				},
-			},
+			}},
 			env: NewEnvironment(Prefill("name", String{"hellogoodbye"})),
 		},
 		{
 			name:    "block that assigns in parent scope and declares new variable in local scope",
 			preload: NewEnvironment(Prefill("name", Number{1.123})),
-			stmt: ast.Block{
+			program: []ast.StatementNode{ast.Block{
 				Body: []ast.StatementNode{
 					ast.ExpressionStatement{
 						Expression: ast.Assignment{
@@ -1689,19 +1703,19 @@ func TestInterpreter_statement(t *testing.T) {
 						},
 					},
 				},
-			},
+			}},
 			env: NewEnvironment(Prefill("name", Number{1556.12})),
 		},
 		{
 			name:    "empty block",
 			preload: NewEnvironment(Prefill("name", Number{1.123})),
-			stmt:    ast.Block{},
+			program: []ast.StatementNode{ast.Block{}},
 			env:     NewEnvironment(Prefill("name", Number{1.123})),
 		},
 		{
 			name:    "if-else that evaluates to true",
 			preload: NewEnvironment(),
-			stmt: ast.If{
+			program: []ast.StatementNode{ast.If{
 				Condition: ast.BooleanLiteral{Boolean: true},
 				Then: ast.Declaration{
 					Name: token.Token{
@@ -1717,13 +1731,13 @@ func TestInterpreter_statement(t *testing.T) {
 					},
 					Initializer: ast.BooleanLiteral{Boolean: false},
 				},
-			},
+			}},
 			env: NewEnvironment(Prefill("result", Boolean{true})),
 		},
 		{
 			name:    "if-else that evaluates to false",
 			preload: NewEnvironment(),
-			stmt: ast.If{
+			program: []ast.StatementNode{ast.If{
 				Condition: ast.BooleanLiteral{Boolean: false},
 				Then: ast.Declaration{
 					Name: token.Token{
@@ -1739,13 +1753,13 @@ func TestInterpreter_statement(t *testing.T) {
 					},
 					Initializer: ast.BooleanLiteral{Boolean: false},
 				},
-			},
+			}},
 			env: NewEnvironment(Prefill("result", Boolean{false})),
 		},
 		{
 			name:    "if that evaluates to true",
 			preload: NewEnvironment(),
-			stmt: ast.If{
+			program: []ast.StatementNode{ast.If{
 				Condition: ast.BooleanLiteral{Boolean: true},
 				Then: ast.Declaration{
 					Name: token.Token{
@@ -1754,13 +1768,13 @@ func TestInterpreter_statement(t *testing.T) {
 					},
 					Initializer: ast.BooleanLiteral{Boolean: true},
 				},
-			},
+			}},
 			env: NewEnvironment(Prefill("result", Boolean{true})),
 		},
 		{
 			name:    "if that evaluates to false",
 			preload: NewEnvironment(),
-			stmt: ast.If{
+			program: []ast.StatementNode{ast.If{
 				Condition: ast.BooleanLiteral{Boolean: false},
 				Then: ast.Declaration{
 					Name: token.Token{
@@ -1769,71 +1783,69 @@ func TestInterpreter_statement(t *testing.T) {
 					},
 					Initializer: ast.BooleanLiteral{Boolean: true},
 				},
-			},
+			}},
 			env: NewEnvironment(),
 		},
 		{
 			name:    "noop is ignored",
 			preload: NewEnvironment(),
-			stmt:    ast.Noop{},
+			program: []ast.StatementNode{ast.Noop{}},
 			env:     NewEnvironment(),
 		},
 		{
 			name:    "while loop",
 			preload: NewEnvironment(Prefill("i", Number{1})),
-			stmt: ast.Block{
-				Body: []ast.StatementNode{
-					ast.While{
-						Condition: ast.Infix{
-							Operator: token.Token{
-								Type:   token.Less,
-								Lexeme: "<",
-							},
-							LHS: ast.Variable{
-								Name: token.Token{
-									Type:   token.Identifier,
-									Lexeme: "i",
-								},
-							},
-							RHS: ast.IntegerLiteral{
-								Integer: 5,
+			program: []ast.StatementNode{
+				ast.While{
+					Condition: ast.Infix{
+						Operator: token.Token{
+							Type:   token.Less,
+							Lexeme: "<",
+						},
+						LHS: ast.Variable{
+							Name: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "i",
 							},
 						},
-						Body: ast.Block{
-							Body: []ast.StatementNode{
-								ast.ExpressionStatement{
-									Expression: ast.Assignment{
-										Name: token.Token{
-											Type:   token.Identifier,
-											Lexeme: "i",
+						RHS: ast.IntegerLiteral{
+							Integer: 5,
+						},
+					},
+					Body: ast.Block{
+						Body: []ast.StatementNode{
+							ast.ExpressionStatement{
+								Expression: ast.Assignment{
+									Name: token.Token{
+										Type:   token.Identifier,
+										Lexeme: "i",
+									},
+									Value: ast.Infix{
+										Operator: token.Token{
+											Type:   token.Plus,
+											Lexeme: "+",
 										},
-										Value: ast.Infix{
-											Operator: token.Token{
-												Type:   token.Plus,
-												Lexeme: "+",
+										LHS: ast.Variable{
+											Name: token.Token{
+												Type:   token.Identifier,
+												Lexeme: "i",
 											},
-											LHS: ast.Variable{
-												Name: token.Token{
-													Type:   token.Identifier,
-													Lexeme: "i",
-												},
-											},
-											RHS: ast.IntegerLiteral{
-												Integer: 1,
-											},
+										},
+										RHS: ast.IntegerLiteral{
+											Integer: 1,
 										},
 									},
 								},
-								ast.Declaration{
+							},
+							ast.Declaration{
+								Name: token.Token{
+									Type:   token.Identifier,
+									Lexeme: "iteration",
+								},
+								Initializer: ast.Variable{
 									Name: token.Token{
 										Type:   token.Identifier,
-										Lexeme: "iteration",
-									},
-									Initializer: ast.Variable{
-										Name: token.Token{
-											Type:   token.Identifier,
-											Lexeme: "i",
-										},
+										Lexeme: "i",
 									},
 								},
 							},
@@ -1852,8 +1864,7 @@ func TestInterpreter_statement(t *testing.T) {
 				out:   out,
 				scope: test.preload,
 			}
-			uw, err := ev.execute(test.stmt)
-			assert.Equal(t, test.uw, uw)
+			err := ev.Execute(test.program)
 			assert.ErrorIs(t, err, test.err)
 			assert.Equal(t, test.out, out.String())
 			assert.Equal(t, test.env, ev.scope)
