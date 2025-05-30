@@ -135,6 +135,14 @@ type Import struct {
 	Source ExpressionNode
 }
 
+// Export represents an export statement. Export statements allows an imported script to share named data with its
+// importer.
+type Export struct {
+	Statement
+	Name  token.Token
+	Value ExpressionNode
+}
+
 // Variable represents an expression in the format of just an identifier.
 type Variable struct {
 	Expression

@@ -104,18 +104,20 @@ func NewInterpreter(wd string, out io.Writer) *Interpreter {
 		Prefill("print", PrintBuiltin{}),
 	)
 	return &Interpreter{
-		wd:     wd,
-		global: global,
-		scope:  global,
-		out:    out,
+		wd:      wd,
+		exports: make(map[string]Object),
+		global:  global,
+		scope:   global,
+		out:     out,
 	}
 }
 
 type Interpreter struct {
-	wd     string
-	global *Environment
-	scope  *Environment
-	out    io.Writer
+	wd      string
+	exports map[string]Object
+	global  *Environment
+	scope   *Environment
+	out     io.Writer
 }
 
 func (in *Interpreter) Execute(program []ast.StatementNode) error {
@@ -188,7 +190,18 @@ func (in *Interpreter) execute(stmt ast.StatementNode) (*unwinder, error) {
 		if err := child.Execute(stmts); err != nil {
 			return nil, err
 		}
-		// TODO: Read the exported values and place them into the current scope
+		// Declare any exported variables to the current scope. This allows users to limit the scope in which exported
+		// variables exist on the importing side.
+		for k, v := range child.exports {
+			in.scope.Declare(k, v)
+		}
+		return nil, nil
+	case ast.Export:
+		val, err := in.evaluate(stmt.Value)
+		if err != nil {
+			return nil, err
+		}
+		in.exports[stmt.Name.Lexeme] = val
 		return nil, nil
 	default:
 		return nil, fmt.Errorf("%w: %T", ErrUnrecognizedStatement, stmt)

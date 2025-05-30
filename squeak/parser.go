@@ -206,6 +206,24 @@ func (ps *Parser) statement() (ast.StatementNode, error) {
 		default:
 			return nil, fmt.Errorf("%w: %T is not a valid import expression", ErrUnrecognizedExpression, expr)
 		}
+	case token.Export:
+		ps.lx.Discard()
+		expr, err := ps.primary()
+		if err != nil {
+			return nil, err
+		}
+		if _, err := ps.expect(token.Semicolon); err != nil {
+			return nil, err
+		}
+		switch expr := expr.(type) {
+		case ast.Variable:
+			return ast.Export{
+				Name:  expr.Name,
+				Value: expr,
+			}, nil
+		default:
+			return nil, fmt.Errorf("%w: %T is not a valid export expression", ErrUnrecognizedExpression, expr)
+		}
 	default:
 		return ps.expression()
 	}

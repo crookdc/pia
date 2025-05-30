@@ -91,7 +91,7 @@ func TestLexer_Next(t *testing.T) {
 			},
 		},
 		{
-			src: "break; continue; import;",
+			src: "break; continue; import; export;",
 			bl:  LexerBufferLength,
 			expected: []token.Token{
 				{
@@ -113,6 +113,14 @@ func TestLexer_Next(t *testing.T) {
 				{
 					Type:   token.Import,
 					Lexeme: "import",
+				},
+				{
+					Type:   token.Semicolon,
+					Lexeme: ";",
+				},
+				{
+					Type:   token.Export,
+					Lexeme: "export",
 				},
 				{
 					Type:   token.Semicolon,

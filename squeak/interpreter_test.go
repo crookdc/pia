@@ -1633,10 +1633,11 @@ func TestInterpreter_Execute(t *testing.T) {
 		program []ast.StatementNode
 		preload *Environment
 
-		out string
-		uw  *unwinder
-		env *Environment
-		err error
+		out     string
+		uw      *unwinder
+		env     *Environment
+		exports map[string]Object
+		err     error
 	}{
 		{
 			name:    "continue outside of loop",
@@ -1644,6 +1645,7 @@ func TestInterpreter_Execute(t *testing.T) {
 			program: []ast.StatementNode{ast.Continue{}},
 			err:     ErrRuntimeFault,
 			env:     NewEnvironment(),
+			exports: make(map[string]Object),
 		},
 		{
 			name:    "break outside of loop",
@@ -1651,6 +1653,7 @@ func TestInterpreter_Execute(t *testing.T) {
 			program: []ast.StatementNode{ast.Break{}},
 			err:     ErrRuntimeFault,
 			env:     NewEnvironment(),
+			exports: make(map[string]Object),
 		},
 		{
 			name:    "variable declaration without initializer",
@@ -1661,7 +1664,8 @@ func TestInterpreter_Execute(t *testing.T) {
 					Lexeme: "name",
 				},
 			}},
-			env: NewEnvironment(Prefill("name", nil)),
+			env:     NewEnvironment(Prefill("name", nil)),
+			exports: make(map[string]Object),
 		},
 		{
 			name:    "variable declaration with explicit nil initializer",
@@ -1673,7 +1677,8 @@ func TestInterpreter_Execute(t *testing.T) {
 				},
 				Initializer: ast.NilLiteral{},
 			}},
-			env: NewEnvironment(Prefill("name", nil)),
+			env:     NewEnvironment(Prefill("name", nil)),
+			exports: make(map[string]Object),
 		},
 		{
 			name:    "variable declaration with initializer",
@@ -1696,7 +1701,8 @@ func TestInterpreter_Execute(t *testing.T) {
 					},
 				},
 			}},
-			env: NewEnvironment(Prefill("name", String{"hellogoodbye"})),
+			env:     NewEnvironment(Prefill("name", String{"hellogoodbye"})),
+			exports: make(map[string]Object),
 		},
 		{
 			name:    "block that assigns in parent scope and declares new variable in local scope",
@@ -1725,13 +1731,15 @@ func TestInterpreter_Execute(t *testing.T) {
 					},
 				},
 			}},
-			env: NewEnvironment(Prefill("name", Number{1556.12})),
+			env:     NewEnvironment(Prefill("name", Number{1556.12})),
+			exports: make(map[string]Object),
 		},
 		{
 			name:    "empty block",
 			preload: NewEnvironment(Prefill("name", Number{1.123})),
 			program: []ast.StatementNode{ast.Block{}},
 			env:     NewEnvironment(Prefill("name", Number{1.123})),
+			exports: make(map[string]Object),
 		},
 		{
 			name:    "if-else that evaluates to true",
@@ -1753,7 +1761,8 @@ func TestInterpreter_Execute(t *testing.T) {
 					Initializer: ast.BooleanLiteral{Boolean: false},
 				},
 			}},
-			env: NewEnvironment(Prefill("result", Boolean{true})),
+			env:     NewEnvironment(Prefill("result", Boolean{true})),
+			exports: make(map[string]Object),
 		},
 		{
 			name:    "if-else that evaluates to false",
@@ -1775,7 +1784,8 @@ func TestInterpreter_Execute(t *testing.T) {
 					Initializer: ast.BooleanLiteral{Boolean: false},
 				},
 			}},
-			env: NewEnvironment(Prefill("result", Boolean{false})),
+			env:     NewEnvironment(Prefill("result", Boolean{false})),
+			exports: make(map[string]Object),
 		},
 		{
 			name:    "if that evaluates to true",
@@ -1790,7 +1800,8 @@ func TestInterpreter_Execute(t *testing.T) {
 					Initializer: ast.BooleanLiteral{Boolean: true},
 				},
 			}},
-			env: NewEnvironment(Prefill("result", Boolean{true})),
+			env:     NewEnvironment(Prefill("result", Boolean{true})),
+			exports: make(map[string]Object),
 		},
 		{
 			name:    "if that evaluates to false",
@@ -1805,13 +1816,37 @@ func TestInterpreter_Execute(t *testing.T) {
 					Initializer: ast.BooleanLiteral{Boolean: true},
 				},
 			}},
-			env: NewEnvironment(),
+			env:     NewEnvironment(),
+			exports: make(map[string]Object),
 		},
 		{
 			name:    "noop is ignored",
 			preload: NewEnvironment(),
 			program: []ast.StatementNode{ast.Noop{}},
 			env:     NewEnvironment(),
+			exports: make(map[string]Object),
+		},
+		{
+			name:    "export variable",
+			preload: NewEnvironment(Prefill("name", String{"crookdc"})),
+			program: []ast.StatementNode{
+				ast.Export{
+					Name: token.Token{
+						Type:   token.Identifier,
+						Lexeme: "name",
+					},
+					Value: ast.Variable{
+						Name: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "name",
+						},
+					},
+				},
+			},
+			env: NewEnvironment(Prefill("name", String{"crookdc"})),
+			exports: map[string]Object{
+				"name": String{"crookdc"},
+			},
 		},
 		{
 			name:    "calling a Number",
@@ -1832,8 +1867,9 @@ func TestInterpreter_Execute(t *testing.T) {
 					},
 				},
 			},
-			err: ErrNotCallable,
-			env: NewEnvironment(Prefill("not_callable", Number{1})),
+			err:     ErrNotCallable,
+			env:     NewEnvironment(Prefill("not_callable", Number{1})),
+			exports: make(map[string]Object),
 		},
 		{
 			name:    "calling a String",
@@ -1854,8 +1890,9 @@ func TestInterpreter_Execute(t *testing.T) {
 					},
 				},
 			},
-			err: ErrNotCallable,
-			env: NewEnvironment(Prefill("not_callable", String{"string"})),
+			err:     ErrNotCallable,
+			env:     NewEnvironment(Prefill("not_callable", String{"string"})),
+			exports: make(map[string]Object),
 		},
 		{
 			name:    "calling a boolean",
@@ -1876,8 +1913,9 @@ func TestInterpreter_Execute(t *testing.T) {
 					},
 				},
 			},
-			err: ErrNotCallable,
-			env: NewEnvironment(Prefill("not_callable", Boolean{true})),
+			err:     ErrNotCallable,
+			env:     NewEnvironment(Prefill("not_callable", Boolean{true})),
+			exports: make(map[string]Object),
 		},
 		{
 			name:    "while loop",
@@ -1940,21 +1978,24 @@ func TestInterpreter_Execute(t *testing.T) {
 					},
 				},
 			},
-			env: NewEnvironment(Prefill("i", Number{5})),
+			env:     NewEnvironment(Prefill("i", Number{5})),
+			exports: make(map[string]Object),
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			out := bytes.NewBufferString("")
-			ev := Interpreter{
-				out:   out,
-				scope: test.preload,
+			in := &Interpreter{
+				exports: make(map[string]Object),
+				out:     out,
+				scope:   test.preload,
 			}
-			err := ev.Execute(test.program)
+			err := in.Execute(test.program)
+			assert.Equal(t, test.exports, in.exports)
 			assert.ErrorIs(t, err, test.err)
 			assert.Equal(t, test.out, out.String())
-			assert.Equal(t, test.env, ev.scope)
+			assert.Equal(t, test.env, in.scope)
 		})
 	}
 
@@ -2030,6 +2071,65 @@ func TestInterpreter_Execute(t *testing.T) {
 		first, err := in.scope.Resolve("test")
 		assert.Nil(t, err)
 		assert.Equal(t, Number{1100}, first)
+	})
+
+	t.Run("export function", func(t *testing.T) {
+		src := `
+		function add(a, b) {
+			return a + b;
+		}
+		export add;
+		`
+		program, err := ParseString(src)
+		assert.Nil(t, err)
+		in := NewInterpreter("", nil)
+		for _, stmt := range program {
+			_, err := in.execute(stmt)
+			assert.Nil(t, err)
+		}
+		assert.Equal(t, Function{
+			declaration: ast.Function{
+				Name: token.Token{
+					Type:   token.Identifier,
+					Lexeme: "add",
+				},
+				Params: []token.Token{
+					{
+						Type:   token.Identifier,
+						Lexeme: "a",
+					},
+					{
+						Type:   token.Identifier,
+						Lexeme: "b",
+					},
+				},
+				Body: ast.Block{
+					Body: []ast.StatementNode{
+						ast.Return{
+							Expression: ast.Infix{
+								Operator: token.Token{
+									Type:   token.Plus,
+									Lexeme: "+",
+								},
+								LHS: ast.Variable{
+									Name: token.Token{
+										Type:   token.Identifier,
+										Lexeme: "a",
+									},
+								},
+								RHS: ast.Variable{
+									Name: token.Token{
+										Type:   token.Identifier,
+										Lexeme: "b",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			closure: in.scope,
+		}, in.exports["add"])
 	})
 
 	t.Run("variable declaration followed by assignment", func(t *testing.T) {

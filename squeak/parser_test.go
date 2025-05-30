@@ -67,6 +67,37 @@ func TestParser_Next(t *testing.T) {
 			err: ErrUnrecognizedExpression,
 		},
 		{
+			src: "export true;",
+			err: ErrUnrecognizedExpression,
+		},
+		{
+			src: "export 13;",
+			err: ErrUnrecognizedExpression,
+		},
+		{
+			src: "export 134.5;",
+			err: ErrUnrecognizedExpression,
+		},
+		{
+			src: "export \"some string\";",
+			err: ErrUnrecognizedExpression,
+		},
+		{
+			src: "export my_var;",
+			expected: ast.Export{
+				Name: token.Token{
+					Type:   token.Identifier,
+					Lexeme: "my_var",
+				},
+				Value: ast.Variable{
+					Name: token.Token{
+						Type:   token.Identifier,
+						Lexeme: "my_var",
+					},
+				},
+			},
+		},
+		{
 			src: `
 			{
 				import "pia:request";
