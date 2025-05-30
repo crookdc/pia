@@ -128,6 +128,13 @@ type Continue struct {
 	Statement
 }
 
+// Import represents an import statement, which executes code from another file within the same environment as the
+// current scope.
+type Import struct {
+	Statement
+	Source ExpressionNode
+}
+
 // Variable represents an expression in the format of just an identifier.
 type Variable struct {
 	Expression

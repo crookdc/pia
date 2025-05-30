@@ -8,18 +8,18 @@ import (
 	"strings"
 )
 
-func Run() error {
-	_, err := tea.NewProgram(initial(), tea.WithAltScreen()).Run()
+func Run(wd string) error {
+	_, err := tea.NewProgram(initial(wd), tea.WithAltScreen()).Run()
 	return err
 }
 
-func initial() model {
+func initial(wd string) model {
 	prompt := textinput.New()
 	prompt.Focus()
 	out := bytes.NewBufferString("")
 	return model{
 		out:    out,
-		in:     squeak.NewInterpreter(out),
+		in:     squeak.NewInterpreter(wd, out),
 		prompt: prompt,
 	}
 }

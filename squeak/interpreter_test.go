@@ -1977,7 +1977,7 @@ func TestInterpreter_Execute(t *testing.T) {
 		`
 		program, err := ParseString(src)
 		assert.Nil(t, err)
-		in := NewInterpreter(nil)
+		in := NewInterpreter("", nil)
 		for _, stmt := range program {
 			_, err := in.execute(stmt)
 			assert.Nil(t, err)
@@ -2002,7 +2002,7 @@ func TestInterpreter_Execute(t *testing.T) {
 		`
 		program, err := ParseString(src)
 		assert.Nil(t, err)
-		in := NewInterpreter(nil)
+		in := NewInterpreter("", nil)
 		for _, stmt := range program {
 			_, err := in.execute(stmt)
 			assert.Nil(t, err)
@@ -2022,7 +2022,7 @@ func TestInterpreter_Execute(t *testing.T) {
 		`
 		program, err := ParseString(src)
 		assert.Nil(t, err)
-		in := NewInterpreter(nil)
+		in := NewInterpreter("", nil)
 		for _, stmt := range program {
 			_, err := in.execute(stmt)
 			assert.Nil(t, err)

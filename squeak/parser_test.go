@@ -36,6 +36,53 @@ func TestParser_Next(t *testing.T) {
 			},
 		},
 		{
+			src: "import \"pia:response\";",
+			expected: ast.Import{
+				Source: ast.StringLiteral{
+					String: "pia:response",
+				},
+			},
+		},
+		{
+			src: "import some_variable;",
+			expected: ast.Import{
+				Source: ast.Variable{
+					Name: token.Token{
+						Type:   token.Identifier,
+						Lexeme: "some_variable",
+					},
+				},
+			},
+		},
+		{
+			src: "import true;",
+			err: ErrUnrecognizedExpression,
+		},
+		{
+			src: "import 15;",
+			err: ErrUnrecognizedExpression,
+		},
+		{
+			src: "import 15.4;",
+			err: ErrUnrecognizedExpression,
+		},
+		{
+			src: `
+			{
+				import "pia:request";
+			}
+			`,
+			expected: ast.Block{
+				Body: []ast.StatementNode{
+					ast.Import{
+						Source: ast.StringLiteral{
+							String: "pia:request",
+						},
+					},
+				},
+			},
+		},
+		{
 			src: `
 			function add(a, b) {
 				print(a + b);

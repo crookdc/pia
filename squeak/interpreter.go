@@ -6,6 +6,8 @@ import (
 	"github.com/crookdc/pia/squeak/ast"
 	"github.com/crookdc/pia/squeak/token"
 	"io"
+	"os"
+	"path/filepath"
 	"reflect"
 )
 
@@ -97,11 +99,12 @@ func (env *Environment) Assign(k string, v Object) error {
 // NewInterpreter constructs an interpreter with a prefilled runtime in its global scope. The caller is responsible for
 // supplying a valid [io.Writer] which is used as the standard output stream. While the caller is allowed to provide a
 // nil [io.Writer], it is discouraged as any usage of the standard output will result in a panic.
-func NewInterpreter(out io.Writer) *Interpreter {
+func NewInterpreter(wd string, out io.Writer) *Interpreter {
 	global := NewEnvironment(
 		Prefill("print", PrintBuiltin{}),
 	)
 	return &Interpreter{
+		wd:     wd,
 		global: global,
 		scope:  global,
 		out:    out,
@@ -109,6 +112,7 @@ func NewInterpreter(out io.Writer) *Interpreter {
 }
 
 type Interpreter struct {
+	wd     string
 	global *Environment
 	scope  *Environment
 	out    io.Writer
@@ -162,6 +166,30 @@ func (in *Interpreter) execute(stmt ast.StatementNode) (*unwinder, error) {
 		// harm in handling them directly like we do now rather than abstracting things away. On the contrary, I believe
 		// that abstracting it away prematurely would just cause confusion.
 		return in.unwinder(stmt)
+	case ast.Import:
+		fn, err := in.evaluate(stmt.Source)
+		if err != nil {
+			return nil, err
+		}
+		if _, ok := fn.(String); !ok {
+			return nil, fmt.Errorf("%w: %s is not a valid import value", ErrIllegalArgument, fn.String())
+		}
+		loc := filepath.Join(in.wd, fn.String())
+		// TODO: Here is where any special Pia imports should be handled.
+		src, err := os.ReadFile(loc)
+		if err != nil {
+			return nil, err
+		}
+		stmts, err := ParseString(string(src))
+		if err != nil {
+			return nil, err
+		}
+		child := NewInterpreter(filepath.Dir(loc), in.out)
+		if err := child.Execute(stmts); err != nil {
+			return nil, err
+		}
+		// TODO: Read the exported values and place them into the current scope
+		return nil, nil
 	default:
 		return nil, fmt.Errorf("%w: %T", ErrUnrecognizedStatement, stmt)
 	}

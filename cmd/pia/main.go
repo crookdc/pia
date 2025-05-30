@@ -16,24 +16,25 @@ var (
 
 func main() {
 	flag.Parse()
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatalln(err)
+	}
 	if *run {
-		if err := repl.Run(); err != nil {
+		if err := repl.Run(wd); err != nil {
 			log.Fatalln(err)
 		}
 	}
 	if *script != "" {
-		if err := evaluate(*script); err != nil {
+		if err := evaluate(wd, *script); err != nil {
 			log.Fatalln(err)
 		}
 	}
 }
 
-func evaluate(file string) error {
-	dir, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-	src, err := os.ReadFile(filepath.Join(dir, file))
+func evaluate(wd, file string) error {
+	loc := filepath.Join(wd, file)
+	src, err := os.ReadFile(loc)
 	if err != nil {
 		return err
 	}
@@ -41,5 +42,5 @@ func evaluate(file string) error {
 	if err != nil {
 		return err
 	}
-	return squeak.NewInterpreter(os.Stdout).Execute(program)
+	return squeak.NewInterpreter(filepath.Dir(loc), os.Stdout).Execute(program)
 }

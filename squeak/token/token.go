@@ -31,6 +31,7 @@ const (
 	Function
 	Var
 	Nil
+	Import
 
 	Less
 	LessEqual
@@ -68,6 +69,7 @@ var lexemes = map[Type]string{
 	Function:         "function",
 	Var:              "var",
 	Nil:              "nil",
+	Import:           "import",
 	Less:             "<",
 	LessEqual:        "<=",
 	Greater:          ">",

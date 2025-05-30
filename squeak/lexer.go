@@ -380,7 +380,7 @@ func (lx *Lexer) symbol() (token.Token, error) {
 }
 
 func (lx *Lexer) word() (token.Token, error) {
-	w, err := lx.next(either(unicode.IsLetter, unicode.IsDigit))
+	w, err := lx.next(identifier())
 	if err != nil {
 		return token.Null, err
 	}
@@ -407,11 +407,19 @@ func (lx *Lexer) word() (token.Token, error) {
 		return token.New(token.Var)
 	case "nil":
 		return token.New(token.Nil)
+	case "import":
+		return token.New(token.Import)
 	case "true", "false":
 		return token.New(token.Boolean, token.Lexeme(string(w)))
 	default:
 		return token.New(token.Identifier, token.Lexeme(string(w)))
 	}
+}
+
+func identifier() func(rune) bool {
+	return either(unicode.IsLetter, unicode.IsDigit, func(r rune) bool {
+		return r == '_'
+	})
 }
 
 func always(_ byte) bool {
