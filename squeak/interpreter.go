@@ -102,6 +102,7 @@ func (env *Environment) Assign(k string, v Object) error {
 func NewInterpreter(wd string, out io.Writer) *Interpreter {
 	global := NewEnvironment(
 		Prefill("print", PrintBuiltin{}),
+		Prefill("length", LengthBuiltin{}),
 	)
 	return &Interpreter{
 		wd:      wd,

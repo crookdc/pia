@@ -19,3 +19,25 @@ func (p PrintBuiltin) Call(in *Interpreter, args ...Object) (Object, error) {
 	}
 	return nil, nil
 }
+
+type LengthBuiltin struct{}
+
+func (l LengthBuiltin) String() string {
+	return "builtin:length"
+}
+
+func (l LengthBuiltin) Arity() int {
+	return 1
+}
+
+func (l LengthBuiltin) Call(_ *Interpreter, args ...Object) (Object, error) {
+	list, ok := args[0].(List)
+	if !ok {
+		return nil, fmt.Errorf(
+			"%w: %T is not a list",
+			ErrIllegalArgument,
+			args[0],
+		)
+	}
+	return Number{float64(len(list.slice))}, nil
+}

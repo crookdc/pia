@@ -1,0 +1,18 @@
+# Looping in Squeak works pretty much like you would expect. However, only while loops are currently supported! Hence,
+# you'll end up writing a bit more boilerplate in certain cases where you might have otherwise reached for your handy
+# for loop.
+
+# The following is an example that loops a set amount of times and prints the current iteration number.
+var i = 0;
+while i < 10 {
+    print(i);
+    i = i + 1;
+}
+
+# Next, we can do the same thing but instead loop over a list of items and print the item at each iteration.
+var developers = ["Linux Torvalds", "Bjarne Stroustrup", "Donald Knuth"];
+i = 0;
+while i < length(developers) {
+    print(developers[i]);
+    i = i + 1;
+}

@@ -1,0 +1,17 @@
+# Squeak allows you to import code and data from other Squeak source code files using the import statement, but how do
+# you specify what should be made available when someone imports you file? Using exports of course!
+
+# The simplest export you could have is that of a named piece of data, which could be a variable or a function.
+function add(a, b) {
+    return a + b;
+}
+export add;
+
+var pi = 3.14;
+export pi;
+
+# Data that is exported must be named. However, you are allowed to name the data at the time of exporting it using the
+# "as" keyword. This allows you to export literal values and export already named data but under a different name.
+export 3.14 as pi;
+var developer = "crookdc";
+export developer as maintainer;

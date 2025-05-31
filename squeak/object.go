@@ -84,6 +84,7 @@ func (b Boolean) String() string {
 	return "false"
 }
 
+// List is a single Object containing a collection of Object values.
 type List struct {
 	slice []Object
 }
