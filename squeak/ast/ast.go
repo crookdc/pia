@@ -178,6 +178,12 @@ type NilLiteral struct {
 	Expression
 }
 
+// ListLiteral represents a literal list expression with zero or more items declared within it.
+type ListLiteral struct {
+	Expression
+	Items []ExpressionNode
+}
+
 // Assignment represents the assignment of a value to a variable without also declaring said variable.
 type Assignment struct {
 	Expression

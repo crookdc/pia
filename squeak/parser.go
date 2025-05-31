@@ -636,46 +636,52 @@ func (ps *Parser) tokens(start, end token.Type) (tokens []token.Token, err error
 	}
 }
 func (ps *Parser) primary() (ast.ExpressionNode, error) {
-	nxt, err := ps.lx.Next()
+	pk, err := ps.lx.Peek()
 	if err != nil {
 		return nil, err
 	}
-	switch nxt.Type {
+	switch pk.Type {
 	case token.Identifier:
-		return ast.Variable{Name: nxt}, nil
+		ps.lx.Discard()
+		return ast.Variable{Name: pk}, nil
 	case token.String:
-		return ast.StringLiteral{String: nxt.Lexeme}, nil
+		ps.lx.Discard()
+		return ast.StringLiteral{String: pk.Lexeme}, nil
 	case token.Integer:
-		i, err := strconv.Atoi(nxt.Lexeme)
+		ps.lx.Discard()
+		i, err := strconv.Atoi(pk.Lexeme)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"%w: invalid integer literal: %s",
 				SyntaxError{ps.lx.Line()},
-				nxt.Lexeme,
+				pk.Lexeme,
 			)
 		}
 		return ast.IntegerLiteral{Integer: i}, nil
 	case token.Float:
-		f, err := strconv.ParseFloat(nxt.Lexeme, 64)
+		ps.lx.Discard()
+		f, err := strconv.ParseFloat(pk.Lexeme, 64)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"%w: invalid float literal: %s",
 				SyntaxError{ps.lx.Line()},
-				nxt.Lexeme,
+				pk.Lexeme,
 			)
 		}
 		return ast.FloatLiteral{Float: f}, nil
 	case token.Boolean:
-		b, err := strconv.ParseBool(nxt.Lexeme)
+		ps.lx.Discard()
+		b, err := strconv.ParseBool(pk.Lexeme)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"%w: invalid boolean literal: %s",
 				SyntaxError{ps.lx.Line()},
-				nxt.Lexeme,
+				pk.Lexeme,
 			)
 		}
 		return ast.BooleanLiteral{Boolean: b}, nil
 	case token.LeftParenthesis:
+		ps.lx.Discard()
 		expr, err := ps.equality()
 		if err != nil {
 			return nil, err
@@ -686,13 +692,23 @@ func (ps *Parser) primary() (ast.ExpressionNode, error) {
 		return ast.Grouping{
 			Group: expr,
 		}, nil
+	case token.LeftBracket:
+		items, err := ps.expressions(token.LeftBracket, token.RightBracket)
+		if err != nil {
+			return nil, err
+		}
+		return ast.ListLiteral{
+			Items: items,
+		}, nil
 	case token.Nil:
+		ps.lx.Discard()
 		return ast.NilLiteral{}, nil
 	default:
+		ps.lx.Discard()
 		return nil, fmt.Errorf(
 			"%w: unexpected token: %s",
 			SyntaxError{Line: ps.lx.Line()},
-			nxt.Lexeme,
+			pk.Lexeme,
 		)
 	}
 }

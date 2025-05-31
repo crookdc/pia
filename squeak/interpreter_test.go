@@ -31,6 +31,43 @@ func TestInterpreter_evaluate(t *testing.T) {
 			obj: Number{-1902},
 		},
 		{
+			name: "list literal with items",
+			node: ast.ListLiteral{
+				Items: []ast.ExpressionNode{
+					ast.Infix{
+						Operator: token.Token{
+							Type:   token.Plus,
+							Lexeme: "+",
+						},
+						LHS: ast.IntegerLiteral{
+							Integer: 10,
+						},
+						RHS: ast.IntegerLiteral{
+							Integer: -5,
+						},
+					},
+					ast.StringLiteral{
+						String: "crookdc",
+					},
+				},
+			},
+			obj: List{
+				slice: []Object{
+					Number{5},
+					String{"crookdc"},
+				},
+			},
+		},
+		{
+			name: "empty list literal",
+			node: ast.ListLiteral{
+				Items: []ast.ExpressionNode{},
+			},
+			obj: List{
+				slice: make([]Object, 0),
+			},
+		},
+		{
 			name: "integer literal",
 			node: ast.IntegerLiteral{Integer: 12956},
 			obj:  Number{12956},

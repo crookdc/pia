@@ -331,6 +331,8 @@ func (in *Interpreter) evaluate(expr ast.ExpressionNode) (Object, error) {
 		return Boolean{expr.Boolean}, nil
 	case ast.NilLiteral:
 		return nil, nil
+	case ast.ListLiteral:
+		return in.list(expr)
 	case ast.Grouping:
 		return in.evaluate(expr.Group)
 	case ast.Prefix:
@@ -355,6 +357,18 @@ func (in *Interpreter) evaluate(expr ast.ExpressionNode) (Object, error) {
 	default:
 		return nil, fmt.Errorf("%w: %T", ErrUnrecognizedExpression, expr)
 	}
+}
+
+func (in *Interpreter) list(node ast.ListLiteral) (Object, error) {
+	items := make([]Object, 0, len(node.Items))
+	for _, expr := range node.Items {
+		item, err := in.evaluate(expr)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+	return List{slice: items}, nil
 }
 
 func (in *Interpreter) call(node ast.Call) (Object, error) {

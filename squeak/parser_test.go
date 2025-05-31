@@ -603,6 +603,84 @@ func TestParser_Next(t *testing.T) {
 			err: SyntaxError{Line: 1},
 		},
 		{
+			src: "var list = [1, 2, 3, true, false, \"crookdc\"];",
+			expected: ast.Declaration{
+				Name: token.Token{
+					Type:   token.Identifier,
+					Lexeme: "list",
+				},
+				Initializer: ast.ListLiteral{
+					Items: []ast.ExpressionNode{
+						ast.IntegerLiteral{Integer: 1},
+						ast.IntegerLiteral{Integer: 2},
+						ast.IntegerLiteral{Integer: 3},
+						ast.BooleanLiteral{Boolean: true},
+						ast.BooleanLiteral{Boolean: false},
+						ast.StringLiteral{String: "crookdc"},
+					},
+				},
+			},
+		},
+		{
+			src: "var list = [1 + 5, 9];",
+			expected: ast.Declaration{
+				Name: token.Token{
+					Type:   token.Identifier,
+					Lexeme: "list",
+				},
+				Initializer: ast.ListLiteral{
+					Items: []ast.ExpressionNode{
+						ast.Infix{
+							Operator: token.Token{
+								Type:   token.Plus,
+								Lexeme: "+",
+							},
+							LHS: ast.IntegerLiteral{
+								Integer: 1,
+							},
+							RHS: ast.IntegerLiteral{
+								Integer: 5,
+							},
+						},
+						ast.IntegerLiteral{
+							Integer: 9,
+						},
+					},
+				},
+			},
+		},
+		{
+			src: "var list = [a];",
+			expected: ast.Declaration{
+				Name: token.Token{
+					Type:   token.Identifier,
+					Lexeme: "list",
+				},
+				Initializer: ast.ListLiteral{
+					Items: []ast.ExpressionNode{
+						ast.Variable{
+							Name: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			src: "var list = [];",
+			expected: ast.Declaration{
+				Name: token.Token{
+					Type:   token.Identifier,
+					Lexeme: "list",
+				},
+				Initializer: ast.ListLiteral{
+					Items: make([]ast.ExpressionNode, 0),
+				},
+			},
+		},
+		{
 			src: "run(5 + 1002, n);",
 			expected: ast.ExpressionStatement{
 				Expression: ast.Call{
