@@ -532,6 +532,77 @@ func TestParser_Next(t *testing.T) {
 			},
 		},
 		{
+			src: "index[4];",
+			expected: ast.ExpressionStatement{
+				Expression: ast.Call{
+					Callee: ast.Variable{
+						Name: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "index",
+						},
+					},
+					Operator: token.Token{
+						Type:   token.LeftBracket,
+						Lexeme: "[",
+					},
+					Args: []ast.ExpressionNode{
+						ast.IntegerLiteral{
+							Integer: 4,
+						},
+					},
+				},
+			},
+		},
+		{
+			src: "indexed[add(a, b)];",
+			expected: ast.ExpressionStatement{
+				Expression: ast.Call{
+					Callee: ast.Variable{
+						Name: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "indexed",
+						},
+					},
+					Operator: token.Token{
+						Type:   token.LeftBracket,
+						Lexeme: "[",
+					},
+					Args: []ast.ExpressionNode{
+						ast.Call{
+							Callee: ast.Variable{
+								Name: token.Token{
+									Type:   token.Identifier,
+									Lexeme: "add",
+								},
+							},
+							Operator: token.Token{
+								Type:   token.LeftParenthesis,
+								Lexeme: "(",
+							},
+							Args: []ast.ExpressionNode{
+								ast.Variable{
+									Name: token.Token{
+										Type:   token.Identifier,
+										Lexeme: "a",
+									},
+								},
+								ast.Variable{
+									Name: token.Token{
+										Type:   token.Identifier,
+										Lexeme: "b",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			src: "indexed[12;",
+			err: SyntaxError{Line: 1},
+		},
+		{
 			src: "run(5 + 1002, n);",
 			expected: ast.ExpressionStatement{
 				Expression: ast.Call{

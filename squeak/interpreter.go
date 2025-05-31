@@ -358,6 +358,17 @@ func (in *Interpreter) evaluate(expr ast.ExpressionNode) (Object, error) {
 }
 
 func (in *Interpreter) call(node ast.Call) (Object, error) {
+	switch node.Operator.Type {
+	case token.LeftParenthesis:
+		return in.function(node)
+	case token.LeftBracket:
+		return in.index(node)
+	default:
+		return nil, fmt.Errorf("%w: %s is not a call operator", ErrUnrecognizedOperator, node.Operator.Lexeme)
+	}
+}
+
+func (in *Interpreter) function(node ast.Call) (Object, error) {
 	fn, err := in.evaluate(node.Callee)
 	if err != nil {
 		return nil, err
@@ -382,6 +393,49 @@ func (in *Interpreter) call(node ast.Call) (Object, error) {
 		return fn.Call(in, args...)
 	default:
 		return nil, fmt.Errorf("%w: %s", ErrNotCallable, fn)
+	}
+}
+
+func (in *Interpreter) index(node ast.Call) (Object, error) {
+	if len(node.Args) != 1 {
+		return nil, fmt.Errorf(
+			"%w: indexing is not supported for %d arguments",
+			ErrIllegalArgument,
+			len(node.Args),
+		)
+	}
+	index, err := in.evaluate(node.Args[0])
+	if err != nil {
+		return nil, err
+	}
+	ls, err := in.evaluate(node.Callee)
+	if err != nil {
+		return nil, err
+	}
+	switch ls := ls.(type) {
+	case List:
+		if _, ok := index.(Number); !ok {
+			return nil, fmt.Errorf(
+				"%w: %T is not a valid list indexing type",
+				ErrIllegalArgument,
+				index,
+			)
+		}
+		index := int(index.(Number).value)
+		if index < 0 || index >= len(ls.slice) {
+			return nil, fmt.Errorf(
+				"%w: index %d is out of bounds",
+				ErrIllegalArgument,
+				index,
+			)
+		}
+		return ls.slice[index], nil
+	default:
+		return nil, fmt.Errorf(
+			"%w: %T is not a valid indexing callee",
+			ErrUnrecognizedExpression,
+			ls,
+		)
 	}
 }
 

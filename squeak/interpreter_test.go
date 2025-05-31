@@ -1863,7 +1863,7 @@ func TestInterpreter_Execute(t *testing.T) {
 							},
 						},
 						Operator: token.Token{
-							Type:   token.Identifier,
+							Type:   token.LeftParenthesis,
 							Lexeme: "(",
 						},
 					},
@@ -1886,7 +1886,7 @@ func TestInterpreter_Execute(t *testing.T) {
 							},
 						},
 						Operator: token.Token{
-							Type:   token.Identifier,
+							Type:   token.LeftParenthesis,
 							Lexeme: "(",
 						},
 					},
@@ -1909,7 +1909,7 @@ func TestInterpreter_Execute(t *testing.T) {
 							},
 						},
 						Operator: token.Token{
-							Type:   token.Identifier,
+							Type:   token.LeftParenthesis,
 							Lexeme: "(",
 						},
 					},

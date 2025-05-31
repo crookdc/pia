@@ -560,8 +560,8 @@ func (ps *Parser) call() (ast.ExpressionNode, error) {
 	if err != nil {
 		return nil, err
 	}
-	for pk.Type == token.LeftParenthesis {
-		args, err := ps.expressions(token.LeftParenthesis, token.RightParenthesis)
+	for matches(pk, token.LeftParenthesis, token.LeftBracket) {
+		args, err := ps.expressions(pk.Type, token.Closers[pk.Type])
 		if err != nil {
 			return nil, err
 		}
@@ -576,6 +576,15 @@ func (ps *Parser) call() (ast.ExpressionNode, error) {
 		}
 	}
 	return expr, nil
+}
+
+func matches(tk token.Token, types ...token.Type) bool {
+	for _, t := range types {
+		if tk.Type == t {
+			return true
+		}
+	}
+	return false
 }
 
 func (ps *Parser) expressions(start, end token.Type) (exps []ast.ExpressionNode, err error) {

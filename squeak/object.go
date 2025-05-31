@@ -83,3 +83,15 @@ func (b Boolean) String() string {
 	}
 	return "false"
 }
+
+type List struct {
+	slice []Object
+}
+
+func (l List) String() string {
+	items := make([]string, len(l.slice))
+	for i := range l.slice {
+		items[i] = l.slice[i].String()
+	}
+	return fmt.Sprintf("[%s]", strings.Join(items, ","))
+}
