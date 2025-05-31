@@ -5,6 +5,8 @@ import (
 	"github.com/crookdc/pia/squeak/ast"
 	"github.com/crookdc/pia/squeak/token"
 	"github.com/stretchr/testify/assert"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -2167,6 +2169,75 @@ func TestInterpreter_Execute(t *testing.T) {
 		assert.Nil(t, err)
 		val, err = ev.scope.Resolve("name")
 		assert.Equal(t, val, String{"goodbye"})
+	})
+
+	t.Run("import script globally", func(t *testing.T) {
+		script := `
+		function add(a, b) {
+			return a + b;
+		}
+		export add;
+		export 3.14 as pi;
+		`
+		wd := t.TempDir()
+		err := os.WriteFile(filepath.Join(wd, "math.sqk"), []byte(script), 0666)
+		assert.Nil(t, err)
+		in := NewInterpreter(wd, nil)
+		err = in.Execute([]ast.StatementNode{
+			ast.Import{
+				Source: ast.StringLiteral{
+					String: "math.sqk",
+				},
+			},
+		})
+		assert.Nil(t, err)
+		obj, err := in.scope.Resolve("pi")
+		assert.Nil(t, err)
+		assert.Equal(t, Number{3.14}, obj)
+		obj, err = in.scope.Resolve("add")
+		assert.Nil(t, err)
+		add, ok := obj.(Function)
+		assert.True(t, ok)
+		assert.Equal(t, ast.Function{
+			Name: token.Token{
+				Type:   token.Identifier,
+				Lexeme: "add",
+			},
+			Params: []token.Token{
+				{
+					Type:   token.Identifier,
+					Lexeme: "a",
+				},
+				{
+					Type:   token.Identifier,
+					Lexeme: "b",
+				},
+			},
+			Body: ast.Block{
+				Body: []ast.StatementNode{
+					ast.Return{
+						Expression: ast.Infix{
+							Operator: token.Token{
+								Type:   token.Plus,
+								Lexeme: "+",
+							},
+							LHS: ast.Variable{
+								Name: token.Token{
+									Type:   token.Identifier,
+									Lexeme: "a",
+								},
+							},
+							RHS: ast.Variable{
+								Name: token.Token{
+									Type:   token.Identifier,
+									Lexeme: "b",
+								},
+							},
+						},
+					},
+				},
+			},
+		}, add.declaration)
 	})
 }
 

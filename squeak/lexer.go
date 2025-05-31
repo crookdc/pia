@@ -409,6 +409,8 @@ func (lx *Lexer) word() (token.Token, error) {
 		return token.New(token.Nil)
 	case "import":
 		return token.New(token.Import)
+	case "as":
+		return token.New(token.As)
 	case "export":
 		return token.New(token.Export)
 	case "true", "false":

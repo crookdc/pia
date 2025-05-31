@@ -83,6 +83,33 @@ func TestParser_Next(t *testing.T) {
 			err: ErrUnrecognizedExpression,
 		},
 		{
+			src: "export \"some string\" as string;",
+			expected: ast.Export{
+				Name: token.Token{
+					Type:   token.Identifier,
+					Lexeme: "string",
+				},
+				Value: ast.StringLiteral{
+					String: "some string",
+				},
+			},
+		},
+		{
+			src: "export my_var as alias;",
+			expected: ast.Export{
+				Name: token.Token{
+					Type:   token.Identifier,
+					Lexeme: "alias",
+				},
+				Value: ast.Variable{
+					Name: token.Token{
+						Type:   token.Identifier,
+						Lexeme: "my_var",
+					},
+				},
+			},
+		},
+		{
 			src: "export my_var;",
 			expected: ast.Export{
 				Name: token.Token{

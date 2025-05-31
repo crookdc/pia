@@ -208,21 +208,41 @@ func (ps *Parser) statement() (ast.StatementNode, error) {
 		}
 	case token.Export:
 		ps.lx.Discard()
-		expr, err := ps.primary()
+		expr, err := ps.assignment()
 		if err != nil {
 			return nil, err
 		}
-		if _, err := ps.expect(token.Semicolon); err != nil {
+		pk, err := ps.lx.Peek()
+		if err != nil {
 			return nil, err
 		}
-		switch expr := expr.(type) {
-		case ast.Variable:
+		switch pk.Type {
+		case token.Semicolon:
+			ps.lx.Discard()
+			switch expr := expr.(type) {
+			case ast.Variable:
+				return ast.Export{
+					Name:  expr.Name,
+					Value: expr,
+				}, nil
+			default:
+				return nil, fmt.Errorf("%w: %T as unnamed export", ErrUnrecognizedExpression, expr)
+			}
+		case token.As:
+			ps.lx.Discard()
+			name, err := ps.expect(token.Identifier)
+			if err != nil {
+				return nil, err
+			}
+			if _, err := ps.expect(token.Semicolon); err != nil {
+				return nil, err
+			}
 			return ast.Export{
-				Name:  expr.Name,
+				Name:  name,
 				Value: expr,
 			}, nil
 		default:
-			return nil, fmt.Errorf("%w: %T is not a valid export expression", ErrUnrecognizedExpression, expr)
+			return nil, fmt.Errorf("%w: unexpected token %s", ErrRuntimeFault, pk.Lexeme)
 		}
 	default:
 		return ps.expression()
