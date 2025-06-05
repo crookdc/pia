@@ -189,6 +189,7 @@ type ListLiteral struct {
 // Assignment represents the assignment of a value to a variable without also declaring said variable.
 type Assignment struct {
 	Expression
+	Level int
 	Name  token.Token
 	Value ExpressionNode
 }

@@ -1748,6 +1748,7 @@ func TestInterpreter_Execute(t *testing.T) {
 				Body: []ast.StatementNode{
 					ast.ExpressionStatement{
 						Expression: ast.Assignment{
+							Level: 1,
 							Name: token.Token{
 								Type:   token.Identifier,
 								Lexeme: "name",
@@ -1965,6 +1966,7 @@ func TestInterpreter_Execute(t *testing.T) {
 							Lexeme: "<",
 						},
 						LHS: ast.Variable{
+							Level: 0,
 							Name: token.Token{
 								Type:   token.Identifier,
 								Lexeme: "i",
@@ -1978,6 +1980,7 @@ func TestInterpreter_Execute(t *testing.T) {
 						Body: []ast.StatementNode{
 							ast.ExpressionStatement{
 								Expression: ast.Assignment{
+									Level: 1,
 									Name: token.Token{
 										Type:   token.Identifier,
 										Lexeme: "i",
@@ -1988,6 +1991,7 @@ func TestInterpreter_Execute(t *testing.T) {
 											Lexeme: "+",
 										},
 										LHS: ast.Variable{
+											Level: 1,
 											Name: token.Token{
 												Type:   token.Identifier,
 												Lexeme: "i",
@@ -2005,6 +2009,7 @@ func TestInterpreter_Execute(t *testing.T) {
 									Lexeme: "iteration",
 								},
 								Initializer: ast.Variable{
+									Level: 1,
 									Name: token.Token{
 										Type:   token.Identifier,
 										Lexeme: "i",
@@ -2060,10 +2065,10 @@ func TestInterpreter_Execute(t *testing.T) {
 			_, err := in.execute(stmt)
 			assert.Nil(t, err)
 		}
-		first, err := in.scope.Resolve("first")
+		first, err := in.scope.Resolve("first", 0)
 		assert.Nil(t, err)
 		assert.Equal(t, Number{5}, first)
-		second, err := in.scope.Resolve("second")
+		second, err := in.scope.Resolve("second", 0)
 		assert.Nil(t, err)
 		assert.Equal(t, Number{100}, second)
 	})
@@ -2085,7 +2090,7 @@ func TestInterpreter_Execute(t *testing.T) {
 			_, err := in.execute(stmt)
 			assert.Nil(t, err)
 		}
-		first, err := in.scope.Resolve("test")
+		first, err := in.scope.Resolve("test", 0)
 		assert.Nil(t, err)
 		assert.Equal(t, Number{110}, first)
 	})
@@ -2105,7 +2110,7 @@ func TestInterpreter_Execute(t *testing.T) {
 			_, err := in.execute(stmt)
 			assert.Nil(t, err)
 		}
-		first, err := in.scope.Resolve("test")
+		first, err := in.scope.Resolve("test", 0)
 		assert.Nil(t, err)
 		assert.Equal(t, Number{1100}, first)
 	})
@@ -2188,7 +2193,7 @@ func TestInterpreter_Execute(t *testing.T) {
 			},
 		})
 		assert.Nil(t, err)
-		val, err := ev.scope.Resolve("name")
+		val, err := ev.scope.Resolve("name", 0)
 		assert.Nil(t, err)
 		assert.Equal(t, val, String{"hello world"})
 
@@ -2204,7 +2209,7 @@ func TestInterpreter_Execute(t *testing.T) {
 			},
 		})
 		assert.Nil(t, err)
-		val, err = ev.scope.Resolve("name")
+		val, err = ev.scope.Resolve("name", 0)
 		assert.Equal(t, val, String{"goodbye"})
 	})
 
@@ -2228,10 +2233,10 @@ func TestInterpreter_Execute(t *testing.T) {
 			},
 		})
 		assert.Nil(t, err)
-		obj, err := in.scope.Resolve("pi")
+		obj, err := in.scope.Resolve("pi", 0)
 		assert.Nil(t, err)
 		assert.Equal(t, Number{3.14}, obj)
-		obj, err = in.scope.Resolve("add")
+		obj, err = in.scope.Resolve("add", 0)
 		assert.Nil(t, err)
 		add, ok := obj.(Function)
 		assert.True(t, ok)
@@ -2282,11 +2287,13 @@ func TestInterpreter_Execute(t *testing.T) {
 
 func TestEnvironment_Resolve(t *testing.T) {
 	tests := []struct {
-		name string
-		env  Environment
-		key  string
-		obj  Object
-		err  error
+		name  string
+		env   Environment
+		key   string
+		level int
+
+		obj Object
+		err error
 	}{
 		{
 			name: "key is available in immediate scope",
@@ -2297,8 +2304,9 @@ func TestEnvironment_Resolve(t *testing.T) {
 					"age":  Number{27.5},
 				},
 			},
-			key: "name",
-			obj: String{"crookdc"},
+			key:   "name",
+			level: 0,
+			obj:   String{"crookdc"},
 		},
 		{
 			name: "key is not available",
@@ -2308,8 +2316,9 @@ func TestEnvironment_Resolve(t *testing.T) {
 					"age": Number{27.5},
 				},
 			},
-			key: "name",
-			err: ErrObjectNotDeclared,
+			key:   "name",
+			level: 0,
+			err:   ErrObjectNotDeclared,
 		},
 		{
 			name: "key is available in parent scope",
@@ -2324,8 +2333,9 @@ func TestEnvironment_Resolve(t *testing.T) {
 					"age": Number{27.5},
 				},
 			},
-			key: "name",
-			obj: String{"crookdc"},
+			key:   "name",
+			level: 1,
+			obj:   String{"crookdc"},
 		},
 		{
 			name: "key is available in parent and immediate scope",
@@ -2341,8 +2351,9 @@ func TestEnvironment_Resolve(t *testing.T) {
 					"age":  Number{27.5},
 				},
 			},
-			key: "name",
-			obj: String{"crookdc"},
+			key:   "name",
+			level: 0,
+			obj:   String{"crookdc"},
 		},
 		{
 			name: "key is available in grandparent scope",
@@ -2359,14 +2370,15 @@ func TestEnvironment_Resolve(t *testing.T) {
 					"age": Number{27.5},
 				},
 			},
-			key: "name",
-			obj: String{"crookdc"},
+			key:   "name",
+			level: 2,
+			obj:   String{"crookdc"},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			obj, err := test.env.Resolve(test.key)
+			obj, err := test.env.Resolve(test.key, test.level)
 			assert.ErrorIs(t, err, test.err)
 			assert.Equal(t, test.obj, obj)
 		})
@@ -2379,6 +2391,7 @@ func TestEnvironment_Assign(t *testing.T) {
 		env   Environment
 		key   string
 		value Object
+		level int
 		after Environment
 		err   error
 	}{
@@ -2393,6 +2406,7 @@ func TestEnvironment_Assign(t *testing.T) {
 			},
 			key:   "name",
 			value: String{"pia"},
+			level: 0,
 			after: Environment{
 				parent: nil,
 				tbl: map[string]Object{
@@ -2409,7 +2423,8 @@ func TestEnvironment_Assign(t *testing.T) {
 					"age": Number{27.5},
 				},
 			},
-			key: "name",
+			key:   "name",
+			level: 0,
 			after: Environment{
 				parent: nil,
 				tbl: map[string]Object{
@@ -2433,6 +2448,7 @@ func TestEnvironment_Assign(t *testing.T) {
 			},
 			key:   "name",
 			value: Number{123.12},
+			level: 1,
 			after: Environment{
 				parent: &Environment{
 					parent: nil,
@@ -2461,6 +2477,7 @@ func TestEnvironment_Assign(t *testing.T) {
 			},
 			key:   "name",
 			value: Boolean{true},
+			level: 0,
 			after: Environment{
 				parent: &Environment{
 					parent: nil,
@@ -2491,6 +2508,7 @@ func TestEnvironment_Assign(t *testing.T) {
 			},
 			key:   "name",
 			value: String{"John Smith"},
+			level: 2,
 			after: Environment{
 				parent: &Environment{
 					parent: &Environment{
@@ -2509,7 +2527,7 @@ func TestEnvironment_Assign(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := test.env.Assign(test.key, test.value)
+			err := test.env.Assign(test.key, test.value, test.level)
 			assert.ErrorIs(t, err, test.err)
 			assert.Equal(t, test.after, test.env)
 		})

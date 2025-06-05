@@ -65,15 +65,16 @@ type Environment struct {
 // for the immediate scope (the table of variables that is stored within the environment) then the parent environment is
 // invoked to resolve the same key within its immediate scope. This call chain continues until the key is successfully
 // resolved or the next parent is a nil value, in which case a non-nil error is returned.
-func (env *Environment) Resolve(k string) (Object, error) {
-	val, ok := env.tbl[k]
-	if ok {
-		return val, nil
+func (env *Environment) Resolve(k string, lvl int) (Object, error) {
+	scope := env
+	for range lvl {
+		scope = scope.parent
 	}
-	if env.parent != nil {
-		return env.parent.Resolve(k)
+	obj, ok := scope.tbl[k]
+	if !ok {
+		return nil, fmt.Errorf("%w: %s", ErrObjectNotDeclared, k)
 	}
-	return nil, fmt.Errorf("%w: %s", ErrObjectNotDeclared, k)
+	return obj, nil
 }
 
 // Declare sets the provided value for the provided key in the immediate scope.
@@ -84,16 +85,17 @@ func (env *Environment) Declare(k string, v Object) {
 // Assign sets a new value for an already declared variable in the immediate scope. If the key cannot be resolved in the
 // immediate scope then the parent is invoked. This call chain continues until the assignment is successful or until the
 // next parent is nil, in which case it returns a non-nil error.
-func (env *Environment) Assign(k string, v Object) error {
-	_, ok := env.tbl[k]
-	if ok {
-		env.tbl[k] = v
-		return nil
+func (env *Environment) Assign(k string, v Object, lvl int) error {
+	scope := env
+	for range lvl {
+		scope = scope.parent
 	}
-	if env.parent != nil {
-		return env.parent.Assign(k, v)
+	_, ok := scope.tbl[k]
+	if !ok {
+		return fmt.Errorf("%w: %s", ErrObjectNotDeclared, k)
 	}
-	return fmt.Errorf("%w: %s", ErrObjectNotDeclared, k)
+	scope.tbl[k] = v
+	return nil
 }
 
 // NewInterpreter constructs an interpreter with a prefilled runtime in its global scope. The caller is responsible for
@@ -341,13 +343,13 @@ func (in *Interpreter) evaluate(expr ast.ExpressionNode) (Object, error) {
 	case ast.Infix:
 		return in.infix(expr)
 	case ast.Variable:
-		return in.scope.Resolve(expr.Name.Lexeme)
+		return in.scope.Resolve(expr.Name.Lexeme, expr.Level)
 	case ast.Assignment:
 		val, err := in.evaluate(expr.Value)
 		if err != nil {
 			return nil, err
 		}
-		if err := in.scope.Assign(expr.Name.Lexeme, val); err != nil {
+		if err := in.scope.Assign(expr.Name.Lexeme, val, expr.Level); err != nil {
 			return nil, err
 		}
 		return val, nil
