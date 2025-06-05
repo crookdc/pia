@@ -146,7 +146,9 @@ type Export struct {
 // Variable represents an expression in the format of just an identifier.
 type Variable struct {
 	Expression
-	Name token.Token
+	// Level corresponds to the depth of which the resolved value exists within the current callstack.
+	Level int
+	Name  token.Token
 }
 
 // IntegerLiteral represents an expression which holds a primitive integer literal.

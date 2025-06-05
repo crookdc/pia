@@ -48,7 +48,14 @@ func NewParser(lx *PeekingLexer) *Parser {
 
 // Parser builds an abstract syntax tree from the tokens yielded by a Lexer.
 type Parser struct {
-	lx *PeekingLexer
+	lx  *PeekingLexer
+	inc int
+}
+
+func (ps *Parser) id() int {
+	id := ps.inc + 1
+	ps.inc++
+	return id
 }
 
 // Next constructs and returns the next node in the abstract syntax tree for the underlying Lexer.
@@ -435,10 +442,9 @@ func (ps *Parser) equality() (ast.ExpressionNode, error) {
 				return nil, err
 			}
 			lhs = ast.Infix{
-				Expression: ast.Expression{},
-				Operator:   pk,
-				LHS:        lhs,
-				RHS:        rhs,
+				Operator: pk,
+				LHS:      lhs,
+				RHS:      rhs,
 			}
 		default:
 			return lhs, nil
@@ -643,7 +649,10 @@ func (ps *Parser) primary() (ast.ExpressionNode, error) {
 	switch pk.Type {
 	case token.Identifier:
 		ps.lx.Discard()
-		return ast.Variable{Name: pk}, nil
+		return ast.Variable{
+			ID:   strconv.Itoa(ps.id()),
+			Name: pk,
+		}, nil
 	case token.String:
 		ps.lx.Discard()
 		return ast.StringLiteral{String: pk.Lexeme}, nil

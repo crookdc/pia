@@ -19,6 +19,7 @@ func TestParser_Next(t *testing.T) {
 			src: "a;",
 			expected: ast.ExpressionStatement{
 				Expression: ast.Variable{
+					ID: "1",
 					Name: token.Token{
 						Type:   token.Identifier,
 						Lexeme: "a",
@@ -47,6 +48,7 @@ func TestParser_Next(t *testing.T) {
 			src: "import some_variable;",
 			expected: ast.Import{
 				Source: ast.Variable{
+					ID: "1",
 					Name: token.Token{
 						Type:   token.Identifier,
 						Lexeme: "some_variable",
@@ -102,6 +104,7 @@ func TestParser_Next(t *testing.T) {
 					Lexeme: "alias",
 				},
 				Value: ast.Variable{
+					ID: "1",
 					Name: token.Token{
 						Type:   token.Identifier,
 						Lexeme: "my_var",
@@ -117,6 +120,7 @@ func TestParser_Next(t *testing.T) {
 					Lexeme: "my_var",
 				},
 				Value: ast.Variable{
+					ID: "1",
 					Name: token.Token{
 						Type:   token.Identifier,
 						Lexeme: "my_var",
@@ -167,6 +171,7 @@ func TestParser_Next(t *testing.T) {
 						ast.ExpressionStatement{
 							Expression: ast.Call{
 								Callee: ast.Variable{
+									ID: "1",
 									Name: token.Token{
 										Type:   token.Identifier,
 										Lexeme: "print",
@@ -183,12 +188,14 @@ func TestParser_Next(t *testing.T) {
 											Lexeme: "+",
 										},
 										LHS: ast.Variable{
+											ID: "2",
 											Name: token.Token{
 												Type:   token.Identifier,
 												Lexeme: "a",
 											},
 										},
 										RHS: ast.Variable{
+											ID: "3",
 											Name: token.Token{
 												Type:   token.Identifier,
 												Lexeme: "b",
@@ -233,12 +240,14 @@ func TestParser_Next(t *testing.T) {
 						Lexeme: "+",
 					},
 					LHS: ast.Variable{
+						ID: "1",
 						Name: token.Token{
 							Type:   token.Identifier,
 							Lexeme: "a",
 						},
 					},
 					RHS: ast.Variable{
+						ID: "2",
 						Name: token.Token{
 							Type:   token.Identifier,
 							Lexeme: "b",
@@ -261,12 +270,14 @@ func TestParser_Next(t *testing.T) {
 							Lexeme: "+",
 						},
 						LHS: ast.Variable{
+							ID: "1",
 							Name: token.Token{
 								Type:   token.Identifier,
 								Lexeme: "a",
 							},
 						},
 						RHS: ast.Variable{
+							ID: "2",
 							Name: token.Token{
 								Type:   token.Identifier,
 								Lexeme: "b",
@@ -288,6 +299,7 @@ func TestParser_Next(t *testing.T) {
 						Lexeme: "+",
 					},
 					LHS: ast.Variable{
+						ID: "1",
 						Name: token.Token{
 							Type:   token.Identifier,
 							Lexeme: "name",
@@ -308,6 +320,7 @@ func TestParser_Next(t *testing.T) {
 						Lexeme: "+",
 					},
 					LHS: ast.Variable{
+						ID: "1",
 						Name: token.Token{
 							Type:   token.Identifier,
 							Lexeme: "a",
@@ -319,12 +332,14 @@ func TestParser_Next(t *testing.T) {
 							Lexeme: "*",
 						},
 						LHS: ast.Variable{
+							ID: "2",
 							Name: token.Token{
 								Type:   token.Identifier,
 								Lexeme: "b",
 							},
 						},
 						RHS: ast.Variable{
+							ID: "3",
 							Name: token.Token{
 								Type:   token.Identifier,
 								Lexeme: "c",
@@ -349,12 +364,14 @@ func TestParser_Next(t *testing.T) {
 								Lexeme: "+",
 							},
 							LHS: ast.Variable{
+								ID: "1",
 								Name: token.Token{
 									Type:   token.Identifier,
 									Lexeme: "a",
 								},
 							},
 							RHS: ast.Variable{
+								ID: "2",
 								Name: token.Token{
 									Type:   token.Identifier,
 									Lexeme: "b",
@@ -363,6 +380,7 @@ func TestParser_Next(t *testing.T) {
 						},
 					},
 					RHS: ast.Variable{
+						ID: "3",
 						Name: token.Token{
 							Type:   token.Identifier,
 							Lexeme: "c",
@@ -380,7 +398,6 @@ func TestParser_Next(t *testing.T) {
 						Lexeme: "<=",
 					},
 					LHS: ast.Infix{
-						Expression: ast.Expression{},
 						Operator: token.Token{
 							Type:   token.Plus,
 							Lexeme: "+",
@@ -397,7 +414,6 @@ func TestParser_Next(t *testing.T) {
 						},
 					},
 					RHS: ast.Infix{
-						Expression: ast.Expression{},
 						Operator: token.Token{
 							Type:   token.Asterisk,
 							Lexeme: "*",
@@ -518,6 +534,7 @@ func TestParser_Next(t *testing.T) {
 			expected: ast.ExpressionStatement{
 				Expression: ast.Call{
 					Callee: ast.Variable{
+						ID: "1",
 						Name: token.Token{
 							Type:   token.Identifier,
 							Lexeme: "run",
@@ -536,6 +553,7 @@ func TestParser_Next(t *testing.T) {
 			expected: ast.ExpressionStatement{
 				Expression: ast.Call{
 					Callee: ast.Variable{
+						ID: "1",
 						Name: token.Token{
 							Type:   token.Identifier,
 							Lexeme: "index",
@@ -558,6 +576,7 @@ func TestParser_Next(t *testing.T) {
 			expected: ast.ExpressionStatement{
 				Expression: ast.Call{
 					Callee: ast.Variable{
+						ID: "1",
 						Name: token.Token{
 							Type:   token.Identifier,
 							Lexeme: "indexed",
@@ -570,6 +589,7 @@ func TestParser_Next(t *testing.T) {
 					Args: []ast.ExpressionNode{
 						ast.Call{
 							Callee: ast.Variable{
+								ID: "2",
 								Name: token.Token{
 									Type:   token.Identifier,
 									Lexeme: "add",
@@ -581,12 +601,14 @@ func TestParser_Next(t *testing.T) {
 							},
 							Args: []ast.ExpressionNode{
 								ast.Variable{
+									ID: "3",
 									Name: token.Token{
 										Type:   token.Identifier,
 										Lexeme: "a",
 									},
 								},
 								ast.Variable{
+									ID: "4",
 									Name: token.Token{
 										Type:   token.Identifier,
 										Lexeme: "b",
@@ -659,6 +681,7 @@ func TestParser_Next(t *testing.T) {
 				Initializer: ast.ListLiteral{
 					Items: []ast.ExpressionNode{
 						ast.Variable{
+							ID: "1",
 							Name: token.Token{
 								Type:   token.Identifier,
 								Lexeme: "a",
@@ -685,6 +708,7 @@ func TestParser_Next(t *testing.T) {
 			expected: ast.ExpressionStatement{
 				Expression: ast.Call{
 					Callee: ast.Variable{
+						ID: "1",
 						Name: token.Token{
 							Type:   token.Identifier,
 							Lexeme: "run",
@@ -708,6 +732,7 @@ func TestParser_Next(t *testing.T) {
 							},
 						},
 						ast.Variable{
+							ID: "2",
 							Name: token.Token{
 								Type:   token.Identifier,
 								Lexeme: "n",
@@ -724,6 +749,7 @@ func TestParser_Next(t *testing.T) {
 					Callee: ast.Call{
 						Callee: ast.Call{
 							Callee: ast.Variable{
+								ID: "1",
 								Name: token.Token{
 									Type:   token.Identifier,
 									Lexeme: "factory",
@@ -753,6 +779,7 @@ func TestParser_Next(t *testing.T) {
 								},
 							},
 							ast.Variable{
+								ID: "2",
 								Name: token.Token{
 									Type:   token.Identifier,
 									Lexeme: "n",
@@ -766,6 +793,7 @@ func TestParser_Next(t *testing.T) {
 					},
 					Args: []ast.ExpressionNode{
 						ast.Variable{
+							ID: "3",
 							Name: token.Token{
 								Type:   token.Identifier,
 								Lexeme: "n",
@@ -799,12 +827,14 @@ func TestParser_Next(t *testing.T) {
 						Lexeme: ">",
 					},
 					LHS: ast.Variable{
+						ID: "1",
 						Name: token.Token{
 							Type:   token.Identifier,
 							Lexeme: "a",
 						},
 					},
 					RHS: ast.Variable{
+						ID: "2",
 						Name: token.Token{
 							Type:   token.Identifier,
 							Lexeme: "b",
@@ -814,6 +844,7 @@ func TestParser_Next(t *testing.T) {
 				Then: ast.ExpressionStatement{
 					Expression: ast.Call{
 						Callee: ast.Variable{
+							ID: "3",
 							Name: token.Token{
 								Type:   token.Identifier,
 								Lexeme: "print",
@@ -825,6 +856,7 @@ func TestParser_Next(t *testing.T) {
 						},
 						Args: []ast.ExpressionNode{
 							ast.Variable{
+								ID: "4",
 								Name: token.Token{
 									Type:   token.Identifier,
 									Lexeme: "a",
@@ -836,6 +868,7 @@ func TestParser_Next(t *testing.T) {
 				Else: ast.ExpressionStatement{
 					Expression: ast.Call{
 						Callee: ast.Variable{
+							ID: "5",
 							Name: token.Token{
 								Type:   token.Identifier,
 								Lexeme: "print",
@@ -847,6 +880,7 @@ func TestParser_Next(t *testing.T) {
 						},
 						Args: []ast.ExpressionNode{
 							ast.Variable{
+								ID: "6",
 								Name: token.Token{
 									Type:   token.Identifier,
 									Lexeme: "b",
@@ -866,12 +900,14 @@ func TestParser_Next(t *testing.T) {
 						Lexeme: ">",
 					},
 					LHS: ast.Variable{
+						ID: "1",
 						Name: token.Token{
 							Type:   token.Identifier,
 							Lexeme: "a",
 						},
 					},
 					RHS: ast.Variable{
+						ID: "2",
 						Name: token.Token{
 							Type:   token.Identifier,
 							Lexeme: "b",
@@ -881,6 +917,7 @@ func TestParser_Next(t *testing.T) {
 				Then: ast.ExpressionStatement{
 					Expression: ast.Call{
 						Callee: ast.Variable{
+							ID: "3",
 							Name: token.Token{
 								Type:   token.Identifier,
 								Lexeme: "print",
@@ -892,6 +929,7 @@ func TestParser_Next(t *testing.T) {
 						},
 						Args: []ast.ExpressionNode{
 							ast.Variable{
+								ID: "4",
 								Name: token.Token{
 									Type:   token.Identifier,
 									Lexeme: "a",
@@ -906,6 +944,7 @@ func TestParser_Next(t *testing.T) {
 			src: "if a if b print(b); else print(c);",
 			expected: ast.If{
 				Condition: ast.Variable{
+					ID: "1",
 					Name: token.Token{
 						Type:   token.Identifier,
 						Lexeme: "a",
@@ -913,6 +952,7 @@ func TestParser_Next(t *testing.T) {
 				},
 				Then: ast.If{
 					Condition: ast.Variable{
+						ID: "2",
 						Name: token.Token{
 							Type:   token.Identifier,
 							Lexeme: "b",
@@ -921,6 +961,7 @@ func TestParser_Next(t *testing.T) {
 					Then: ast.ExpressionStatement{
 						Expression: ast.Call{
 							Callee: ast.Variable{
+								ID: "3",
 								Name: token.Token{
 									Type:   token.Identifier,
 									Lexeme: "print",
@@ -932,6 +973,7 @@ func TestParser_Next(t *testing.T) {
 							},
 							Args: []ast.ExpressionNode{
 								ast.Variable{
+									ID: "4",
 									Name: token.Token{
 										Type:   token.Identifier,
 										Lexeme: "b",
@@ -943,6 +985,7 @@ func TestParser_Next(t *testing.T) {
 					Else: ast.ExpressionStatement{
 						Expression: ast.Call{
 							Callee: ast.Variable{
+								ID: "5",
 								Name: token.Token{
 									Type:   token.Identifier,
 									Lexeme: "print",
@@ -954,6 +997,7 @@ func TestParser_Next(t *testing.T) {
 							},
 							Args: []ast.ExpressionNode{
 								ast.Variable{
+									ID: "6",
 									Name: token.Token{
 										Type:   token.Identifier,
 										Lexeme: "c",
@@ -966,23 +1010,30 @@ func TestParser_Next(t *testing.T) {
 			},
 		},
 		{
-			src: "{ a + b; a = 2.; }",
+			src: "{ var a; a + b; a = 2.; }",
 			expected: ast.Block{
 				Body: []ast.StatementNode{
+					ast.Declaration{
+						Name: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "a",
+						},
+					},
 					ast.ExpressionStatement{
 						Expression: ast.Infix{
-							Expression: ast.Expression{},
 							Operator: token.Token{
 								Type:   token.Plus,
 								Lexeme: "+",
 							},
 							LHS: ast.Variable{
+								Level: 0,
 								Name: token.Token{
 									Type:   token.Identifier,
 									Lexeme: "a",
 								},
 							},
 							RHS: ast.Variable{
+								Level: 0,
 								Name: token.Token{
 									Type:   token.Identifier,
 									Lexeme: "b",
@@ -1018,12 +1069,14 @@ func TestParser_Next(t *testing.T) {
 							Lexeme: "<",
 						},
 						LHS: ast.Variable{
+							Level: 0,
 							Name: token.Token{
 								Type:   token.Identifier,
 								Lexeme: "a",
 							},
 						},
 						RHS: ast.Variable{
+							Level: 0,
 							Name: token.Token{
 								Type:   token.Identifier,
 								Lexeme: "b",
@@ -1036,6 +1089,7 @@ func TestParser_Next(t *testing.T) {
 							Lexeme: ">=",
 						},
 						LHS: ast.Variable{
+							Level: 0,
 							Name: token.Token{
 								Type:   token.Identifier,
 								Lexeme: "b",
@@ -1051,6 +1105,7 @@ func TestParser_Next(t *testing.T) {
 						ast.ExpressionStatement{
 							Expression: ast.Call{
 								Callee: ast.Variable{
+									Level: 1,
 									Name: token.Token{
 										Type:   token.Identifier,
 										Lexeme: "print",
@@ -1062,6 +1117,7 @@ func TestParser_Next(t *testing.T) {
 								},
 								Args: []ast.ExpressionNode{
 									ast.Variable{
+										Level: 1,
 										Name: token.Token{
 											Type:   token.Identifier,
 											Lexeme: "a",
@@ -1083,12 +1139,14 @@ func TestParser_Next(t *testing.T) {
 						Lexeme: "<",
 					},
 					LHS: ast.Variable{
+						Level: 0,
 						Name: token.Token{
 							Type:   token.Identifier,
 							Lexeme: "a",
 						},
 					},
 					RHS: ast.Variable{
+						Level: 0,
 						Name: token.Token{
 							Type:   token.Identifier,
 							Lexeme: "b",
@@ -1100,6 +1158,7 @@ func TestParser_Next(t *testing.T) {
 						ast.ExpressionStatement{
 							Expression: ast.Call{
 								Callee: ast.Variable{
+									Level: 1,
 									Name: token.Token{
 										Type:   token.Identifier,
 										Lexeme: "print",
@@ -1111,6 +1170,7 @@ func TestParser_Next(t *testing.T) {
 								},
 								Args: []ast.ExpressionNode{
 									ast.Variable{
+										Level: 1,
 										Name: token.Token{
 											Type:   token.Identifier,
 											Lexeme: "a",
@@ -1122,6 +1182,7 @@ func TestParser_Next(t *testing.T) {
 						ast.ExpressionStatement{
 							Expression: ast.Call{
 								Callee: ast.Variable{
+									Level: 1,
 									Name: token.Token{
 										Type:   token.Identifier,
 										Lexeme: "print",
@@ -1133,6 +1194,7 @@ func TestParser_Next(t *testing.T) {
 								},
 								Args: []ast.ExpressionNode{
 									ast.Variable{
+										Level: 1,
 										Name: token.Token{
 											Type:   token.Identifier,
 											Lexeme: "b",
@@ -1172,6 +1234,7 @@ func TestParser_Next(t *testing.T) {
 						},
 					},
 					RHS: ast.Variable{
+						Level: 0,
 						Name: token.Token{
 							Type:   token.Identifier,
 							Lexeme: "b",
@@ -1206,6 +1269,7 @@ func TestParser_Next(t *testing.T) {
 							},
 						},
 						RHS: ast.Variable{
+							Level: 0,
 							Name: token.Token{
 								Type:   token.Identifier,
 								Lexeme: "b",
@@ -1213,6 +1277,7 @@ func TestParser_Next(t *testing.T) {
 						},
 					},
 					RHS: ast.Variable{
+						Level: 0,
 						Name: token.Token{
 							Type:   token.Identifier,
 							Lexeme: "c",
@@ -1260,12 +1325,14 @@ func TestParser_Next(t *testing.T) {
 					Lexeme: "+",
 				},
 				LHS: ast.Variable{
+					Level: 0,
 					Name: token.Token{
 						Type:   token.Identifier,
 						Lexeme: "a",
 					},
 				},
 				RHS: ast.Variable{
+					Level: 0,
 					Name: token.Token{
 						Type:   token.Identifier,
 						Lexeme: "b",

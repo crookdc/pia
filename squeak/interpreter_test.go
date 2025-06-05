@@ -200,7 +200,6 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Integer: 10002,
 				},
 				RHS: ast.Infix{
-					Expression: ast.Expression{},
 					Operator: token.Token{
 						Type:   token.Plus,
 						Lexeme: "+",
@@ -248,7 +247,6 @@ func TestInterpreter_evaluate(t *testing.T) {
 					String: "Hello",
 				},
 				RHS: ast.Infix{
-					Expression: ast.Expression{},
 					Operator: token.Token{
 						Type:   token.Plus,
 						Lexeme: "+",
@@ -2151,12 +2149,14 @@ func TestInterpreter_Execute(t *testing.T) {
 									Lexeme: "+",
 								},
 								LHS: ast.Variable{
+									Level: 0,
 									Name: token.Token{
 										Type:   token.Identifier,
 										Lexeme: "a",
 									},
 								},
 								RHS: ast.Variable{
+									Level: 0,
 									Name: token.Token{
 										Type:   token.Identifier,
 										Lexeme: "b",
@@ -2259,12 +2259,14 @@ func TestInterpreter_Execute(t *testing.T) {
 								Lexeme: "+",
 							},
 							LHS: ast.Variable{
+								Level: 0,
 								Name: token.Token{
 									Type:   token.Identifier,
 									Lexeme: "a",
 								},
 							},
 							RHS: ast.Variable{
+								Level: 0,
 								Name: token.Token{
 									Type:   token.Identifier,
 									Lexeme: "b",
