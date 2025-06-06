@@ -1,0 +1,36 @@
+# Functions work much like you would likely expect. Nevertheless, the following is a set of example functions to get
+# you started.
+
+# The simplest type of function you could write looks a little something like this, it takes no input and produces no
+# output.
+function nothing() {
+    # Calling this would undoubtedly be silly, but we will anyway.
+}
+nothing();
+
+# You can define a set of named parameters which must be passed to the function when it is called.
+function say_hi(name) {
+    print("Hi " + name + "!");
+}
+say_hi("developer");
+
+# Parameters are good for input data, but to product some output you need to utilize the return statement. You do not
+# need to declare the existence of a return value in the function header.
+function add(a, b) {
+    return a + b;
+}
+var added = add(10, 15);
+print(added);
+
+# Functions also capture the environment around them at the point of declaration, which means that you can do stuff like
+# this!
+{
+    var name = nil;
+    function greet() {
+        print(name);
+    }
+    name = "crookdc";
+    greet();
+    name = "cdkoorc";
+    greet();
+}
