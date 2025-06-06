@@ -43,12 +43,76 @@ func ParseString(src string) ([]ast.StatementNode, error) {
 }
 
 func NewParser(lx *PeekingLexer) *Parser {
-	return &Parser{lx: lx}
+	return &Parser{
+		lx: lx,
+		stack: struct {
+			slice []map[string]struct{}
+			sp    int
+		}{
+			slice: []map[string]struct{}{
+				// The initial map represents the global environment
+				make(map[string]struct{}),
+			},
+			sp: 0,
+		},
+	}
 }
 
 // Parser builds an abstract syntax tree from the tokens yielded by a Lexer.
 type Parser struct {
-	lx *PeekingLexer
+	lx    *PeekingLexer
+	stack struct {
+		slice []map[string]struct{}
+		sp    int
+	}
+}
+
+func (ps *Parser) resolve(name token.Token) int {
+	for i := range ps.stack.sp + 1 {
+		scope := ps.stack.slice[ps.stack.sp-i]
+		if _, ok := scope[name.Lexeme]; ok {
+			return i
+		}
+	}
+	// The value of the stack pointer is the current distance from the global environment. If a variable cannot be
+	// resolved then it is assumed to exist within the global environment.
+	return ps.stack.sp
+}
+
+func (ps *Parser) scope() (map[string]struct{}, bool) {
+	if ps.stack.sp < 0 {
+		return nil, false
+	}
+	return ps.stack.slice[ps.stack.sp], true
+}
+
+func (ps *Parser) declare(name token.Token) error {
+	sc, ok := ps.scope()
+	if !ok {
+		return nil
+	}
+	if _, ok := sc[name.Lexeme]; ok {
+		return fmt.Errorf("%w: %s", SyntaxError{Line: ps.lx.Line()}, name.Lexeme)
+	}
+	sc[name.Lexeme] = struct{}{}
+	return nil
+}
+
+func (ps *Parser) begin() {
+	if ps.stack.sp == len(ps.stack.slice)-1 {
+		// If the stack is the largest it has been (and the stack pointer would exceed the length of the stack if
+		// incremented) then it must first be extended.
+		ps.stack.slice = append(ps.stack.slice, map[string]struct{}{})
+	}
+	ps.stack.sp += 1
+	return
+}
+
+func (ps *Parser) end() {
+	if ps.stack.sp < 0 {
+		return
+	}
+	ps.stack.sp -= 1
 }
 
 // Next constructs and returns the next node in the abstract syntax tree for the underlying Lexer.
@@ -95,6 +159,9 @@ func (ps *Parser) variable() (ast.Declaration, error) {
 	if err != nil {
 		return ast.Declaration{}, err
 	}
+	if err := ps.declare(name); err != nil {
+		return ast.Declaration{}, err
+	}
 	stmt := ast.Declaration{
 		Name:        name,
 		Initializer: nil,
@@ -128,6 +195,8 @@ func (ps *Parser) statement() (ast.StatementNode, error) {
 	}
 	switch pk.Type {
 	case token.LeftBrace:
+		ps.begin()
+		defer ps.end()
 		return ps.block()
 	case token.If:
 		return ps.ifs()
@@ -138,13 +207,27 @@ func (ps *Parser) statement() (ast.StatementNode, error) {
 		return ast.Noop{}, nil
 	case token.Function:
 		ps.lx.Discard()
+		// The function name must be declared before the new scope is registered since the function name would otherwise
+		// be undefined in the surrounding environment.
 		name, err := ps.expect(token.Identifier)
 		if err != nil {
 			return nil, err
 		}
+		if err := ps.declare(name); err != nil {
+			return nil, err
+		}
+		ps.begin()
+		defer ps.end()
 		params, err := ps.tokens(token.LeftParenthesis, token.RightParenthesis)
 		if err != nil {
 			return nil, err
+		}
+		// The parameters for the function should be declared as part of the scope of the function itself, meaning that
+		// resolving any parameter name leads to a level of 0.
+		for _, param := range params {
+			if err := ps.declare(param); err != nil {
+				return nil, err
+			}
 		}
 		body, err := ps.block()
 		if err != nil {
@@ -257,6 +340,8 @@ func (ps *Parser) while() (ast.StatementNode, error) {
 	if err != nil {
 		return nil, err
 	}
+	ps.begin()
+	defer ps.end()
 	body, err := ps.block()
 	if err != nil {
 		return nil, err
@@ -378,6 +463,7 @@ func (ps *Parser) assignment() (ast.ExpressionNode, error) {
 			return nil, err
 		}
 		return ast.Assignment{
+			Level: ps.resolve(expr.Name),
 			Name:  expr.Name,
 			Value: val,
 		}, nil
@@ -435,10 +521,9 @@ func (ps *Parser) equality() (ast.ExpressionNode, error) {
 				return nil, err
 			}
 			lhs = ast.Infix{
-				Expression: ast.Expression{},
-				Operator:   pk,
-				LHS:        lhs,
-				RHS:        rhs,
+				Operator: pk,
+				LHS:      lhs,
+				RHS:      rhs,
 			}
 		default:
 			return lhs, nil
@@ -643,7 +728,10 @@ func (ps *Parser) primary() (ast.ExpressionNode, error) {
 	switch pk.Type {
 	case token.Identifier:
 		ps.lx.Discard()
-		return ast.Variable{Name: pk}, nil
+		return ast.Variable{
+			Level: ps.resolve(pk),
+			Name:  pk,
+		}, nil
 	case token.String:
 		ps.lx.Discard()
 		return ast.StringLiteral{String: pk.Lexeme}, nil
