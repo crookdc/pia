@@ -2142,6 +2142,35 @@ func TestInterpreter_Execute(t *testing.T) {
 		assert.Equal(t, String{"crookdc"}, result)
 	})
 
+	t.Run("closure that reuses identifiers in different scopes", func(t *testing.T) {
+		src := `
+		function say_hi(name) {
+			print("Hi " + name + "!");
+		}
+		say_hi("developer");
+
+		{
+			var name = nil;
+			function greet() {
+				print(name);
+			}
+			name = "crookdc";
+			greet();
+			name = "cdkoorc";
+			greet();
+		}
+		`
+		program, err := ParseString(src)
+		assert.Nil(t, err)
+		out := bytes.NewBufferString("")
+		in := NewInterpreter("", out)
+		for _, stmt := range program {
+			_, err := in.execute(stmt)
+			assert.Nil(t, err)
+		}
+		assert.Equal(t, "Hi developer!crookdccdkoorc", out.String())
+	})
+
 	t.Run("export function", func(t *testing.T) {
 		src := `
 		function add(a, b) {

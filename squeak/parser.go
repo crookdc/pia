@@ -105,6 +105,8 @@ func (ps *Parser) begin() {
 		ps.stack.slice = append(ps.stack.slice, map[string]struct{}{})
 	}
 	ps.stack.sp += 1
+	// Clear the old data, it belongs to an environment that has now gone out of scope.
+	clear(ps.stack.slice[ps.stack.sp])
 	return
 }
 
