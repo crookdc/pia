@@ -716,6 +716,63 @@ func TestParser_Next(t *testing.T) {
 			},
 		},
 		{
+			src: "developer.location.country = \"Sweden\";",
+			expected: ast.ExpressionStatement{
+				Expression: ast.Set{
+					Target: ast.Get{
+						Expression: ast.Expression{},
+						Target: ast.Get{
+							Target: ast.Variable{
+								Level: 0,
+								Name: token.Token{
+									Type:   token.Identifier,
+									Lexeme: "developer",
+								},
+							},
+							Property: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "location",
+							},
+						},
+						Property: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "country",
+						},
+					},
+					Property: token.Token{
+						Type:   token.Identifier,
+						Lexeme: "country",
+					},
+					Value: ast.StringLiteral{String: "Sweden"},
+				},
+			},
+		},
+		{
+			src: "developer.age = 27;",
+			expected: ast.ExpressionStatement{
+				Expression: ast.Set{
+					Target: ast.Get{
+						Target: ast.Variable{
+							Level: 0,
+							Name: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "developer",
+							},
+						},
+						Property: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "age",
+						},
+					},
+					Property: token.Token{
+						Type:   token.Identifier,
+						Lexeme: "age",
+					},
+					Value: ast.IntegerLiteral{Integer: 27},
+				},
+			},
+		},
+		{
 			src: "get_developers()[0].location;",
 			expected: ast.ExpressionStatement{
 				Expression: ast.Get{

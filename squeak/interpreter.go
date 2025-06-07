@@ -353,6 +353,26 @@ func (in *Interpreter) evaluate(expr ast.ExpressionNode) (Object, error) {
 			return nil, err
 		}
 		return val, nil
+	case ast.Set:
+		val, err := in.evaluate(expr.Value)
+		if err != nil {
+			return nil, err
+		}
+		obj, err := in.evaluate(expr.Target.Target)
+		if err != nil {
+			return nil, err
+		}
+		switch obj := obj.(type) {
+		case Instance:
+			obj.Properties[expr.Property.Lexeme] = val
+			return val, nil
+		default:
+			return nil, fmt.Errorf(
+				"%w: %T cannot invoke property setter",
+				ErrIllegalArgument,
+				obj,
+			)
+		}
 	case ast.Logical:
 		return in.logical(expr)
 	case ast.Call:

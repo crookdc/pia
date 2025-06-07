@@ -28,3 +28,12 @@ if (developer.partner) {
 } else {
     print("The developer is alone");
 }
+
+# It is entirely possible to change the structure of an object after it has been created. You can define new properties
+# or reassign the values of existing properties as such:
+developer.partner = Object {
+    name: "Jane Doe",
+    age: 29
+};
+developer.name = "John Doe";
+print(developer.name + " <3 " + developer.partner.name);

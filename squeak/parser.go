@@ -469,6 +469,16 @@ func (ps *Parser) assignment() (ast.ExpressionNode, error) {
 			Name:  expr.Name,
 			Value: val,
 		}, nil
+	case ast.Get:
+		val, err := ps.assignment()
+		if err != nil {
+			return nil, err
+		}
+		return ast.Set{
+			Target:   expr,
+			Property: expr.Property,
+			Value:    val,
+		}, nil
 	default:
 		return nil, fmt.Errorf(
 			"%w: invalid left hand side of assignment",

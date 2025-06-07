@@ -1,6 +1,8 @@
 package ast
 
-import "github.com/crookdc/pia/squeak/token"
+import (
+	"github.com/crookdc/pia/squeak/token"
+)
 
 // Node represent any type of node in an AST. It does not define any functional behaviours. This is by design as the
 // Node abstraction is little more than a means of categorizing data. It is not considered incorrect to implement the
@@ -155,6 +157,13 @@ type Get struct {
 	Expression
 	Target   ExpressionNode
 	Property token.Token
+}
+
+type Set struct {
+	Expression
+	Target   Get
+	Property token.Token
+	Value    ExpressionNode
 }
 
 // IntegerLiteral represents an expression which holds a primitive integer literal.

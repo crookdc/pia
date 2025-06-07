@@ -1914,6 +1914,107 @@ func TestInterpreter_Execute(t *testing.T) {
 			exports: make(map[string]Object),
 		},
 		{
+			name:    "reassigning existing instance property",
+			preload: NewEnvironment(),
+			program: []ast.StatementNode{
+				ast.Declaration{
+					Name: token.Token{
+						Type:   token.Identifier,
+						Lexeme: "obj",
+					},
+					Initializer: ast.ObjectLiteral{
+						Properties: map[string]ast.ExpressionNode{
+							"status": ast.IntegerLiteral{Integer: 201},
+							"line":   ast.StringLiteral{String: "Created"},
+						},
+					},
+				},
+				ast.ExpressionStatement{
+					Expression: ast.Set{
+						Target: ast.Get{
+							Target: ast.Variable{
+								Level: 0,
+								Name: token.Token{
+									Type:   token.Identifier,
+									Lexeme: "obj",
+								},
+							},
+							Property: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "status",
+							},
+						},
+						Property: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "status",
+						},
+						Value: ast.IntegerLiteral{
+							Integer: 400,
+						},
+					},
+				},
+			},
+			env: NewEnvironment(
+				Prefill("obj", Instance{
+					Properties: map[string]Object{
+						"status": Number{400},
+						"line":   String{"Created"},
+					},
+				}),
+			),
+			exports: make(map[string]Object),
+		},
+		{
+			name:    "assigning new property",
+			preload: NewEnvironment(),
+			program: []ast.StatementNode{
+				ast.Declaration{
+					Name: token.Token{
+						Type:   token.Identifier,
+						Lexeme: "obj",
+					},
+					Initializer: ast.ObjectLiteral{
+						Properties: map[string]ast.ExpressionNode{
+							"status": ast.IntegerLiteral{Integer: 201},
+							"line":   ast.StringLiteral{String: "Created"},
+						},
+					},
+				},
+				ast.ExpressionStatement{
+					Expression: ast.Set{
+						Target: ast.Get{
+							Target: ast.Variable{
+								Level: 0,
+								Name: token.Token{
+									Type:   token.Identifier,
+									Lexeme: "obj",
+								},
+							},
+							Property: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "success",
+							},
+						},
+						Property: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "success",
+						},
+						Value: ast.BooleanLiteral{Boolean: true},
+					},
+				},
+			},
+			env: NewEnvironment(
+				Prefill("obj", Instance{
+					Properties: map[string]Object{
+						"status":  Number{201},
+						"line":    String{"Created"},
+						"success": Boolean{true},
+					},
+				}),
+			),
+			exports: make(map[string]Object),
+		},
+		{
 			name:    "defining a nested object literal",
 			preload: NewEnvironment(),
 			program: []ast.StatementNode{
