@@ -18,8 +18,8 @@ print(developer.name);
 print(developer.location.country);
 
 # You check for the presence of a property on an object by using it as the expression in an if statement. However, you
-# can only check for the presence of one property at a time! If you try to invoke a property getter on a nil value then
-# an error occurs.
+# should only check for the presence of one property at a time! If you try to invoke a property getter on a nil value
+# then an error occurs.
 if (developer.name) {
     print("The developer has a name");
 }
