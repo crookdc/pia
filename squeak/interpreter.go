@@ -357,6 +357,8 @@ func (in *Interpreter) evaluate(expr ast.ExpressionNode) (Object, error) {
 		return in.logical(expr)
 	case ast.Call:
 		return in.call(expr)
+	case ast.Get:
+		return in.get(expr)
 	case ast.ObjectLiteral:
 		obj := Instance{
 			Properties: make(map[string]Object),
@@ -384,6 +386,21 @@ func (in *Interpreter) list(node ast.ListLiteral) (Object, error) {
 		items = append(items, item)
 	}
 	return List{slice: items}, nil
+}
+
+func (in *Interpreter) get(node ast.Get) (Object, error) {
+	obj, err := in.evaluate(node.Target)
+	if err != nil {
+		return nil, err
+	}
+	switch obj := obj.(type) {
+	case Instance:
+		// If the property does not exist on the instance then a nil value is returned. This allows the users to do
+		// presence checks using the getter as an expression.
+		return obj.Properties[node.Property.Lexeme], nil
+	default:
+		return nil, fmt.Errorf("%w: %T cannot invoke property getter", ErrIllegalArgument, obj)
+	}
 }
 
 func (in *Interpreter) call(node ast.Call) (Object, error) {
