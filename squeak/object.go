@@ -14,6 +14,22 @@ type Object interface {
 	fmt.Stringer
 }
 
+// Instance is an object instance, which consists of a collection of named data as well as behaviours coupled to the
+// data.
+type Instance struct {
+	Properties map[string]Object
+}
+
+func (i Instance) String() string {
+	sb := strings.Builder{}
+	sb.WriteString("Object {")
+	for k, v := range i.Properties {
+		sb.WriteString(fmt.Sprintf("%s: %s", k, v.String()))
+	}
+	sb.WriteString("}")
+	return sb.String()
+}
+
 type Callable interface {
 	Object
 	Arity() int

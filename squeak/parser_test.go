@@ -692,6 +692,66 @@ func TestParser_Next(t *testing.T) {
 			},
 		},
 		{
+			src: "developer.location.country;",
+			expected: ast.ExpressionStatement{
+				Expression: ast.Get{
+					Target: ast.Get{
+						Target: ast.Variable{
+							Level: 0,
+							Name: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "developer",
+							},
+						},
+						Property: token.Token{
+							Type:   token.Identifier,
+							Lexeme: "location",
+						},
+					},
+					Property: token.Token{
+						Type:   token.Identifier,
+						Lexeme: "country",
+					},
+				},
+			},
+		},
+		{
+			src: "get_developers()[0].location;",
+			expected: ast.ExpressionStatement{
+				Expression: ast.Get{
+					Target: ast.Call{
+						Callee: ast.Call{
+							Callee: ast.Variable{
+								Level: 0,
+								Name: token.Token{
+									Type:   token.Identifier,
+									Lexeme: "get_developers",
+								},
+							},
+							Operator: token.Token{
+								Type:   token.LeftParenthesis,
+								Lexeme: "(",
+							},
+							Args: []ast.ExpressionNode{},
+						},
+						Operator: token.Token{
+							Type:   token.LeftBracket,
+							Lexeme: "[",
+						},
+						Args: []ast.ExpressionNode{
+							ast.IntegerLiteral{
+								Integer: 0,
+							},
+						},
+					},
+					Property: token.Token{
+						Type:   token.Identifier,
+						Lexeme: "location",
+					},
+				},
+			},
+		},
+		{
 			src: "var list = [];",
 			expected: ast.Declaration{
 				Name: token.Token{
@@ -1190,6 +1250,37 @@ func TestParser_Next(t *testing.T) {
 			}
 			`,
 			err: SyntaxError{Line: 4},
+		},
+		{
+			src: `
+			Object {
+				status: Object {
+					code: 200 + 1,	
+					line: "Created"
+				},
+				success: true
+			};
+			`,
+			expected: ast.ExpressionStatement{
+				Expression: ast.ObjectLiteral{
+					Properties: map[string]ast.ExpressionNode{
+						"status": ast.ObjectLiteral{
+							Properties: map[string]ast.ExpressionNode{
+								"code": ast.Infix{
+									Operator: token.Token{
+										Type:   token.Plus,
+										Lexeme: "+",
+									},
+									LHS: ast.IntegerLiteral{Integer: 200},
+									RHS: ast.IntegerLiteral{Integer: 1},
+								},
+								"line": ast.StringLiteral{String: "Created"},
+							},
+						},
+						"success": ast.BooleanLiteral{Boolean: true},
+					},
+				},
+			},
 		},
 		{
 			src: `

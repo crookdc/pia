@@ -34,6 +34,7 @@ const (
 	Import
 	Export
 	As
+	Object
 
 	Less
 	LessEqual
@@ -50,6 +51,7 @@ const (
 	Comma
 	Dot
 	Semicolon
+	Colon
 	LeftParenthesis
 	RightParenthesis
 	LeftBrace
@@ -79,6 +81,7 @@ var (
 		Nil:              "nil",
 		Import:           "import",
 		As:               "as",
+		Object:           "Object",
 		Export:           "export",
 		Less:             "<",
 		LessEqual:        "<=",
@@ -95,6 +98,7 @@ var (
 		Comma:            ",",
 		Dot:              ".",
 		Semicolon:        ";",
+		Colon:            ":",
 		LeftParenthesis:  "(",
 		RightParenthesis: ")",
 		LeftBrace:        "{",

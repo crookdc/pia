@@ -91,7 +91,53 @@ func TestLexer_Next(t *testing.T) {
 			},
 		},
 		{
-			src: "break; continue; import; import as; export;",
+			src: `
+			Object {
+				status: 200,
+			};
+			`,
+			bl: LexerBufferLength,
+			expected: []token.Token{
+				{
+					Type:   token.Object,
+					Lexeme: "Object",
+				},
+				{
+					Type:   token.LeftBrace,
+					Lexeme: "{",
+				},
+				{
+					Type:   token.Identifier,
+					Lexeme: "status",
+				},
+				{
+					Type:   token.Colon,
+					Lexeme: ":",
+				},
+				{
+					Type:   token.Integer,
+					Lexeme: "200",
+				},
+				{
+					Type:   token.Comma,
+					Lexeme: ",",
+				},
+				{
+					Type:   token.RightBrace,
+					Lexeme: "}",
+				},
+				{
+					Type:   token.Semicolon,
+					Lexeme: ";",
+				},
+				{
+					Type:   token.EOF,
+					Lexeme: "EOF",
+				},
+			},
+		},
+		{
+			src: "break; continue; import; import as; export; Object;",
 			bl:  LexerBufferLength,
 			expected: []token.Token{
 				{
@@ -133,6 +179,14 @@ func TestLexer_Next(t *testing.T) {
 				{
 					Type:   token.Export,
 					Lexeme: "export",
+				},
+				{
+					Type:   token.Semicolon,
+					Lexeme: ";",
+				},
+				{
+					Type:   token.Object,
+					Lexeme: "Object",
 				},
 				{
 					Type:   token.Semicolon,

@@ -1,0 +1,19 @@
+# Objects in Squeak are realized using a very simple prototype-based implementation. There are only a handful of key
+# operations you need to know to get started with objects in Squeak, all of which are demoed in this script.
+
+# First off we want to create a new object from 'nothing'. That is, without cloning an already existing object. This is
+# done using the object literal expression. You may recognize the syntax as it is heavily inspired by JavaScript.
+var developer = Object {
+    name: "crookdc",
+    age: 27,
+    location: Object {
+        country: "Sweden",
+        type: "Coastal"
+    }
+};
+
+# To access properties on objects and nested objects you define the part to the property in terms of a list of
+# identifiers joined together with full-stop characters.
+print(developer.name);
+print(developer.location.country);
+

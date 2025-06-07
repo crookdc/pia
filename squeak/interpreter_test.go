@@ -1887,6 +1887,70 @@ func TestInterpreter_Execute(t *testing.T) {
 			},
 		},
 		{
+			name:    "defining an object with object literal",
+			preload: NewEnvironment(),
+			program: []ast.StatementNode{
+				ast.Declaration{
+					Name: token.Token{
+						Type:   token.Identifier,
+						Lexeme: "obj",
+					},
+					Initializer: ast.ObjectLiteral{
+						Properties: map[string]ast.ExpressionNode{
+							"status": ast.IntegerLiteral{Integer: 201},
+							"line":   ast.StringLiteral{String: "Created"},
+						},
+					},
+				},
+			},
+			env: NewEnvironment(
+				Prefill("obj", Instance{
+					Properties: map[string]Object{
+						"status": Number{201},
+						"line":   String{"Created"},
+					},
+				}),
+			),
+			exports: make(map[string]Object),
+		},
+		{
+			name:    "defining a nested object literal",
+			preload: NewEnvironment(),
+			program: []ast.StatementNode{
+				ast.Declaration{
+					Name: token.Token{
+						Type:   token.Identifier,
+						Lexeme: "obj",
+					},
+					Initializer: ast.ObjectLiteral{
+						Properties: map[string]ast.ExpressionNode{
+							"status": ast.IntegerLiteral{Integer: 201},
+							"address": ast.ObjectLiteral{
+								Properties: map[string]ast.ExpressionNode{
+									"street": ast.StringLiteral{String: "Testers Avenue 14"},
+									"zip":    ast.StringLiteral{String: "4MX12 4H"},
+								},
+							},
+						},
+					},
+				},
+			},
+			env: NewEnvironment(
+				Prefill("obj", Instance{
+					Properties: map[string]Object{
+						"status": Number{201},
+						"address": Instance{
+							Properties: map[string]Object{
+								"street": String{"Testers Avenue 14"},
+								"zip":    String{"4MX12 4H"},
+							},
+						},
+					},
+				}),
+			),
+			exports: make(map[string]Object),
+		},
+		{
 			name:    "calling a Number",
 			preload: NewEnvironment(Prefill("not_callable", Number{1})),
 			program: []ast.StatementNode{

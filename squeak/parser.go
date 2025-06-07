@@ -647,22 +647,36 @@ func (ps *Parser) call() (ast.ExpressionNode, error) {
 	if err != nil {
 		return nil, err
 	}
-	for matches(pk, token.LeftParenthesis, token.LeftBracket) {
-		args, err := ps.expressions(pk.Type, token.Closers[pk.Type])
-		if err != nil {
-			return nil, err
-		}
-		expr = ast.Call{
-			Callee:   expr,
-			Operator: pk,
-			Args:     args,
+	for {
+		switch pk.Type {
+		case token.LeftParenthesis, token.LeftBracket:
+			args, err := ps.expressions(pk.Type, token.Closers[pk.Type])
+			if err != nil {
+				return nil, err
+			}
+			expr = ast.Call{
+				Callee:   expr,
+				Operator: pk,
+				Args:     args,
+			}
+		case token.Dot:
+			ps.lx.Discard()
+			prop, err := ps.expect(token.Identifier)
+			if err != nil {
+				return nil, err
+			}
+			expr = ast.Get{
+				Target:   expr,
+				Property: prop,
+			}
+		default:
+			return expr, nil
 		}
 		pk, err = ps.lx.Peek()
 		if err != nil {
 			return nil, err
 		}
 	}
-	return expr, nil
 }
 
 func matches(tk token.Token, types ...token.Type) bool {
@@ -790,6 +804,52 @@ func (ps *Parser) primary() (ast.ExpressionNode, error) {
 		return ast.ListLiteral{
 			Items: items,
 		}, nil
+	case token.Object:
+		ps.lx.Discard()
+		if _, err := ps.expect(token.LeftBrace); err != nil {
+			return nil, err
+		}
+		obj := ast.ObjectLiteral{
+			Properties: make(map[string]ast.ExpressionNode),
+		}
+		for {
+			pk, err := ps.lx.Peek()
+			if err != nil {
+				return nil, err
+			}
+			switch pk.Type {
+			case token.Identifier:
+				ps.lx.Discard()
+				if _, err := ps.expect(token.Colon); err != nil {
+					return nil, err
+				}
+				expr, err := ps.equality()
+				if err != nil {
+					return nil, err
+				}
+				obj.Properties[pk.Lexeme] = expr
+			default:
+				return nil, fmt.Errorf(
+					"%w: unexpected token %s",
+					SyntaxError{
+						Line: ps.lx.Line(),
+					},
+					pk.Lexeme,
+				)
+			}
+			pk, err = ps.lx.Peek()
+			if err != nil {
+				return nil, err
+			}
+			if pk.Type != token.Comma {
+				break
+			}
+			ps.lx.Discard()
+		}
+		if _, err := ps.expect(token.RightBrace); err != nil {
+			return nil, err
+		}
+		return obj, nil
 	case token.Nil:
 		ps.lx.Discard()
 		return ast.NilLiteral{}, nil

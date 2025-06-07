@@ -213,6 +213,11 @@ func (lx *Lexer) symbol() (token.Token, error) {
 			return token.Null, err
 		}
 		return token.New(token.Semicolon)
+	case ':':
+		if err := lx.skip(amount(1)); err != nil {
+			return token.Null, err
+		}
+		return token.New(token.Colon)
 	case '<':
 		if err := lx.skip(amount(1)); err != nil {
 			return token.Null, err
@@ -413,6 +418,8 @@ func (lx *Lexer) word() (token.Token, error) {
 		return token.New(token.As)
 	case "export":
 		return token.New(token.Export)
+	case "Object":
+		return token.New(token.Object)
 	case "true", "false":
 		return token.New(token.Boolean, token.Lexeme(string(w)))
 	default:

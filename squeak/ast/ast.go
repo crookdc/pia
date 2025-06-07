@@ -151,6 +151,12 @@ type Variable struct {
 	Name  token.Token
 }
 
+type Get struct {
+	Expression
+	Target   ExpressionNode
+	Property token.Token
+}
+
 // IntegerLiteral represents an expression which holds a primitive integer literal.
 type IntegerLiteral struct {
 	Expression
@@ -184,6 +190,12 @@ type NilLiteral struct {
 type ListLiteral struct {
 	Expression
 	Items []ExpressionNode
+}
+
+// ObjectLiteral represents a literal object defined by the properties it holds.
+type ObjectLiteral struct {
+	Expression
+	Properties map[string]ExpressionNode
 }
 
 // Assignment represents the assignment of a value to a variable without also declaring said variable.

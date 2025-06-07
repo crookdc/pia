@@ -357,6 +357,18 @@ func (in *Interpreter) evaluate(expr ast.ExpressionNode) (Object, error) {
 		return in.logical(expr)
 	case ast.Call:
 		return in.call(expr)
+	case ast.ObjectLiteral:
+		obj := Instance{
+			Properties: make(map[string]Object),
+		}
+		for k, v := range expr.Properties {
+			val, err := in.evaluate(v)
+			if err != nil {
+				return nil, err
+			}
+			obj.Properties[k] = val
+		}
+		return obj, nil
 	default:
 		return nil, fmt.Errorf("%w: %T", ErrUnrecognizedExpression, expr)
 	}
