@@ -863,7 +863,7 @@ func TestParser_Next(t *testing.T) {
 								ast.ExpressionStatement{
 									Expression: ast.Call{
 										Callee: ast.Variable{
-											Level: 2,
+											Level: 3,
 											Name: token.Token{
 												Type:   token.Identifier,
 												Lexeme: "print",
@@ -1502,7 +1502,7 @@ func TestParser_Next(t *testing.T) {
 									ast.ExpressionStatement{
 										Expression: ast.Call{
 											Callee: ast.Variable{
-												Level: 1,
+												Level: 3,
 												Name: token.Token{
 													Type:   token.Identifier,
 													Lexeme: "print",
@@ -1529,7 +1529,7 @@ func TestParser_Next(t *testing.T) {
 									ast.ExpressionStatement{
 										Expression: ast.Call{
 											Callee: ast.Variable{
-												Level: 1,
+												Level: 3,
 												Name: token.Token{
 													Type:   token.Identifier,
 													Lexeme: "print",

@@ -856,11 +856,12 @@ func (ps *Parser) method() (ast.Method, error) {
 	}{
 		slice: []map[string]struct{}{
 			make(map[string]struct{}),
+			make(map[string]struct{}),
 			{
 				"this": struct{}{},
 			},
 		},
-		sp: 1,
+		sp: 2,
 	}
 	ps.begin()
 	for _, param := range params {

@@ -2238,7 +2238,7 @@ func TestInterpreter_Execute(t *testing.T) {
 		assert.Equal(t, Number{100}, second)
 	})
 
-	t.Run("methods", func(t *testing.T) {
+	t.Run("calling methods on direct object", func(t *testing.T) {
 		src := `
 		var developer = Object {
 			name: "crookdc",
@@ -2260,6 +2260,56 @@ func TestInterpreter_Execute(t *testing.T) {
 			assert.Nil(t, err)
 		}
 		assert.Equal(t, "crookdc greets Jane DoeJohn Doe greets Jane Doe", out.String())
+	})
+
+	t.Run("calling methods indirectly", func(t *testing.T) {
+		src := `
+		var developer = Object {
+			name: "crookdc",
+			say_hi: function(to) {
+				print(this.name + " greets " + to);
+			}
+		};
+		developer.name = "John Doe";
+		var fn = developer.say_hi;
+		fn("Jane Doe");
+		`
+		program, err := ParseString(src)
+		assert.Nil(t, err)
+		out := bytes.NewBufferString("")
+		in := NewInterpreter("", out)
+		for _, stmt := range program {
+			_, err := in.execute(stmt)
+			assert.Nil(t, err)
+		}
+		assert.Equal(t, "John Doe greets Jane Doe", out.String())
+	})
+
+	t.Run("calling nested object method", func(t *testing.T) {
+		src := `
+		var developer = Object {
+			name: "crookdc",
+			say_hi: function(to) {
+				print(this.name + " greets " + to);
+			},
+			location: Object {
+				country: "Sweden",
+				is_nordic: function() {
+					return true;
+				}
+			}
+		};
+		print(developer.location.is_nordic());
+		`
+		program, err := ParseString(src)
+		assert.Nil(t, err)
+		out := bytes.NewBufferString("")
+		in := NewInterpreter("", out)
+		for _, stmt := range program {
+			_, err := in.execute(stmt)
+			assert.Nil(t, err)
+		}
+		assert.Equal(t, "true", out.String())
 	})
 
 	t.Run("closure within a function", func(t *testing.T) {

@@ -78,7 +78,7 @@ func (bm BoundMethod) Arity() int {
 }
 
 func (bm BoundMethod) Call(in *Interpreter, args ...Object) (Object, error) {
-	closure := NewEnvironment(Parent(runtime), Prefill("this", bm.this))
+	closure := NewEnvironment(Parent(in.global), Prefill("this", bm.this))
 	scope := NewEnvironment(Parent(closure))
 	for i, param := range bm.declaration.Params {
 		scope.Declare(param.Lexeme, args[i])
