@@ -12,6 +12,7 @@ import (
 // meaning behind the value. Hence, this interface is largely just for clearer naming.
 type Object interface {
 	fmt.Stringer
+	Clone() Object
 }
 
 // Instance is an object instance, which consists of a collection of named data as well as behaviours coupled to the
@@ -30,6 +31,14 @@ func (i Instance) String() string {
 	return sb.String()
 }
 
+func (i Instance) Clone() Object {
+	props := make(map[string]Object)
+	for k, v := range i.Properties {
+		props[k] = v.Clone()
+	}
+	return Instance{Properties: props}
+}
+
 type Callable interface {
 	Object
 	Arity() int
@@ -44,6 +53,13 @@ type Function struct {
 
 func (f Function) String() string {
 	return fmt.Sprintf("function:%s", f.declaration.Name.Lexeme)
+}
+
+func (f Function) Clone() Object {
+	return Function{
+		declaration: f.declaration,
+		closure:     f.closure,
+	}
 }
 
 func (f Function) Arity() int {
@@ -104,6 +120,10 @@ func (m Method) String() string {
 	return fmt.Sprintf("method")
 }
 
+func (m Method) Clone() Object {
+	return Method{declaration: m.declaration}
+}
+
 // Number is an Object representing a numerical value internally represented as a float64. In Squeak, the notion of
 // integers only exists in the lexical and parsing phase. During evaluation, all numerical objects are represented with
 // this struct.
@@ -115,6 +135,12 @@ func (i Number) String() string {
 	return strings.TrimRight(fmt.Sprintf("%f", i.value), "0")
 }
 
+func (i Number) Clone() Object {
+	return Number{
+		value: i.value,
+	}
+}
+
 // String is an Object representing a textual value.
 type String struct {
 	value string
@@ -122,6 +148,10 @@ type String struct {
 
 func (s String) String() string {
 	return s.value
+}
+
+func (s String) Clone() Object {
+	return String{value: s.value}
 }
 
 // Boolean is an Object representing a boolean value.
@@ -136,6 +166,10 @@ func (b Boolean) String() string {
 	return "false"
 }
 
+func (b Boolean) Clone() Object {
+	return Boolean{value: b.value}
+}
+
 // List is a single Object containing a collection of Object values.
 type List struct {
 	slice []Object
@@ -147,4 +181,12 @@ func (l List) String() string {
 		items[i] = l.slice[i].String()
 	}
 	return fmt.Sprintf("[%s]", strings.Join(items, ","))
+}
+
+func (l List) Clone() Object {
+	clone := make([]Object, len(l.slice))
+	for i, v := range l.slice {
+		clone[i] = v.Clone()
+	}
+	return List{slice: clone}
 }

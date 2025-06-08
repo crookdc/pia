@@ -44,5 +44,14 @@ print(developer.name + " <3 " + developer.partner.name);
 developer.greet = function(other) {
     print(this.name + " says hi to " + other);
 };
-
 developer.greet("Jane Doe");
+
+# Since Squeak uses a prototype based object model, you can create subobjects by cloning (extending) an existing object,
+# which then serves as the prototype for the new object.
+var crookdc = clone(developer);
+crookdc.name = "crookdc";
+crookdc.greet("Jane Doe");
+
+if developer.name != "John Doe" {
+    panic("Expected name to be John Doe");
+}

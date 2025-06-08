@@ -26,6 +26,8 @@ var (
 	runtime = NewEnvironment(
 		Prefill("print", PrintBuiltin{}),
 		Prefill("length", LengthBuiltin{}),
+		Prefill("clone", CloneBuiltin{}),
+		Prefill("panic", PanicBuiltin{}),
 	)
 )
 
