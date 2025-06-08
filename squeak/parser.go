@@ -50,10 +50,10 @@ func NewParser(lx *PeekingLexer) *Parser {
 			sp    int
 		}{
 			slice: []map[string]struct{}{
-				// The initial map represents the global environment
-				make(map[string]struct{}),
+				make(map[string]struct{}), // Runtime environment
+				make(map[string]struct{}), // Global user environment
 			},
-			sp: 0,
+			sp: 1,
 		},
 	}
 }
@@ -816,50 +816,15 @@ func (ps *Parser) primary() (ast.ExpressionNode, error) {
 		}, nil
 	case token.Object:
 		ps.lx.Discard()
-		if _, err := ps.expect(token.LeftBrace); err != nil {
+		props, err := ps.keymap()
+		if err != nil {
 			return nil, err
 		}
-		obj := ast.ObjectLiteral{
-			Properties: make(map[string]ast.ExpressionNode),
-		}
-		for {
-			pk, err := ps.lx.Peek()
-			if err != nil {
-				return nil, err
-			}
-			switch pk.Type {
-			case token.Identifier:
-				ps.lx.Discard()
-				if _, err := ps.expect(token.Colon); err != nil {
-					return nil, err
-				}
-				expr, err := ps.equality()
-				if err != nil {
-					return nil, err
-				}
-				obj.Properties[pk.Lexeme] = expr
-			default:
-				return nil, fmt.Errorf(
-					"%w: unexpected token %s",
-					SyntaxError{
-						Line: ps.lx.Line(),
-					},
-					pk.Lexeme,
-				)
-			}
-			pk, err = ps.lx.Peek()
-			if err != nil {
-				return nil, err
-			}
-			if pk.Type != token.Comma {
-				break
-			}
-			ps.lx.Discard()
-		}
-		if _, err := ps.expect(token.RightBrace); err != nil {
-			return nil, err
-		}
-		return obj, nil
+		return ast.ObjectLiteral{
+			Properties: props,
+		}, nil
+	case token.Function:
+		return ps.method()
 	case token.Nil:
 		ps.lx.Discard()
 		return ast.NilLiteral{}, nil
@@ -871,6 +836,92 @@ func (ps *Parser) primary() (ast.ExpressionNode, error) {
 			pk.Lexeme,
 		)
 	}
+}
+
+func (ps *Parser) method() (ast.Method, error) {
+	if _, err := ps.expect(token.Function); err != nil {
+		return ast.Method{}, err
+	}
+	params, err := ps.tokens(token.LeftParenthesis, token.RightParenthesis)
+	if err != nil {
+		return ast.Method{}, err
+	}
+	previous := ps.stack
+	defer func() {
+		ps.stack = previous
+	}()
+	ps.stack = struct {
+		slice []map[string]struct{}
+		sp    int
+	}{
+		slice: []map[string]struct{}{
+			make(map[string]struct{}),
+			{
+				"this": struct{}{},
+			},
+		},
+		sp: 1,
+	}
+	ps.begin()
+	for _, param := range params {
+		if err := ps.declare(param); err != nil {
+			return ast.Method{}, err
+		}
+	}
+	body, err := ps.block()
+	if err != nil {
+		return ast.Method{}, err
+	}
+	ps.end()
+	return ast.Method{
+		Params: params,
+		Body:   body,
+	}, nil
+}
+
+func (ps *Parser) keymap() (map[string]ast.ExpressionNode, error) {
+	if _, err := ps.expect(token.LeftBrace); err != nil {
+		return nil, err
+	}
+	m := make(map[string]ast.ExpressionNode)
+	for {
+		pk, err := ps.lx.Peek()
+		if err != nil {
+			return nil, err
+		}
+		switch pk.Type {
+		case token.Identifier:
+			ps.lx.Discard()
+			if _, err := ps.expect(token.Colon); err != nil {
+				return nil, err
+			}
+			expr, err := ps.equality()
+			if err != nil {
+				return nil, err
+			}
+			m[pk.Lexeme] = expr
+		default:
+			return nil, fmt.Errorf(
+				"%w: unexpected token %s",
+				SyntaxError{
+					Line: ps.lx.Line(),
+				},
+				pk.Lexeme,
+			)
+		}
+		pk, err = ps.lx.Peek()
+		if err != nil {
+			return nil, err
+		}
+		if pk.Type != token.Comma {
+			break
+		}
+		ps.lx.Discard()
+	}
+	if _, err := ps.expect(token.RightBrace); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 func (ps *Parser) expect(v token.Type) (token.Token, error) {

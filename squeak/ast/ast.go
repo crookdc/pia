@@ -113,6 +113,15 @@ type Function struct {
 	Body   Block
 }
 
+// Method is a type of function that is bound to an instance of an object. A method is different from a function in that
+// it does not capture the surrounding environment upon definition, and it can be represented as an expression rather
+// than a statement.
+type Method struct {
+	Expression
+	Params []token.Token
+	Body   Block
+}
+
 // Return represents a statement which allows a value from within a block to be returned to the caller of said block.
 type Return struct {
 	Statement

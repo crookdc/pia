@@ -22,6 +22,13 @@ var (
 	ErrIllegalArgument         = fmt.Errorf("%w: illegal argument", ErrRuntimeFault)
 )
 
+var (
+	runtime = NewEnvironment(
+		Prefill("print", PrintBuiltin{}),
+		Prefill("length", LengthBuiltin{}),
+	)
+)
+
 type unwinder struct {
 	source token.Token
 	value  Object
@@ -102,10 +109,7 @@ func (env *Environment) Assign(k string, v Object, lvl int) error {
 // supplying a valid [io.Writer] which is used as the standard output stream. While the caller is allowed to provide a
 // nil [io.Writer], it is discouraged as any usage of the standard output will result in a panic.
 func NewInterpreter(wd string, out io.Writer) *Interpreter {
-	global := NewEnvironment(
-		Prefill("print", PrintBuiltin{}),
-		Prefill("length", LengthBuiltin{}),
-	)
+	global := NewEnvironment(Parent(runtime))
 	return &Interpreter{
 		wd:      wd,
 		exports: make(map[string]Object),
@@ -391,6 +395,8 @@ func (in *Interpreter) evaluate(expr ast.ExpressionNode) (Object, error) {
 			obj.Properties[k] = val
 		}
 		return obj, nil
+	case ast.Method:
+		return Method{declaration: expr}, nil
 	default:
 		return nil, fmt.Errorf("%w: %T", ErrUnrecognizedExpression, expr)
 	}
@@ -413,13 +419,21 @@ func (in *Interpreter) get(node ast.Get) (Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	switch obj := obj.(type) {
-	case Instance:
-		// If the property does not exist on the instance then a nil value is returned. This allows the users to do
-		// presence checks using the getter as an expression.
-		return obj.Properties[node.Property.Lexeme], nil
-	default:
+	ins, ok := obj.(Instance)
+	if !ok {
 		return nil, fmt.Errorf("%w: %T cannot invoke property getter", ErrIllegalArgument, obj)
+	}
+	// If the property does not exist on the instance then a nil value is returned. This allows the users to do
+	// presence checks using the getter as an expression.
+	prop := ins.Properties[node.Property.Lexeme]
+	switch prop := prop.(type) {
+	case Method:
+		return BoundMethod{
+			Method: prop,
+			this:   ins,
+		}, nil
+	default:
+		return prop, nil
 	}
 }
 

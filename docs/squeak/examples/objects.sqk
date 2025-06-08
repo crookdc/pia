@@ -37,3 +37,12 @@ developer.partner = Object {
 };
 developer.name = "John Doe";
 print(developer.name + " <3 " + developer.partner.name);
+
+# It is also possible to define behaviours on objects, these are called methods. A method is similar to a function but
+# it does not have access to the environment it was defined in (it does not work with closures), instead it has only
+# access to the global environment and a special type of closure which captures the target object.
+developer.greet = function(other) {
+    print(this.name + " says hi to " + other);
+};
+
+developer.greet("Jane Doe");

@@ -50,10 +50,10 @@ func (f Function) Arity() int {
 	return len(f.declaration.Params)
 }
 
-func (f Function) Call(in *Interpreter, objs ...Object) (Object, error) {
+func (f Function) Call(in *Interpreter, args ...Object) (Object, error) {
 	scope := NewEnvironment(Parent(f.closure))
 	for i, param := range f.declaration.Params {
-		scope.Declare(param.Lexeme, objs[i])
+		scope.Declare(param.Lexeme, args[i])
 	}
 	uw, err := in.block(scope, f.declaration.Body.Body)
 	if err != nil {
@@ -66,6 +66,42 @@ func (f Function) Call(in *Interpreter, objs ...Object) (Object, error) {
 		return nil, fmt.Errorf("%w: unexpected unwinding source %s", ErrRuntimeFault, uw.source.Lexeme)
 	}
 	return uw.value, nil
+}
+
+type BoundMethod struct {
+	Method
+	this Instance
+}
+
+func (bm BoundMethod) Arity() int {
+	return len(bm.declaration.Params)
+}
+
+func (bm BoundMethod) Call(in *Interpreter, args ...Object) (Object, error) {
+	closure := NewEnvironment(Parent(runtime), Prefill("this", bm.this))
+	scope := NewEnvironment(Parent(closure))
+	for i, param := range bm.declaration.Params {
+		scope.Declare(param.Lexeme, args[i])
+	}
+	uw, err := in.block(scope, bm.declaration.Body.Body)
+	if err != nil {
+		return nil, err
+	}
+	if uw == nil {
+		return nil, nil
+	}
+	if uw.source.Type != token.Return {
+		return nil, fmt.Errorf("%w: unexpected unwinding source %s", ErrRuntimeFault, uw.source.Lexeme)
+	}
+	return uw.value, nil
+}
+
+type Method struct {
+	declaration ast.Method
+}
+
+func (m Method) String() string {
+	return fmt.Sprintf("method")
 }
 
 // Number is an Object representing a numerical value internally represented as a float64. In Squeak, the notion of

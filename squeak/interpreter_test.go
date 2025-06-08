@@ -2238,6 +2238,30 @@ func TestInterpreter_Execute(t *testing.T) {
 		assert.Equal(t, Number{100}, second)
 	})
 
+	t.Run("methods", func(t *testing.T) {
+		src := `
+		var developer = Object {
+			name: "crookdc",
+			say_hi: function(to) {
+				print(this.name + " greets " + to);
+			}
+		};
+		developer.say_hi("Jane Doe");
+
+		developer.name = "John Doe";
+		developer.say_hi("Jane Doe");
+		`
+		program, err := ParseString(src)
+		assert.Nil(t, err)
+		out := bytes.NewBufferString("")
+		in := NewInterpreter("", out)
+		for _, stmt := range program {
+			_, err := in.execute(stmt)
+			assert.Nil(t, err)
+		}
+		assert.Equal(t, "crookdc greets Jane DoeJohn Doe greets Jane Doe", out.String())
+	})
+
 	t.Run("closure within a function", func(t *testing.T) {
 		src := `
 		function random(n) {
