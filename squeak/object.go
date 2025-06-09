@@ -99,22 +99,22 @@ func (f Function) Call(in *Interpreter, args ...Object) (Object, error) {
 	return uw.value, nil
 }
 
-type BoundMethod struct {
-	Method
-	this Instance
+type Method interface {
+	Bind(Object) (Callable, error)
 }
 
-func (bm BoundMethod) Arity() int {
-	return len(bm.declaration.Params)
+type BoundObjectInstanceMethod struct {
+	ObjectInstanceMethod
+	this *ObjectInstance
 }
 
-func (bm BoundMethod) Call(in *Interpreter, args ...Object) (Object, error) {
-	closure := NewEnvironment(Parent(in.global), Prefill("this", bm.this))
+func (b BoundObjectInstanceMethod) Call(in *Interpreter, args ...Object) (Object, error) {
+	closure := NewEnvironment(Parent(in.global), Prefill("this", b.this))
 	scope := NewEnvironment(Parent(closure))
-	for i, param := range bm.declaration.Params {
+	for i, param := range b.declaration.Params {
 		scope.Declare(param.Lexeme, args[i])
 	}
-	uw, err := in.block(scope, bm.declaration.Body.Body)
+	uw, err := in.block(scope, b.declaration.Body.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -127,16 +127,31 @@ func (bm BoundMethod) Call(in *Interpreter, args ...Object) (Object, error) {
 	return uw.value, nil
 }
 
-type Method struct {
+func (b BoundObjectInstanceMethod) Arity() int {
+	return len(b.declaration.Params)
+}
+
+type ObjectInstanceMethod struct {
 	declaration ast.Method
 }
 
-func (m Method) String() string {
+func (m ObjectInstanceMethod) String() string {
 	return fmt.Sprintf("method")
 }
 
-func (m Method) Clone() Object {
-	return Method{declaration: m.declaration}
+func (m ObjectInstanceMethod) Clone() Object {
+	return &ObjectInstanceMethod{declaration: m.declaration}
+}
+
+func (m ObjectInstanceMethod) Bind(obj Object) (Callable, error) {
+	i, ok := obj.(*ObjectInstance)
+	if !ok {
+		return nil, fmt.Errorf("%w: %T cannot be binding target for object method", ErrIllegalArgument, obj)
+	}
+	return BoundObjectInstanceMethod{
+		ObjectInstanceMethod: m,
+		this:                 i,
+	}, nil
 }
 
 // Number is an Object representing a numerical value internally represented as a float64. In Squeak, the notion of
@@ -185,6 +200,46 @@ func (b Boolean) Clone() Object {
 	return Boolean{value: b.value}
 }
 
+type BoundListMethod struct {
+	ListMethod
+	this *List
+}
+
+func (b BoundListMethod) String() string {
+	return "builtin:list:method"
+}
+
+func (b BoundListMethod) Clone() Object {
+	return BoundListMethod{
+		ListMethod: b.ListMethod,
+		this:       b.this,
+	}
+}
+
+func (b BoundListMethod) Arity() int {
+	return b.arity
+}
+
+func (b BoundListMethod) Call(in *Interpreter, args ...Object) (Object, error) {
+	return b.ListMethod.fn(b.this, in, args...)
+}
+
+type ListMethod struct {
+	arity int
+	fn    func(*List, *Interpreter, ...Object) (Object, error)
+}
+
+func (l ListMethod) Bind(obj Object) (Callable, error) {
+	list, ok := obj.(List)
+	if !ok {
+		return nil, fmt.Errorf("%w: %T cannot be binding target for list method", ErrIllegalOperation, obj)
+	}
+	return BoundListMethod{
+		ListMethod: l,
+		this:       &list,
+	}, nil
+}
+
 // List is a single Object containing a collection of Object values.
 type List struct {
 	slice []Object
@@ -204,4 +259,12 @@ func (l List) Clone() Object {
 		clone[i] = v.Clone()
 	}
 	return List{slice: clone}
+}
+
+func (l List) Get(s string) Object {
+	panic("not implemented")
+}
+
+func (l List) Put(string, Object) Object {
+	panic(fmt.Errorf("%w: cannot mutate prototype of list data structure", ErrIllegalOperation))
 }

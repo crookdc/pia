@@ -20,6 +20,7 @@ var (
 	ErrObjectNotDeclared       = fmt.Errorf("%w: variable not declared", ErrRuntimeFault)
 	ErrUnrecognizedOperandType = fmt.Errorf("%w: unrecognized operand type", ErrRuntimeFault)
 	ErrIllegalArgument         = fmt.Errorf("%w: illegal argument", ErrRuntimeFault)
+	ErrIllegalOperation        = fmt.Errorf("%w: illegal operation", ErrRuntimeFault)
 )
 
 var (
@@ -397,7 +398,7 @@ func (in *Interpreter) evaluate(expr ast.ExpressionNode) (Object, error) {
 		}
 		return obj, nil
 	case ast.Method:
-		return Method{declaration: expr}, nil
+		return &ObjectInstanceMethod{declaration: expr}, nil
 	default:
 		return nil, fmt.Errorf("%w: %T", ErrUnrecognizedExpression, expr)
 	}
@@ -429,10 +430,7 @@ func (in *Interpreter) get(node ast.Get) (Object, error) {
 	p := i.Get(node.Property.Lexeme)
 	switch p := p.(type) {
 	case Method:
-		return BoundMethod{
-			Method: p,
-			this:   i,
-		}, nil
+		return p.Bind(i)
 	default:
 		return p, nil
 	}

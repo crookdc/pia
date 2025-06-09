@@ -2376,7 +2376,7 @@ func TestInterpreter_Execute(t *testing.T) {
 		assert.Equal(t, &ObjectInstance{
 			Properties: map[string]Object{
 				"age": Number{32},
-				"set_age": Method{
+				"set_age": &ObjectInstanceMethod{
 					declaration: ast.Method{
 						Params: []token.Token{
 							{
