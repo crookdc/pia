@@ -370,8 +370,7 @@ func (in *Interpreter) evaluate(expr ast.ExpressionNode) (Object, error) {
 		}
 		switch obj := obj.(type) {
 		case Instance:
-			obj.Properties[expr.Property.Lexeme] = val
-			return val, nil
+			return obj.Put(expr.Property.Lexeme, val), nil
 		default:
 			return nil, fmt.Errorf(
 				"%w: %T cannot invoke property setter",
@@ -386,7 +385,7 @@ func (in *Interpreter) evaluate(expr ast.ExpressionNode) (Object, error) {
 	case ast.Get:
 		return in.get(expr)
 	case ast.ObjectLiteral:
-		obj := Instance{
+		obj := &ObjectInstance{
 			Properties: make(map[string]Object),
 		}
 		for k, v := range expr.Properties {
@@ -421,21 +420,21 @@ func (in *Interpreter) get(node ast.Get) (Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	ins, ok := obj.(Instance)
+	i, ok := obj.(Instance)
 	if !ok {
 		return nil, fmt.Errorf("%w: %T cannot invoke property getter", ErrIllegalArgument, obj)
 	}
 	// If the property does not exist on the instance then a nil value is returned. This allows the users to do
 	// presence checks using the getter as an expression.
-	prop := ins.Properties[node.Property.Lexeme]
-	switch prop := prop.(type) {
+	p := i.Get(node.Property.Lexeme)
+	switch p := p.(type) {
 	case Method:
 		return BoundMethod{
-			Method: prop,
-			this:   ins,
+			Method: p,
+			this:   i,
 		}, nil
 	default:
-		return prop, nil
+		return p, nil
 	}
 }
 

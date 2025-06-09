@@ -15,13 +15,19 @@ type Object interface {
 	Clone() Object
 }
 
-// Instance is an object instance, which consists of a collection of named data as well as behaviours coupled to the
+type Instance interface {
+	Object
+	Get(string) Object
+	Put(string, Object) Object
+}
+
+// ObjectInstance is an object instance, which consists of a collection of named data as well as behaviours coupled to the
 // data.
-type Instance struct {
+type ObjectInstance struct {
 	Properties map[string]Object
 }
 
-func (i Instance) String() string {
+func (i *ObjectInstance) String() string {
 	sb := strings.Builder{}
 	sb.WriteString("Object {")
 	for k, v := range i.Properties {
@@ -31,12 +37,21 @@ func (i Instance) String() string {
 	return sb.String()
 }
 
-func (i Instance) Clone() Object {
+func (i *ObjectInstance) Clone() Object {
 	props := make(map[string]Object)
 	for k, v := range i.Properties {
 		props[k] = v.Clone()
 	}
-	return Instance{Properties: props}
+	return &ObjectInstance{Properties: props}
+}
+
+func (i *ObjectInstance) Get(s string) Object {
+	return i.Properties[s]
+}
+
+func (i *ObjectInstance) Put(s string, object Object) Object {
+	i.Properties[s] = object
+	return object
 }
 
 type Callable interface {

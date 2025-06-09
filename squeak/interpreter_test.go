@@ -1904,7 +1904,7 @@ func TestInterpreter_Execute(t *testing.T) {
 				},
 			},
 			env: NewEnvironment(
-				Prefill("obj", Instance{
+				Prefill("obj", &ObjectInstance{
 					Properties: map[string]Object{
 						"status": Number{201},
 						"line":   String{"Created"},
@@ -1955,7 +1955,7 @@ func TestInterpreter_Execute(t *testing.T) {
 				},
 			},
 			env: NewEnvironment(
-				Prefill("obj", Instance{
+				Prefill("obj", &ObjectInstance{
 					Properties: map[string]Object{
 						"status": Number{400},
 						"line":   String{"Created"},
@@ -2004,7 +2004,7 @@ func TestInterpreter_Execute(t *testing.T) {
 				},
 			},
 			env: NewEnvironment(
-				Prefill("obj", Instance{
+				Prefill("obj", &ObjectInstance{
 					Properties: map[string]Object{
 						"status":  Number{201},
 						"line":    String{"Created"},
@@ -2037,10 +2037,10 @@ func TestInterpreter_Execute(t *testing.T) {
 				},
 			},
 			env: NewEnvironment(
-				Prefill("obj", Instance{
+				Prefill("obj", &ObjectInstance{
 					Properties: map[string]Object{
 						"status": Number{201},
-						"address": Instance{
+						"address": &ObjectInstance{
 							Properties: map[string]Object{
 								"street": String{"Testers Avenue 14"},
 								"zip":    String{"4MX12 4H"},
@@ -2373,7 +2373,7 @@ func TestInterpreter_Execute(t *testing.T) {
 		}
 		obj, err := in.scope.Resolve("developer", 0)
 		assert.Nil(t, err)
-		assert.Equal(t, Instance{
+		assert.Equal(t, &ObjectInstance{
 			Properties: map[string]Object{
 				"age": Number{32},
 				"set_age": Method{
