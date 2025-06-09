@@ -2354,6 +2354,74 @@ func TestInterpreter_Execute(t *testing.T) {
 		assert.Equal(t, Number{1100}, first)
 	})
 
+	t.Run("mutating method", func(t *testing.T) {
+		src := `
+		var developer = Object {
+			age: 27.,
+			set_age: function(age) {
+				this.age = age;
+			}
+		};
+		developer.set_age(32);
+		`
+		program, err := ParseString(src)
+		assert.Nil(t, err)
+		in := NewInterpreter("", nil)
+		for _, stmt := range program {
+			_, err := in.execute(stmt)
+			assert.Nil(t, err)
+		}
+		obj, err := in.scope.Resolve("developer", 0)
+		assert.Nil(t, err)
+		assert.Equal(t, Instance{
+			Properties: map[string]Object{
+				"age": Number{32},
+				"set_age": Method{
+					declaration: ast.Method{
+						Params: []token.Token{
+							{
+								Type:   token.Identifier,
+								Lexeme: "age",
+							},
+						},
+						Body: ast.Block{
+							Body: []ast.StatementNode{
+								ast.ExpressionStatement{
+									Expression: ast.Set{
+										Target: ast.Get{
+											Target: ast.Variable{
+												Level: 1,
+												Name: token.Token{
+													Type:   token.Identifier,
+													Lexeme: "this",
+												},
+											},
+											Property: token.Token{
+												Type:   token.Identifier,
+												Lexeme: "age",
+											},
+										},
+										Property: token.Token{
+											Type:   token.Identifier,
+											Lexeme: "age",
+										},
+										Value: ast.Variable{
+											Level: 0,
+											Name: token.Token{
+												Type:   token.Identifier,
+												Lexeme: "age",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}, obj)
+	})
+
 	t.Run("when closure scope is mutated with new shadowing variable it should refer to the shadowed", func(t *testing.T) {
 		src := `
 		var result;
