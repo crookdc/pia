@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/crookdc/pia/squeak/ast"
 	"github.com/crookdc/pia/squeak/token"
+	"slices"
 	"strings"
 )
 
@@ -229,14 +230,25 @@ type ListMethod struct {
 	fn    func(*List, *Interpreter, ...Object) (Object, error)
 }
 
+func (l ListMethod) String() string {
+	return "builtin:list:method"
+}
+
+func (l ListMethod) Clone() Object {
+	return ListMethod{
+		arity: l.arity,
+		fn:    l.fn,
+	}
+}
+
 func (l ListMethod) Bind(obj Object) (Callable, error) {
-	list, ok := obj.(List)
+	list, ok := obj.(*List)
 	if !ok {
 		return nil, fmt.Errorf("%w: %T cannot be binding target for list method", ErrIllegalOperation, obj)
 	}
 	return BoundListMethod{
 		ListMethod: l,
-		this:       &list,
+		this:       list,
 	}, nil
 }
 
@@ -245,7 +257,7 @@ type List struct {
 	slice []Object
 }
 
-func (l List) String() string {
+func (l *List) String() string {
 	items := make([]string, len(l.slice))
 	for i := range l.slice {
 		items[i] = l.slice[i].String()
@@ -253,18 +265,84 @@ func (l List) String() string {
 	return fmt.Sprintf("[%s]", strings.Join(items, ","))
 }
 
-func (l List) Clone() Object {
+func (l *List) Clone() Object {
 	clone := make([]Object, len(l.slice))
 	for i, v := range l.slice {
 		clone[i] = v.Clone()
 	}
-	return List{slice: clone}
+	return &List{slice: clone}
 }
 
-func (l List) Get(s string) Object {
-	panic("not implemented")
+func (l *List) Get(s string) Object {
+	switch s {
+	case "add":
+		return ListMethod{
+			arity: 1,
+			fn: func(l *List, _ *Interpreter, args ...Object) (Object, error) {
+				l.slice = append(l.slice, args[0])
+				return l, nil
+			},
+		}
+	case "length":
+		return ListMethod{
+			arity: 0,
+			fn: func(l *List, _ *Interpreter, _ ...Object) (Object, error) {
+				return Number{float64(len(l.slice))}, nil
+			},
+		}
+	case "find":
+		return ListMethod{
+			arity: 1,
+			fn: func(l *List, in *Interpreter, args ...Object) (Object, error) {
+				for i, v := range l.slice {
+					eq, err := in.isEqual(args[0], v)
+					if err != nil {
+						return nil, err
+					}
+					if eq.value {
+						return Number{float64(i)}, nil
+					}
+				}
+				return Number{-1}, nil
+			},
+		}
+	case "contains":
+		return ListMethod{
+			arity: 1,
+			fn: func(l *List, in *Interpreter, args ...Object) (Object, error) {
+				for _, v := range l.slice {
+					eq, err := in.isEqual(args[0], v)
+					if err != nil {
+						return nil, err
+					}
+					if eq.value {
+						return Boolean{true}, nil
+					}
+				}
+				return Boolean{false}, nil
+			},
+		}
+	case "remove":
+		return ListMethod{
+			arity: 1,
+			fn: func(l *List, _ *Interpreter, args ...Object) (Object, error) {
+				idx, ok := args[0].(Number)
+				if !ok {
+					return nil, fmt.Errorf("%w: index must be a number", ErrIllegalArgument)
+				}
+				i := int(idx.value)
+				if i >= len(l.slice) {
+					return nil, fmt.Errorf("%w: index out of range", ErrIllegalArgument)
+				}
+				l.slice = slices.Delete(l.slice, i, i+1)
+				return l, nil
+			},
+		}
+	default:
+		return nil
+	}
 }
 
-func (l List) Put(string, Object) Object {
+func (l *List) Put(string, Object) Object {
 	panic(fmt.Errorf("%w: cannot mutate prototype of list data structure", ErrIllegalOperation))
 }

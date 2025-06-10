@@ -51,7 +51,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					},
 				},
 			},
-			obj: List{
+			obj: &List{
 				slice: []Object{
 					Number{5},
 					String{"crookdc"},
@@ -63,7 +63,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 			node: ast.ListLiteral{
 				Items: []ast.ExpressionNode{},
 			},
-			obj: List{
+			obj: &List{
 				slice: make([]Object, 0),
 			},
 		},
@@ -2352,6 +2352,44 @@ func TestInterpreter_Execute(t *testing.T) {
 		first, err := in.scope.Resolve("test", 0)
 		assert.Nil(t, err)
 		assert.Equal(t, Number{1100}, first)
+	})
+
+	t.Run("builtin list method add", func(t *testing.T) {
+		src := `
+		var fruits = ["apple", "pear"];
+		fruits.add("orange");
+		print(fruits);
+		`
+		program, err := ParseString(src)
+		assert.Nil(t, err)
+		out := bytes.NewBufferString("")
+		in := NewInterpreter("", out)
+		for _, stmt := range program {
+			_, err := in.execute(stmt)
+			assert.Nil(t, err)
+		}
+		assert.Nil(t, err)
+		assert.Equal(t, "[apple,pear,orange]", out.String())
+	})
+
+	t.Run("builtin list method delete", func(t *testing.T) {
+		src := `
+		var fruits = ["apple", "pear"];
+		fruits.remove(0);
+		print(fruits);
+		fruits.remove(0);
+		print(fruits);
+		`
+		program, err := ParseString(src)
+		assert.Nil(t, err)
+		out := bytes.NewBufferString("")
+		in := NewInterpreter("", out)
+		for _, stmt := range program {
+			_, err := in.execute(stmt)
+			assert.Nil(t, err)
+		}
+		assert.Nil(t, err)
+		assert.Equal(t, "[pear][]", out.String())
 	})
 
 	t.Run("mutating method", func(t *testing.T) {

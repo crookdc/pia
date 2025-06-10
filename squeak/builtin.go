@@ -35,7 +35,7 @@ func (l LengthBuiltin) Arity() int {
 }
 
 func (l LengthBuiltin) Call(_ *Interpreter, args ...Object) (Object, error) {
-	list, ok := args[0].(List)
+	list, ok := args[0].(*List)
 	if !ok {
 		return nil, fmt.Errorf(
 			"%w: %T is not a list",

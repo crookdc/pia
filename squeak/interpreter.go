@@ -413,7 +413,7 @@ func (in *Interpreter) list(node ast.ListLiteral) (Object, error) {
 		}
 		items = append(items, item)
 	}
-	return List{slice: items}, nil
+	return &List{slice: items}, nil
 }
 
 func (in *Interpreter) get(node ast.Get) (Object, error) {
@@ -492,7 +492,7 @@ func (in *Interpreter) index(node ast.Call) (Object, error) {
 		return nil, err
 	}
 	switch ls := ls.(type) {
-	case List:
+	case *List:
 		if _, ok := index.(Number); !ok {
 			return nil, fmt.Errorf(
 				"%w: %T is not a valid list indexing type",
