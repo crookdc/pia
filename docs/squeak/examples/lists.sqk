@@ -1,0 +1,29 @@
+# Lists in Squeak are quite simplistic. They allow mixtures of datatypes to be stored within them and come equipped with
+# a couple of convenience methods.
+
+# Creating a new list is simply done using the list literal expression.
+var developers = ["Linus", "Bjarne", "crookdc", "Donald"];
+
+# You can check for the presence of a value within a list either using the contains method which returns a boolean or
+# using the find method and checking for a valid index.
+if developers.contains("crookdc") {
+    println("crookdc is in the list");
+}
+
+if developers.find("crookdc") > -1 {
+    println("crookdc is in the list");
+}
+
+# Now, I don't think crookdc belongs with the rest of the developers in the list, so I want to remove him. Doing so is
+# achieved by simply calling the remove method with an index to remove. This can be used together with the find method.
+developers.remove(developers.find("crookdc"));
+if developers.contains("crookdc") {
+    panic("crookdc was supposed to go away!");
+}
+
+# Finally, you can add new items to the end of a list by calling the add method.
+developers.add("Jack");
+
+if !developers.contains("Jack") {
+    panic("where did Jack go?!");
+}

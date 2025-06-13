@@ -26,7 +26,7 @@ var (
 var (
 	runtime = NewEnvironment(
 		Prefill("print", PrintBuiltin{}),
-		Prefill("length", LengthBuiltin{}),
+		Prefill("println", PrintlnBuiltin{}),
 		Prefill("clone", CloneBuiltin{}),
 		Prefill("panic", PanicBuiltin{}),
 	)
@@ -727,12 +727,7 @@ func (in *Interpreter) isEqual(lhs, rhs Object) (Boolean, error) {
 		return Boolean{true}, nil
 	}
 	if reflect.TypeOf(lhs) != reflect.TypeOf(rhs) {
-		return Boolean{}, fmt.Errorf(
-			"%w: cannot compare equality between %T with %T",
-			ErrUnrecognizedOperandType,
-			lhs,
-			rhs,
-		)
+		return Boolean{false}, nil
 	}
 	return Boolean{lhs == rhs}, nil
 }

@@ -981,7 +981,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Boolean: true,
 				},
 			},
-			err: ErrUnrecognizedOperandType,
+			obj: Boolean{false},
 		},
 		{
 			name: "comparing equals with string and number",
@@ -997,7 +997,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Integer: 12,
 				},
 			},
-			err: ErrUnrecognizedOperandType,
+			obj: Boolean{false},
 		},
 		{
 			name: "comparing equals with boolean and number",
@@ -1013,7 +1013,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Integer: 12,
 				},
 			},
-			err: ErrUnrecognizedOperandType,
+			obj: Boolean{false},
 		},
 		{
 			name: "comparing not equals with numbers",
@@ -1125,7 +1125,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Boolean: true,
 				},
 			},
-			err: ErrUnrecognizedOperandType,
+			obj: Boolean{true},
 		},
 		{
 			name: "comparing not equals with string and number",
@@ -1141,7 +1141,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Integer: 12,
 				},
 			},
-			err: ErrUnrecognizedOperandType,
+			obj: Boolean{true},
 		},
 		{
 			name: "comparing not equals with boolean and number",
@@ -1157,7 +1157,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 					Integer: 12,
 				},
 			},
-			err: ErrUnrecognizedOperandType,
+			obj: Boolean{true},
 		},
 
 		{
@@ -2372,7 +2372,7 @@ func TestInterpreter_Execute(t *testing.T) {
 		assert.Equal(t, "[apple,pear,orange]", out.String())
 	})
 
-	t.Run("builtin list method delete", func(t *testing.T) {
+	t.Run("builtin list method remove", func(t *testing.T) {
 		src := `
 		var fruits = ["apple", "pear"];
 		fruits.remove(0);
@@ -2390,6 +2390,46 @@ func TestInterpreter_Execute(t *testing.T) {
 		}
 		assert.Nil(t, err)
 		assert.Equal(t, "[pear][]", out.String())
+	})
+
+	t.Run("builtin list method contains", func(t *testing.T) {
+		src := `
+		var fruits = ["apple", "pear", 1];
+		print(fruits.contains("apple"));
+		print(fruits.contains(1));
+		print(fruits.contains("peare"));
+		print(fruits.contains("pear"));
+		`
+		program, err := ParseString(src)
+		assert.Nil(t, err)
+		out := bytes.NewBufferString("")
+		in := NewInterpreter("", out)
+		for _, stmt := range program {
+			_, err := in.execute(stmt)
+			assert.Nil(t, err)
+		}
+		assert.Nil(t, err)
+		assert.Equal(t, "truetruefalsetrue", out.String())
+	})
+
+	t.Run("builtin list method find", func(t *testing.T) {
+		src := `
+		var fruits = ["apple", "pear", "apple", 1];
+		print(fruits.find("apple"));
+		print(fruits.find(1));
+		print(fruits.find("peare"));
+		print(fruits.find("pear"));
+		`
+		program, err := ParseString(src)
+		assert.Nil(t, err)
+		out := bytes.NewBufferString("")
+		in := NewInterpreter("", out)
+		for _, stmt := range program {
+			_, err := in.execute(stmt)
+			assert.Nil(t, err)
+		}
+		assert.Nil(t, err)
+		assert.Equal(t, "0.3.-1.1.", out.String())
 	})
 
 	t.Run("mutating method", func(t *testing.T) {

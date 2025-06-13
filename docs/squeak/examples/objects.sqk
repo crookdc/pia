@@ -14,19 +14,19 @@ var developer = Object {
 
 # To access properties on objects and nested objects you define the part to the property in terms of a list of
 # identifiers joined together with full-stop characters.
-print(developer.name);
-print(developer.location.country);
+println(developer.name);
+println(developer.location.country);
 
 # You check for the presence of a property on an object by using it as the expression in an if statement. However, you
 # should only check for the presence of one property at a time! If you try to invoke a property getter on a nil value
 # then an error occurs.
 if (developer.name) {
-    print("The developer has a name");
+    println("The developer has a name");
 }
 if (developer.partner) {
-    print("The developer has a partner");
+    println("The developer has a partner");
 } else {
-    print("The developer is alone");
+    println("The developer is alone");
 }
 
 # It is entirely possible to change the structure of an object after it has been created. You can define new properties
@@ -36,13 +36,13 @@ developer.partner = Object {
     age: 29
 };
 developer.name = "John Doe";
-print(developer.name + " <3 " + developer.partner.name);
+println(developer.name + " <3 " + developer.partner.name);
 
 # It is also possible to define behaviours on objects, these are called methods. A method is similar to a function but
 # it does not have access to the environment it was defined in (it does not work with closures), instead it has only
 # access to the global environment and a special type of closure which captures the target object.
 developer.greet = function(other) {
-    print(this.name + " says hi to " + other);
+    println(this.name + " says hi to " + other);
 };
 developer.greet("Jane Doe");
 

@@ -10,7 +10,7 @@ nothing();
 
 # You can define a set of named parameters which must be passed to the function when it is called.
 function say_hi(name) {
-    print("Hi " + name + "!");
+    println("Hi " + name + "!");
 }
 say_hi("developer");
 
@@ -20,14 +20,14 @@ function add(a, b) {
     return a + b;
 }
 var added = add(10, 15);
-print(added);
+println(added);
 
 # Functions also capture the environment around them at the point of declaration, which means that you can do stuff like
 # this!
 {
     var name = nil;
     function greet() {
-        print(name);
+        println(name);
     }
     name = "crookdc";
     greet();

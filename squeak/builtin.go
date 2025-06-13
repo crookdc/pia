@@ -24,6 +24,28 @@ func (p PrintBuiltin) Clone() Object {
 	return PrintBuiltin{}
 }
 
+type PrintlnBuiltin struct{}
+
+func (p PrintlnBuiltin) String() string {
+	return "builtin:println"
+}
+
+func (p PrintlnBuiltin) Clone() Object {
+	return PrintlnBuiltin{}
+}
+
+func (p PrintlnBuiltin) Arity() int {
+	return 1
+}
+
+func (p PrintlnBuiltin) Call(in *Interpreter, args ...Object) (Object, error) {
+	_, err := fmt.Fprintln(in.out, args[0].String())
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+
 type LengthBuiltin struct{}
 
 func (l LengthBuiltin) String() string {
