@@ -21,6 +21,7 @@ var (
 	ErrUnrecognizedOperandType = fmt.Errorf("%w: unrecognized operand type", ErrRuntimeFault)
 	ErrIllegalArgument         = fmt.Errorf("%w: illegal argument", ErrRuntimeFault)
 	ErrIllegalOperation        = fmt.Errorf("%w: illegal operation", ErrRuntimeFault)
+	ErrFailedAssertion         = fmt.Errorf("%w: assertion failed", ErrRuntimeFault)
 )
 
 var (
@@ -29,6 +30,7 @@ var (
 		Prefill("println", PrintlnBuiltin{}),
 		Prefill("clone", CloneBuiltin{}),
 		Prefill("panic", PanicBuiltin{}),
+		Prefill("assert", AssertBuiltin{}),
 	)
 )
 

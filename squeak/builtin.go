@@ -1,6 +1,8 @@
 package squeak
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type PrintBuiltin struct{}
 
@@ -106,4 +108,26 @@ func (p PanicBuiltin) Arity() int {
 
 func (p PanicBuiltin) Call(_ *Interpreter, args ...Object) (Object, error) {
 	panic(fmt.Errorf("%w: %s", ErrRuntimeFault, args[0]))
+}
+
+type AssertBuiltin struct{}
+
+func (a AssertBuiltin) String() string {
+	return "builtin:assert"
+}
+
+func (a AssertBuiltin) Clone() Object {
+	return AssertBuiltin{}
+}
+
+func (a AssertBuiltin) Arity() int {
+	return 2
+}
+
+func (a AssertBuiltin) Call(in *Interpreter, args ...Object) (Object, error) {
+	val := Boolean{in.truthy(args[0])}
+	if val.value {
+		return nil, nil
+	}
+	return nil, fmt.Errorf("%w: %s", ErrFailedAssertion, args[1])
 }
