@@ -34,10 +34,10 @@ func (m MapResolver) Resolve(k string) (string, error) {
 	return v, nil
 }
 
-// WrapReader returns a [pia.SubstitutingReader] that uses the supplied [pia.KeyResolver] as source for substitutions
+// WrapReader returns a [pia.Interpolator] that uses the supplied [pia.KeyResolver] as source for substitutions
 // and the supplied [io.Reader] as its target.
-func WrapReader(resolver KeyResolver, r io.Reader) *SubstitutingReader {
-	return &SubstitutingReader{
+func WrapReader(resolver KeyResolver, r io.Reader) *Interpolator {
+	return &Interpolator{
 		prefix:   regexp.MustCompile("\\${"),
 		matcher:  regexp.MustCompile("\\${(.+?)}"),
 		resolver: resolver,
@@ -46,10 +46,10 @@ func WrapReader(resolver KeyResolver, r io.Reader) *SubstitutingReader {
 	}
 }
 
-// SubstitutingReader decorates the wrapped reader by replacing any occurrences of substitution points defined using
+// Interpolator decorates the wrapped reader by replacing any occurrences of substitution points defined using
 // "${key}" syntax with the corresponding value according to the supplied [pia.KeyResolver]. Since a [pia.KeyResolver]
 // is powering the substitution, all values must be supplied as strings and will be placed unquoted into the stream.
-type SubstitutingReader struct {
+type Interpolator struct {
 	prefix  *regexp.Regexp
 	matcher *regexp.Regexp
 
@@ -59,9 +59,9 @@ type SubstitutingReader struct {
 }
 
 // Read implements the [io.Reader] interface for seamless interoperability with the Go standard library.
-func (s SubstitutingReader) Read(p []byte) (int, error) {
+func (s Interpolator) Read(p []byte) (int, error) {
 	if len(p) < 2 {
-		// Destination must be able to contain at least "${" for SubstitutingReader to be able to find substitution
+		// Destination must be able to contain at least "${" for Interpolator to be able to find substitution
 		// points. As such, the buffer must be at least two bytes long.
 		return 0, ErrInsufficientDestinationLength
 	}
@@ -88,7 +88,7 @@ func (s SubstitutingReader) Read(p []byte) (int, error) {
 
 // read returns the next processable chunk of data using ln as the pivoting length. It is possible that read returns
 // both shorter and longer strings based on the data residing within the raw read data.
-func (s SubstitutingReader) read(ln int) (string, error) {
+func (s Interpolator) read(ln int) (string, error) {
 	str, err := s.raw(ln)
 	if err != nil {
 		return "", err
@@ -120,7 +120,7 @@ func (s SubstitutingReader) read(ln int) (string, error) {
 
 // raw returns ln or fewer bytes of data from the carry and wrapped readers without performing any modifications or
 // additions to the data.
-func (s SubstitutingReader) raw(ln int) (string, error) {
+func (s Interpolator) raw(ln int) (string, error) {
 	p := make([]byte, ln)
 	cn, err := s.carry.Read(p)
 	if errors.Is(err, io.EOF) {
@@ -146,7 +146,7 @@ func (s SubstitutingReader) raw(ln int) (string, error) {
 	return string(p[:cn+wn]), nil
 }
 
-func (s SubstitutingReader) substitute(str string, match []string) (string, error) {
+func (s Interpolator) substitute(str string, match []string) (string, error) {
 	val, err := s.resolver.Resolve(match[1])
 	if err != nil {
 		return "", err
@@ -156,26 +156,26 @@ func (s SubstitutingReader) substitute(str string, match []string) (string, erro
 	return regexp.MustCompile(regexp.QuoteMeta(match[0])).ReplaceAllLiteralString(str, val), nil
 }
 
-func (s SubstitutingReader) match(str string) [][]string {
+func (s Interpolator) match(str string) [][]string {
 	return s.matcher.FindAllStringSubmatch(str, -1)
 }
 
 // partials reports whether the supplied string is potentially containing partial substitution points with respect to
 // the rest of the stream. However, this cannot be guaranteed without potentially reading the entire wrapped stream and
 // checking whether there exists a terminating character "}".
-func (s SubstitutingReader) partials(str string) bool {
+func (s Interpolator) partials(str string) bool {
 	return s.prefixes(str) > s.points(str)
 }
 
 // pristine reports whether the supplied string is devoid of any substitution points
-func (s SubstitutingReader) pristine(str string) bool {
+func (s Interpolator) pristine(str string) bool {
 	return s.prefixes(str) == 0
 }
 
-func (s SubstitutingReader) points(str string) int {
+func (s Interpolator) points(str string) int {
 	return len(s.matcher.FindAllStringIndex(str, -1))
 }
 
-func (s SubstitutingReader) prefixes(str string) int {
+func (s Interpolator) prefixes(str string) int {
 	return len(s.prefix.FindAllStringIndex(str, -1))
 }
