@@ -19,16 +19,16 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	var runner func(string) error
+	var run func(string) error
 	switch *mode {
 	case "repl":
-		runner = repl.Run
+		run = repl.Run
 	case "", "tui":
-		runner = tui.Run
+		run = tui.Run
 	default:
 		panic(fmt.Errorf("unrecognized mode: %s", *mode))
 	}
-	if err := runner(wd); err != nil {
+	if err := run(wd); err != nil {
 		log.Fatalln(err)
 	}
 }
