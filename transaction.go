@@ -53,10 +53,8 @@ type transaction struct {
 	} `yaml:"url"`
 	Method  string            `yaml:"method"`
 	Headers map[string]string `yaml:"headers"`
-	Body    struct {
-		input
-	} `yaml:"body"`
-	Hooks struct {
+	Body    body              `yaml:"body"`
+	Hooks   struct {
 		Before input `yaml:"before"`
 		After  input `yaml:"after"`
 	} `yaml:"hooks"`
