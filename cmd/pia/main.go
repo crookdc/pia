@@ -2,16 +2,15 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/crookdc/pia/cmd/pia/internal/repl"
-	"github.com/crookdc/pia/squeak"
+	"github.com/crookdc/pia/cmd/pia/internal/tui"
 	"log"
 	"os"
-	"path/filepath"
 )
 
 var (
-	run    = flag.Bool("run", false, "starts the Squeak REPL in an interactive mode")
-	script = flag.String("script", "", "runs the specified Squeak script")
+	mode = flag.String("mode", "", "")
 )
 
 func main() {
@@ -20,26 +19,16 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	if *run {
-		if err := repl.Run(wd); err != nil {
-			log.Fatalln(err)
-		}
-	} else if *script != "" {
-		if err := evaluate(wd, *script); err != nil {
-			log.Fatalln(err)
-		}
+	var runner func(string) error
+	switch *mode {
+	case "repl":
+		runner = repl.Run
+	case "", "tui":
+		runner = tui.Run
+	default:
+		panic(fmt.Errorf("unrecognized mode: %s", *mode))
 	}
-}
-
-func evaluate(wd, file string) error {
-	loc := filepath.Join(wd, file)
-	src, err := os.ReadFile(loc)
-	if err != nil {
-		return err
+	if err := runner(wd); err != nil {
+		log.Fatalln(err)
 	}
-	program, err := squeak.ParseString(string(src))
-	if err != nil {
-		return err
-	}
-	return squeak.NewInterpreter(filepath.Dir(loc), os.Stdout).Execute(program)
 }
