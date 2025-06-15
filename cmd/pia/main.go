@@ -24,8 +24,7 @@ func main() {
 		if err := repl.Run(wd); err != nil {
 			log.Fatalln(err)
 		}
-	}
-	if *script != "" {
+	} else if *script != "" {
 		if err := evaluate(wd, *script); err != nil {
 			log.Fatalln(err)
 		}
