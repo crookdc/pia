@@ -21,10 +21,11 @@ jobs:
       with:
         go-version: '1.24'
 
+    - name: Install build dependencies
+      run: sudo apt install -y libx11-dev
+
     - name: Build
-      run: |
-        apt install libx11-dev
-        go build -v ./...
+      run: go build -v ./...
 
     - name: Test
       run: go test -v ./...
