@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/crookdc/pia/squeak/ast"
 	"github.com/crookdc/pia/squeak/token"
+	"net/http"
 	"slices"
 	"strings"
 )
@@ -20,6 +21,20 @@ type Instance interface {
 	Object
 	Get(string) Object
 	Put(string, Object) Object
+}
+
+func NewRequestObject(req *http.Request) *ObjectInstance {
+	obj := &ObjectInstance{Properties: make(map[string]Object)}
+	obj.Properties["method"] = String{req.Method}
+	obj.Properties["url"] = String{req.URL.String()}
+	return obj
+}
+
+func NewResponseObject(res *http.Response) *ObjectInstance {
+	obj := &ObjectInstance{Properties: make(map[string]Object)}
+	obj.Properties["status_code"] = Number{float64(res.StatusCode)}
+	obj.Properties["status"] = String{res.Status}
+	return obj
 }
 
 // ObjectInstance is an object instance, which consists of a collection of named data as well as behaviours coupled to the

@@ -1,0 +1,15 @@
+method: GET
+url:
+  target: https://${props:target.host}
+headers:
+  Content-Type: application/json
+body:
+  inline: '
+  {
+    "username": "admin",
+    "password": "password"
+  }
+  '
+hooks:
+  before:
+    file: before.sqk

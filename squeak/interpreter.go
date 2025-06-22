@@ -24,15 +24,7 @@ var (
 	ErrFailedAssertion         = fmt.Errorf("%w: assertion failed", ErrRuntimeFault)
 )
 
-var (
-	runtime = NewEnvironment(
-		Prefill("print", PrintBuiltin{}),
-		Prefill("println", PrintlnBuiltin{}),
-		Prefill("clone", CloneBuiltin{}),
-		Prefill("panic", PanicBuiltin{}),
-		Prefill("assert", AssertBuiltin{}),
-	)
-)
+var ()
 
 type unwinder struct {
 	source token.Token
@@ -114,10 +106,18 @@ func (env *Environment) Assign(k string, v Object, lvl int) error {
 // supplying a valid [io.Writer] which is used as the standard output stream. While the caller is allowed to provide a
 // nil [io.Writer], it is discouraged as any usage of the standard output will result in a panic.
 func NewInterpreter(wd string, out io.Writer) *Interpreter {
+	runtime := NewEnvironment(
+		Prefill("print", PrintBuiltin{}),
+		Prefill("println", PrintlnBuiltin{}),
+		Prefill("clone", CloneBuiltin{}),
+		Prefill("panic", PanicBuiltin{}),
+		Prefill("assert", AssertBuiltin{}),
+	)
 	global := NewEnvironment(Parent(runtime))
 	return &Interpreter{
 		wd:      wd,
 		exports: make(map[string]Object),
+		runtime: runtime,
 		global:  global,
 		scope:   global,
 		out:     out,
@@ -127,6 +127,7 @@ func NewInterpreter(wd string, out io.Writer) *Interpreter {
 type Interpreter struct {
 	wd      string
 	exports map[string]Object
+	runtime *Environment
 	global  *Environment
 	scope   *Environment
 	out     io.Writer
@@ -145,6 +146,15 @@ func (in *Interpreter) Execute(program []ast.StatementNode) error {
 		}
 	}
 	return nil
+}
+
+func (in *Interpreter) Declare(name string, obj Object) {
+	in.runtime.Declare(name, obj)
+}
+
+func (in *Interpreter) Resolve(name string, lvl int) (Object, bool) {
+	obj, err := in.scope.Resolve(name, lvl)
+	return obj, err == nil
 }
 
 // execute runs the provided statement node within the current context of the interpreter. Statements do not generally

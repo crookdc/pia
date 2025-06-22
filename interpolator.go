@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"regexp"
 )
@@ -13,26 +12,6 @@ var (
 	ErrKeyNotFound                   = errors.New("key not found")
 	ErrInsufficientDestinationLength = errors.New("destination size for substituting reader must be greater than 2")
 )
-
-// KeyResolver is a simple abstraction of a key-value store for string values.
-type KeyResolver interface {
-	// Resolve takes a key and returns a value from the underlying store. An error value may be returned for any
-	// erroneous reason but for the case where a key cannot be resolved it is expected to return [pia.ErrKeyNotFound].
-	Resolve(k string) (string, error)
-}
-
-// MapResolver is the simplest possible implementation of [pia.KeyResolver] using an underlying map to facilitate
-// storage and retrieval.
-type MapResolver map[string]string
-
-// Resolve implements the [pia.KeyResolver] interface.
-func (m MapResolver) Resolve(k string) (string, error) {
-	v, ok := m[k]
-	if !ok {
-		return "", fmt.Errorf("failed to resolve key '%s': %w", k, ErrKeyNotFound)
-	}
-	return v, nil
-}
 
 // WrapReader returns a [pia.Interpolator] that uses the supplied [pia.KeyResolver] as source for substitutions
 // and the supplied [io.Reader] as its target.

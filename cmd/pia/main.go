@@ -1,16 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"flag"
-	"fmt"
-	"github.com/crookdc/pia/cmd/pia/internal/repl"
 	"github.com/crookdc/pia/cmd/pia/internal/tui"
 	"log"
 	"os"
-)
-
-var (
-	mode = flag.String("mode", "", "")
+	"strings"
 )
 
 func main() {
@@ -19,16 +15,25 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	var run func(string) error
-	switch *mode {
-	case "repl":
-		run = repl.Run
-	case "", "tui":
-		run = tui.Run
-	default:
-		panic(fmt.Errorf("unrecognized mode: %s", *mode))
+	props := make(map[string]string)
+	if len(os.Args) > 1 {
+		src, err := os.ReadFile(os.Args[1])
+		if err != nil {
+			log.Fatalln(err)
+		}
+		scn := bufio.NewScanner(strings.NewReader(string(src)))
+		for scn.Scan() {
+			line := scn.Text()
+			segments := strings.SplitN(line, "=", 2)
+			if len(segments) != 2 {
+				continue
+			}
+			props[segments[0]] = strings.TrimSpace(
+				strings.Trim(segments[1], "\""),
+			)
+		}
 	}
-	if err := run(wd); err != nil {
+	if err := tui.Run(wd, props); err != nil {
 		log.Fatalln(err)
 	}
 }

@@ -18,6 +18,14 @@ func (s SyntaxError) Error() string {
 	return fmt.Sprintf("syntax error on line %d", s.Line)
 }
 
+func Parse(r io.Reader) ([]ast.StatementNode, error) {
+	src, err := io.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+	return ParseString(string(src))
+}
+
 // ParseString reads src all the way through and builds an AST containing multiple statements from it.
 func ParseString(src string) ([]ast.StatementNode, error) {
 	lx, err := NewLexer(strings.NewReader(src))

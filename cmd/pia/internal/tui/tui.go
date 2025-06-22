@@ -1,70 +1,172 @@
 package tui
 
 import (
-	"github.com/charmbracelet/bubbles/table"
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"bytes"
+	"fmt"
+	"github.com/crookdc/pia"
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
+	"golang.design/x/clipboard"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
 )
 
-var style = lipgloss.NewStyle().
-	BorderStyle(lipgloss.NormalBorder()).
-	BorderForeground(lipgloss.Color("240"))
-
-func Run(wd string) error {
-	_, err := tea.NewProgram(model{
-		wd: wd,
-		transactions: table.New(
-			table.WithColumns([]table.Column{
-				{
-					Title: "Transaction",
-					Width: 50,
-				},
-			}),
-			table.WithRows([]table.Row{
-				{"users/read/tx.yml"},
-				{"users/create/tx.yml"},
-				{"users/update/tx.yml"},
-				{"users/delete/tx.yml"},
-			}),
-		),
-	}).Run()
-	return err
+type App struct {
+	resolver pia.KeyResolver
+	*tview.Application
+	pages   *tview.Pages
+	console *console
+	content *content
+	finder  *finder
+	history *history
 }
 
-type model struct {
-	wd           string
-	transactions table.Model
-	history      table.Model
-	prompt       textinput.Model
+type SwitchPageCommand struct {
+	Page     string
+	Callback func(*App) error
 }
 
-func (m model) Init() tea.Cmd {
-	return nil
-}
-
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
-	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		m.transactions.SetHeight(msg.Height - 4)
-		m.transactions.SetWidth((msg.Width - 4) / 3)
-	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyCtrlC, tea.KeyEsc:
-			return m, tea.Quit
-		case tea.KeyCtrlT:
-			m.transactions.Focus()
-		case tea.KeyEnter:
-			return m, tea.Batch(
-				tea.Printf("%s", m.transactions.SelectedRow()),
-			)
-		}
+func (a *App) view(path string) {
+	tx, err := os.OpenFile(path, os.O_RDONLY, os.ModeAppend)
+	if err != nil {
+		panic(err)
 	}
-	m.transactions, cmd = m.transactions.Update(msg)
-	return m, cmd
+	defer tx.Close()
+	src, err := io.ReadAll(pia.WrapReader(a.resolver, tx))
+	if err != nil {
+		panic(err)
+	}
+	a.display(string(src))
 }
 
-func (m model) View() string {
-	return style.Render(m.transactions.View()) + "\n"
+func (a *App) execute(path string) {
+	cfg, err := os.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+	tx, err := pia.ParseTransaction(filepath.Dir(path), pia.WrapReader(a.resolver, bytes.NewReader(cfg)))
+	if err != nil {
+		panic(err)
+	}
+	client := pia.Pia{
+		WorkingDirectory: filepath.Dir(path),
+		Output:           a.console.log,
+		Resolver:         a.resolver,
+	}
+	res, err := client.Execute(tx)
+	if err != nil {
+		panic(err)
+	}
+	sb := strings.Builder{}
+	var color string
+	switch res.StatusCode / 100 {
+	case 1, 3:
+		color = "yellow"
+	case 2:
+		color = "green"
+	case 4, 5:
+		color = "red"
+	default:
+		color = "white"
+	}
+	sb.WriteString(fmt.Sprintf("[%s]Status: %s\n", color, res.Status))
+	for k, v := range res.Header {
+		sb.WriteString(fmt.Sprintf("[blue]%s: [white]%s\n", k, strings.Join(v, ", ")))
+	}
+	sb.WriteString("\n\n")
+	if res.Body != nil {
+		raw, err := io.ReadAll(res.Body)
+		if err != nil {
+			panic(err)
+		}
+		sb.WriteString(string(raw))
+	}
+	a.history.push(entry{
+		method:    tx.Method,
+		endpoint:  tx.URL.Target,
+		timestamp: time.Now(),
+		text:      sb.String(),
+	})
+	a.display(sb.String())
+}
+
+func (a *App) display(text string) {
+	a.content.text.SetText(text)
+	a.pages.SwitchToPage("content")
+}
+
+func (a *App) input(ev *tcell.EventKey) *tcell.EventKey {
+	if ev.Key() == tcell.KeyEsc {
+		a.pages.SwitchToPage("dashboard")
+		return nil
+	}
+	switch ev.Rune() {
+	case 'h':
+		a.history.enter()
+		a.pages.SwitchToPage("history")
+		return nil
+	case 'f':
+		a.pages.SwitchToPage("finder")
+		return nil
+	case 'c':
+		a.console.enter()
+		if a.pages.HasPage("console") {
+			a.pages.RemovePage("console")
+		} else {
+			a.pages.AddPage("console", a.console.root(), true, true)
+		}
+		return nil
+	default:
+		return ev
+	}
+}
+
+func Run(wd string, props map[string]string) error {
+	if err := clipboard.Init(); err != nil {
+		return err
+	}
+	app := App{
+		Application: tview.NewApplication(),
+		pages:       tview.NewPages(),
+		console:     newConsole(bytes.NewBufferString("")),
+		content:     newContent(),
+		finder:      newFinder(wd),
+		history:     newHistory(128),
+		resolver: pia.DelegatingKeyResolver{
+			Delegates: map[string]pia.KeyResolver{
+				"env":   pia.EnvironmentResolver{},
+				"props": pia.MapResolver(props),
+			},
+		},
+	}
+	app.history.viewCallback = func(e *entry) {
+		app.display(e.text)
+	}
+	app.finder.executeCallback = app.execute
+	app.finder.viewCallback = app.view
+	app.pages.AddPage("dashboard", tview.NewTextView().SetText(`
+	
+	pia - the postman alternative for technical people. 
+
+	Usage:
+	f - open finder window
+		x - execute currently selected file
+			y - copy output to clipboard
+		v - view file contents after preprocessing
+			y - copy output to clipboard
+	h - open history
+	c - toggle console
+
+	<ESC> brings you back here.
+
+	created by crookdc @ github.com/crookdc
+	`), true, true)
+	app.pages.AddPage("finder", app.finder.root(), true, false)
+	app.pages.AddPage("content", app.content.root(), true, false)
+	app.pages.AddPage("history", app.history.root(), true, false)
+	app.SetInputCapture(app.input)
+	return app.SetRoot(app.pages, true).Run()
 }

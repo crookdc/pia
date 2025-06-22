@@ -16,5 +16,31 @@ will never be any of the sort. Hopefully there will be alpha releases of Pia onc
 it can be used by the public in exchange for some feedback (not mandatory). You can of course clone and build Pia from 
 source whenever you want but the quality of your experience cannot be guaranteed until an official release is created.
 
+## Getting started
+### Interpolation property sources
+One of the core functions of Pia is to interpolate your text files and replace certain strings with values at runtime.
+The aforementioned values can have one of several sources, each of which is described in this subsection. Each section
+states the *context key* for the property source, this is the key used to identify which property source to fetch values
+from. For example, `${session:id_token}` would be targeting the `session` property source and resolving the key 
+`id_token`.
+
+#### Environment
+*Context key: `env`*
+
+Fetches a value from the environment variables of the host machine.
+
+#### Project
+*Context key: `project`*
+
+Fetches a value from the current projects' configuration. If Pia was started from outside a project then trying to 
+resolve any project value will fail.
+
+#### Session
+*Context key: `session`*
+
+Fetches a value from the current session. Squeak scripts are normally what would set these values. Examples of usage 
+includes having a Squeak script store a bearer token in the session and then inserting it into the headers of each 
+request made to protected endpoints.
+
 ---
 *This readme is still under construction.*
