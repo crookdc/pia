@@ -477,15 +477,24 @@ func (ps *Parser) assignment() (ast.ExpressionNode, error) {
 			Name:  expr.Name,
 			Value: val,
 		}, nil
-	case ast.Get:
+	case ast.GetProp:
 		val, err := ps.assignment()
 		if err != nil {
 			return nil, err
 		}
-		return ast.Set{
+		return ast.SetProp{
 			Target:   expr,
 			Property: expr.Property,
 			Value:    val,
+		}, nil
+	case ast.GetIndex:
+		val, err := ps.assignment()
+		if err != nil {
+			return nil, err
+		}
+		return ast.SetIndex{
+			Target: expr,
+			Value:  val,
 		}, nil
 	default:
 		return nil, fmt.Errorf(
@@ -667,7 +676,7 @@ func (ps *Parser) call() (ast.ExpressionNode, error) {
 	}
 	for {
 		switch pk.Type {
-		case token.LeftParenthesis, token.LeftBracket:
+		case token.LeftParenthesis:
 			args, err := ps.expressions(pk.Type, token.Closers[pk.Type])
 			if err != nil {
 				return nil, err
@@ -677,13 +686,28 @@ func (ps *Parser) call() (ast.ExpressionNode, error) {
 				Operator: pk,
 				Args:     args,
 			}
-		case token.Dot:
-			ps.lx.Discard()
-			prop, err := ps.expect(token.Identifier)
+		case token.LeftBracket:
+			args, err := ps.expressions(pk.Type, token.Closers[pk.Type])
 			if err != nil {
 				return nil, err
 			}
-			expr = ast.Get{
+			if len(args) != 1 {
+				return nil, fmt.Errorf(
+					"%w: indexing requires exactly one argument",
+					SyntaxError{Line: ps.lx.Line()},
+				)
+			}
+			expr = ast.GetIndex{
+				Target: expr,
+				Index:  args[0],
+			}
+		case token.Dot:
+			ps.lx.Discard()
+			prop, err := ps.expect(token.Identifier, token.String)
+			if err != nil {
+				return nil, err
+			}
+			expr = ast.GetProp{
 				Target:   expr,
 				Property: prop,
 			}
@@ -933,17 +957,19 @@ func (ps *Parser) keymap() (map[string]ast.ExpressionNode, error) {
 	return m, nil
 }
 
-func (ps *Parser) expect(v token.Type) (token.Token, error) {
-	t, err := ps.lx.Next()
+func (ps *Parser) expect(types ...token.Type) (token.Token, error) {
+	tok, err := ps.lx.Next()
 	if err != nil {
 		return token.Token{}, err
 	}
-	if t.Type != v {
-		return token.Token{}, fmt.Errorf(
-			"%w: unexpected token: %s",
-			SyntaxError{ps.lx.Line()},
-			t.Lexeme,
-		)
+	for _, t := range types {
+		if tok.Type == t {
+			return tok, nil
+		}
 	}
-	return t, nil
+	return token.Token{}, fmt.Errorf(
+		"%w: unexpected token: %s",
+		SyntaxError{ps.lx.Line()},
+		tok.Lexeme,
+	)
 }

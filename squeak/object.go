@@ -27,6 +27,11 @@ func NewRequestObject(req *http.Request) *ObjectInstance {
 	obj := &ObjectInstance{Properties: make(map[string]Object)}
 	obj.Properties["method"] = String{req.Method}
 	obj.Properties["url"] = String{req.URL.String()}
+	headers := &ObjectInstance{Properties: make(map[string]Object)}
+	for k, v := range req.Header {
+		headers.Put(k, String{strings.Join(v, ", ")})
+	}
+	obj.Properties["headers"] = headers
 	return obj
 }
 
@@ -34,6 +39,11 @@ func NewResponseObject(res *http.Response) *ObjectInstance {
 	obj := &ObjectInstance{Properties: make(map[string]Object)}
 	obj.Properties["status_code"] = Number{float64(res.StatusCode)}
 	obj.Properties["status"] = String{res.Status}
+	headers := &ObjectInstance{Properties: make(map[string]Object)}
+	for k, v := range res.Header {
+		headers.Put(k, String{strings.Join(v, ", ")})
+	}
+	obj.Properties["headers"] = headers
 	return obj
 }
 

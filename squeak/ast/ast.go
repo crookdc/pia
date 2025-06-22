@@ -162,15 +162,27 @@ type Variable struct {
 	Name  token.Token
 }
 
-type Get struct {
+type GetIndex struct {
+	Expression
+	Target ExpressionNode
+	Index  ExpressionNode
+}
+
+type SetIndex struct {
+	Expression
+	Target GetIndex
+	Value  ExpressionNode
+}
+
+type GetProp struct {
 	Expression
 	Target   ExpressionNode
 	Property token.Token
 }
 
-type Set struct {
+type SetProp struct {
 	Expression
-	Target   Get
+	Target   GetProp
 	Property token.Token
 	Value    ExpressionNode
 }

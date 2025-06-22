@@ -1930,8 +1930,8 @@ func TestInterpreter_Execute(t *testing.T) {
 					},
 				},
 				ast.ExpressionStatement{
-					Expression: ast.Set{
-						Target: ast.Get{
+					Expression: ast.SetProp{
+						Target: ast.GetProp{
 							Target: ast.Variable{
 								Level: 0,
 								Name: token.Token{
@@ -1981,8 +1981,8 @@ func TestInterpreter_Execute(t *testing.T) {
 					},
 				},
 				ast.ExpressionStatement{
-					Expression: ast.Set{
-						Target: ast.Get{
+					Expression: ast.SetProp{
+						Target: ast.GetProp{
 							Target: ast.Variable{
 								Level: 0,
 								Name: token.Token{
@@ -2392,6 +2392,25 @@ func TestInterpreter_Execute(t *testing.T) {
 		assert.Equal(t, "[pear][]", out.String())
 	})
 
+	t.Run("builtin list index assignment", func(t *testing.T) {
+		src := `
+		var fruits = ["apple", "pear"];
+		fruits[0] = "kiwi";
+		print(fruits);
+		fruits[1] = "apple";
+		print(fruits);
+		`
+		program, err := ParseString(src)
+		assert.Nil(t, err)
+		out := bytes.NewBufferString("")
+		in := NewInterpreter("", out)
+		for _, stmt := range program {
+			_, err := in.execute(stmt)
+			assert.Nil(t, err)
+		}
+		assert.Equal(t, "[kiwi,pear][kiwi,apple]", out.String())
+	})
+
 	t.Run("builtin list method contains", func(t *testing.T) {
 		src := `
 		var fruits = ["apple", "pear", 1];
@@ -2408,7 +2427,6 @@ func TestInterpreter_Execute(t *testing.T) {
 			_, err := in.execute(stmt)
 			assert.Nil(t, err)
 		}
-		assert.Nil(t, err)
 		assert.Equal(t, "truetruefalsetrue", out.String())
 	})
 
@@ -2428,7 +2446,6 @@ func TestInterpreter_Execute(t *testing.T) {
 			_, err := in.execute(stmt)
 			assert.Nil(t, err)
 		}
-		assert.Nil(t, err)
 		assert.Equal(t, "0.3.-1.1.", out.String())
 	})
 
@@ -2465,8 +2482,8 @@ func TestInterpreter_Execute(t *testing.T) {
 						Body: ast.Block{
 							Body: []ast.StatementNode{
 								ast.ExpressionStatement{
-									Expression: ast.Set{
-										Target: ast.Get{
+									Expression: ast.SetProp{
+										Target: ast.GetProp{
 											Target: ast.Variable{
 												Level: 1,
 												Name: token.Token{

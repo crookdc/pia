@@ -372,31 +372,18 @@ func (in *Interpreter) evaluate(expr ast.ExpressionNode) (Object, error) {
 			return nil, err
 		}
 		return val, nil
-	case ast.Set:
-		val, err := in.evaluate(expr.Value)
-		if err != nil {
-			return nil, err
-		}
-		obj, err := in.evaluate(expr.Target.Target)
-		if err != nil {
-			return nil, err
-		}
-		switch obj := obj.(type) {
-		case Instance:
-			return obj.Put(expr.Property.Lexeme, val), nil
-		default:
-			return nil, fmt.Errorf(
-				"%w: %T cannot invoke property setter",
-				ErrIllegalArgument,
-				obj,
-			)
-		}
+	case ast.SetProp:
+		return in.setProp(expr)
+	case ast.SetIndex:
+		return in.setIndex(expr)
 	case ast.Logical:
 		return in.logical(expr)
 	case ast.Call:
 		return in.call(expr)
-	case ast.Get:
-		return in.get(expr)
+	case ast.GetProp:
+		return in.getProp(expr)
+	case ast.GetIndex:
+		return in.getIndex(expr)
 	case ast.ObjectLiteral:
 		obj := &ObjectInstance{
 			Properties: make(map[string]Object),
@@ -428,7 +415,7 @@ func (in *Interpreter) list(node ast.ListLiteral) (Object, error) {
 	return &List{slice: items}, nil
 }
 
-func (in *Interpreter) get(node ast.Get) (Object, error) {
+func (in *Interpreter) getProp(node ast.GetProp) (Object, error) {
 	obj, err := in.evaluate(node.Target)
 	if err != nil {
 		return nil, err
@@ -448,12 +435,87 @@ func (in *Interpreter) get(node ast.Get) (Object, error) {
 	}
 }
 
+func (in *Interpreter) getIndex(node ast.GetIndex) (Object, error) {
+	obj, err := in.evaluate(node.Target)
+	if err != nil {
+		return nil, err
+	}
+	l, ok := obj.(*List)
+	if !ok {
+		return nil, fmt.Errorf("%w: %T cannot invoke indexing", ErrIllegalArgument, obj)
+	}
+	val, err := in.evaluate(node.Index)
+	if err != nil {
+		return nil, err
+	}
+	idx, ok := val.(Number)
+	if !ok {
+		return nil, fmt.Errorf("%w: %T cannot be used as index", ErrIllegalArgument, val)
+	}
+	if idx.value < 0 || int(idx.value) >= len(l.slice) {
+		return nil, fmt.Errorf("%w: index out of range", ErrIllegalArgument)
+	}
+	return l.slice[int(idx.value)], nil
+}
+
+func (in *Interpreter) setIndex(expr ast.SetIndex) (Object, error) {
+	val, err := in.evaluate(expr.Value)
+	if err != nil {
+		return nil, err
+	}
+	obj, err := in.evaluate(expr.Target.Target)
+	if err != nil {
+		return nil, err
+	}
+	switch obj := obj.(type) {
+	case *List:
+		arg, err := in.evaluate(expr.Target.Index)
+		if err != nil {
+			return nil, err
+		}
+		index, ok := arg.(Number)
+		if !ok {
+			return nil, fmt.Errorf("%w: list index must be number", ErrIllegalArgument)
+		}
+		if int(index.value) >= len(obj.slice) || index.value < 0 {
+			return nil, fmt.Errorf("%w: %d index is out of range", ErrIllegalArgument, int(index.value))
+		}
+		obj.slice[int(index.value)] = val
+		return val, nil
+	default:
+		return nil, fmt.Errorf(
+			"%w: %T cannot store indexed items",
+			ErrIllegalArgument,
+			obj,
+		)
+	}
+}
+
+func (in *Interpreter) setProp(expr ast.SetProp) (Object, error) {
+	val, err := in.evaluate(expr.Value)
+	if err != nil {
+		return nil, err
+	}
+	obj, err := in.evaluate(expr.Target.Target)
+	if err != nil {
+		return nil, err
+	}
+	switch obj := obj.(type) {
+	case Instance:
+		return obj.Put(expr.Property.Lexeme, val), nil
+	default:
+		return nil, fmt.Errorf(
+			"%w: %T cannot invoke property setter",
+			ErrIllegalArgument,
+			obj,
+		)
+	}
+}
+
 func (in *Interpreter) call(node ast.Call) (Object, error) {
 	switch node.Operator.Type {
 	case token.LeftParenthesis:
 		return in.function(node)
-	case token.LeftBracket:
-		return in.index(node)
 	default:
 		return nil, fmt.Errorf("%w: %s is not a call operator", ErrUnrecognizedOperator, node.Operator.Lexeme)
 	}
@@ -484,49 +546,6 @@ func (in *Interpreter) function(node ast.Call) (Object, error) {
 		return fn.Call(in, args...)
 	default:
 		return nil, fmt.Errorf("%w: %s", ErrNotCallable, fn)
-	}
-}
-
-func (in *Interpreter) index(node ast.Call) (Object, error) {
-	if len(node.Args) != 1 {
-		return nil, fmt.Errorf(
-			"%w: indexing is not supported for %d arguments",
-			ErrIllegalArgument,
-			len(node.Args),
-		)
-	}
-	index, err := in.evaluate(node.Args[0])
-	if err != nil {
-		return nil, err
-	}
-	ls, err := in.evaluate(node.Callee)
-	if err != nil {
-		return nil, err
-	}
-	switch ls := ls.(type) {
-	case *List:
-		if _, ok := index.(Number); !ok {
-			return nil, fmt.Errorf(
-				"%w: %T is not a valid list indexing type",
-				ErrIllegalArgument,
-				index,
-			)
-		}
-		index := int(index.(Number).value)
-		if index < 0 || index >= len(ls.slice) {
-			return nil, fmt.Errorf(
-				"%w: index %d is out of bounds",
-				ErrIllegalArgument,
-				index,
-			)
-		}
-		return ls.slice[index], nil
-	default:
-		return nil, fmt.Errorf(
-			"%w: %T is not a valid indexing callee",
-			ErrUnrecognizedExpression,
-			ls,
-		)
 	}
 }
 

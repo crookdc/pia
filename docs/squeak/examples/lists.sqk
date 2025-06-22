@@ -27,3 +27,6 @@ developers.add("Jack");
 if !developers.contains("Jack") {
     panic("where did Jack go?!");
 }
+
+developers[0] = "Linuz";
+assert(developers[0] == "Linuz", "first developers name should be Linuz");

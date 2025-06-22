@@ -552,22 +552,16 @@ func TestParser_Next(t *testing.T) {
 		{
 			src: "index[4];",
 			expected: ast.ExpressionStatement{
-				Expression: ast.Call{
-					Callee: ast.Variable{
+				Expression: ast.GetIndex{
+					Target: ast.Variable{
 						Level: 1,
 						Name: token.Token{
 							Type:   token.Identifier,
 							Lexeme: "index",
 						},
 					},
-					Operator: token.Token{
-						Type:   token.LeftBracket,
-						Lexeme: "[",
-					},
-					Args: []ast.ExpressionNode{
-						ast.IntegerLiteral{
-							Integer: 4,
-						},
+					Index: ast.IntegerLiteral{
+						Integer: 4,
 					},
 				},
 			},
@@ -575,45 +569,39 @@ func TestParser_Next(t *testing.T) {
 		{
 			src: "indexed[add(a, b)];",
 			expected: ast.ExpressionStatement{
-				Expression: ast.Call{
-					Callee: ast.Variable{
+				Expression: ast.GetIndex{
+					Target: ast.Variable{
 						Level: 1,
 						Name: token.Token{
 							Type:   token.Identifier,
 							Lexeme: "indexed",
 						},
 					},
-					Operator: token.Token{
-						Type:   token.LeftBracket,
-						Lexeme: "[",
-					},
-					Args: []ast.ExpressionNode{
-						ast.Call{
-							Callee: ast.Variable{
+					Index: ast.Call{
+						Callee: ast.Variable{
+							Level: 1,
+							Name: token.Token{
+								Type:   token.Identifier,
+								Lexeme: "add",
+							},
+						},
+						Operator: token.Token{
+							Type:   token.LeftParenthesis,
+							Lexeme: "(",
+						},
+						Args: []ast.ExpressionNode{
+							ast.Variable{
 								Level: 1,
 								Name: token.Token{
 									Type:   token.Identifier,
-									Lexeme: "add",
+									Lexeme: "a",
 								},
 							},
-							Operator: token.Token{
-								Type:   token.LeftParenthesis,
-								Lexeme: "(",
-							},
-							Args: []ast.ExpressionNode{
-								ast.Variable{
-									Level: 1,
-									Name: token.Token{
-										Type:   token.Identifier,
-										Lexeme: "a",
-									},
-								},
-								ast.Variable{
-									Level: 1,
-									Name: token.Token{
-										Type:   token.Identifier,
-										Lexeme: "b",
-									},
+							ast.Variable{
+								Level: 1,
+								Name: token.Token{
+									Type:   token.Identifier,
+									Lexeme: "b",
 								},
 							},
 						},
@@ -695,8 +683,8 @@ func TestParser_Next(t *testing.T) {
 		{
 			src: "developer.location.country;",
 			expected: ast.ExpressionStatement{
-				Expression: ast.Get{
-					Target: ast.Get{
+				Expression: ast.GetProp{
+					Target: ast.GetProp{
 						Target: ast.Variable{
 							Level: 1,
 							Name: token.Token{
@@ -720,8 +708,8 @@ func TestParser_Next(t *testing.T) {
 			src: "developer.location.find(10);",
 			expected: ast.ExpressionStatement{
 				Expression: ast.Call{
-					Callee: ast.Get{
-						Target: ast.Get{
+					Callee: ast.GetProp{
+						Target: ast.GetProp{
 							Target: ast.Variable{
 								Level: 1,
 								Name: token.Token{
@@ -752,10 +740,10 @@ func TestParser_Next(t *testing.T) {
 		{
 			src: "developer.location.country = \"Sweden\";",
 			expected: ast.ExpressionStatement{
-				Expression: ast.Set{
-					Target: ast.Get{
+				Expression: ast.SetProp{
+					Target: ast.GetProp{
 						Expression: ast.Expression{},
-						Target: ast.Get{
+						Target: ast.GetProp{
 							Target: ast.Variable{
 								Level: 1,
 								Name: token.Token{
@@ -784,8 +772,8 @@ func TestParser_Next(t *testing.T) {
 		{
 			src: "developer.age = 27;",
 			expected: ast.ExpressionStatement{
-				Expression: ast.Set{
-					Target: ast.Get{
+				Expression: ast.SetProp{
+					Target: ast.GetProp{
 						Target: ast.Variable{
 							Level: 1,
 							Name: token.Token{
@@ -810,7 +798,7 @@ func TestParser_Next(t *testing.T) {
 			src: "developer.get();",
 			expected: ast.ExpressionStatement{
 				Expression: ast.Call{
-					Callee: ast.Get{
+					Callee: ast.GetProp{
 						Target: ast.Variable{
 							Level: 1,
 							Name: token.Token{
@@ -838,8 +826,8 @@ func TestParser_Next(t *testing.T) {
 			};
 			`,
 			expected: ast.ExpressionStatement{
-				Expression: ast.Set{
-					Target: ast.Get{
+				Expression: ast.SetProp{
+					Target: ast.GetProp{
 						Target: ast.Variable{
 							Level: 1,
 							Name: token.Token{
@@ -887,7 +875,7 @@ func TestParser_Next(t *testing.T) {
 													LHS: ast.StringLiteral{
 														String: "It is ",
 													},
-													RHS: ast.Get{
+													RHS: ast.GetProp{
 														Target: ast.Variable{
 															Level: 1,
 															Name: token.Token{
@@ -917,9 +905,9 @@ func TestParser_Next(t *testing.T) {
 		{
 			src: "get_developers()[0].location;",
 			expected: ast.ExpressionStatement{
-				Expression: ast.Get{
-					Target: ast.Call{
-						Callee: ast.Call{
+				Expression: ast.GetProp{
+					Target: ast.GetIndex{
+						Target: ast.Call{
 							Callee: ast.Variable{
 								Level: 1,
 								Name: token.Token{
@@ -933,14 +921,8 @@ func TestParser_Next(t *testing.T) {
 							},
 							Args: []ast.ExpressionNode{},
 						},
-						Operator: token.Token{
-							Type:   token.LeftBracket,
-							Lexeme: "[",
-						},
-						Args: []ast.ExpressionNode{
-							ast.IntegerLiteral{
-								Integer: 0,
-							},
+						Index: ast.IntegerLiteral{
+							Integer: 0,
 						},
 					},
 					Property: token.Token{

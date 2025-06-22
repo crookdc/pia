@@ -13,3 +13,9 @@ body:
 hooks:
   before:
     file: before.sqk
+  after:
+    inline: '
+    if response.headers."Set-Cookie" {
+      println("Remote server wants to set cookies: " + response.headers."Set-Cookie");
+    }
+    '
