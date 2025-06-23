@@ -1652,7 +1652,7 @@ func TestInterpreter_evaluate(t *testing.T) {
 			assert.ErrorIs(t, err, test.err)
 			if err == nil {
 				// The returned value is only interesting if the returned error is nil. If the error is not nil then the
-				// returned object does not have a defined rule to its state and should never be used anyway.
+				// returned asObject does not have a defined rule to its state and should never be used anyway.
 				assert.Equal(t, test.obj, obj)
 			}
 		})

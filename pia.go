@@ -1,6 +1,7 @@
 package pia
 
 import (
+	"bytes"
 	"github.com/crookdc/pia/squeak"
 	"io"
 	"net/http"
@@ -38,7 +39,16 @@ func (p *Pia) Execute(tx *Transaction) (*http.Response, error) {
 			return nil, err
 		}
 		in := squeak.NewInterpreter(p.WorkingDirectory, p.Output)
-		in.Declare("response", squeak.NewResponseObject(res))
+		var body []byte
+		if res.Body != nil {
+			body, err = io.ReadAll(res.Body)
+			if err != nil {
+				return nil, err
+			}
+			// Allow the response body to be re-read by assigning a new io.Reader to it.
+			res.Body = io.NopCloser(bytes.NewBuffer(body))
+		}
+		in.Declare("response", squeak.NewResponseObject(res, body))
 		if err := in.Execute(ast); err != nil {
 			return nil, err
 		}

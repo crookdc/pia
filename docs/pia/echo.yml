@@ -1,21 +1,24 @@
-method: GET
+method: POST
 url:
-  target: https://${props:target.host}
+  target: http://webservices.daehosting.com/services/isbnservice.wso
 headers:
-  Content-Type: application/json
+  Content-Type: text/xml
+  SOAPAction: "#POST"
 body:
-  inline: '
-  {
-    "username": "admin",
-    "password": "password"
-  }
-  '
+  inline: |
+    <?xml version="1.0" encoding="utf-8"?>
+    <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+      <soap:Body>
+        <IsValidISBN10 xmlns="http://webservices.daehosting.com/ISBN">
+          <sISBN>${props:isbn}</sISBN>
+        </IsValidISBN10>
+      </soap:Body>
+    </soap:Envelope>
 hooks:
-  before:
-    file: before.sqk
   after:
-    inline: '
-    if response.headers."Set-Cookie" {
-      println("Remote server wants to set cookies: " + response.headers."Set-Cookie");
-    }
-    '
+    inline: |
+      assert(response.status_code == 200, "expected status code 200");
+      var xml = response.xml();
+      if xml.Body.IsValidISBN10Response.IsValidISBN10Result."_inner" == "true" {
+        println("The ISBN ${props:isbn} is valid!");
+      }

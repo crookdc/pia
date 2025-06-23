@@ -1,3 +1,0 @@
-println("This is a Squeak script that is executed before the HTTP request is sent");
-println("Sending " + request.method + " HTTP request to " + request.url + "...");
-println("Content type is: " + request.headers."Content-Type");

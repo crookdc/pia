@@ -18,7 +18,8 @@ type input struct {
 func (in *input) reader(wd string) (io.Reader, error) {
 	if in.Inline != "" {
 		return strings.NewReader(in.Inline), nil
-	} else if in.File != "" {
+	}
+	if in.File != "" {
 		path := in.File
 		if !filepath.IsAbs(path) {
 			path = filepath.Join(wd, path)
@@ -29,12 +30,12 @@ func (in *input) reader(wd string) (io.Reader, error) {
 }
 
 type body struct {
-	input
-	Form map[string]string `yaml:"form"`
+	input `yaml:",inline"`
+	Form  map[string]string `yaml:"form"`
 }
 
 func (b *body) reader(wd string) (io.Reader, error) {
-	if b.Form == nil {
+	if len(b.Form) == 0 {
 		return b.input.reader(wd)
 	}
 	body := url.Values{}

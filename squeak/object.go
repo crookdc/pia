@@ -1,6 +1,8 @@
 package squeak
 
 import (
+	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"github.com/crookdc/pia/squeak/ast"
 	"github.com/crookdc/pia/squeak/token"
@@ -35,7 +37,54 @@ func NewRequestObject(req *http.Request) *ObjectInstance {
 	return obj
 }
 
-func NewResponseObject(res *http.Response) *ObjectInstance {
+type BoundBuiltinMethod struct {
+	this Object
+	impl BuiltinMethod
+}
+
+func (b BoundBuiltinMethod) String() string {
+	return "builtin:method"
+}
+
+func (b BoundBuiltinMethod) Clone() Object {
+	return BoundBuiltinMethod{
+		this: b.this,
+		impl: b.impl,
+	}
+}
+
+func (b BoundBuiltinMethod) Arity() int {
+	return b.impl.arity
+}
+
+func (b BoundBuiltinMethod) Call(in *Interpreter, args ...Object) (Object, error) {
+	return b.impl.fn(b.this, in, args...)
+}
+
+type BuiltinMethod struct {
+	arity int
+	fn    func(Object, *Interpreter, ...Object) (Object, error)
+}
+
+func (b BuiltinMethod) String() string {
+	return "builtin:method"
+}
+
+func (b BuiltinMethod) Clone() Object {
+	return BuiltinMethod{
+		arity: b.arity,
+		fn:    b.fn,
+	}
+}
+
+func (b BuiltinMethod) Bind(obj Object) (Callable, error) {
+	return BoundBuiltinMethod{
+		this: obj,
+		impl: b,
+	}, nil
+}
+
+func NewResponseObject(res *http.Response, body []byte) *ObjectInstance {
 	obj := &ObjectInstance{Properties: make(map[string]Object)}
 	obj.Properties["status_code"] = Number{float64(res.StatusCode)}
 	obj.Properties["status"] = String{res.Status}
@@ -44,10 +93,148 @@ func NewResponseObject(res *http.Response) *ObjectInstance {
 		headers.Put(k, String{strings.Join(v, ", ")})
 	}
 	obj.Properties["headers"] = headers
+
+	obj.Properties["json"] = BuiltinMethod{
+		arity: 0,
+		fn: func(_ Object, _ *Interpreter, _ ...Object) (Object, error) {
+			if len(body) == 0 {
+				return nil, nil
+			}
+			var builder Builder
+			if err := json.Unmarshal(body, &builder); err != nil {
+				return nil, err
+			}
+			return builder.Object(), nil
+		},
+	}
+	obj.Properties["xml"] = BuiltinMethod{
+		arity: 0,
+		fn: func(_ Object, _ *Interpreter, _ ...Object) (Object, error) {
+			if len(body) == 0 {
+				return nil, nil
+			}
+			var builder Builder
+			if err := xml.Unmarshal(body, &builder); err != nil {
+				return nil, err
+			}
+			return builder.Object(), nil
+		},
+	}
 	return obj
 }
 
-// ObjectInstance is an object instance, which consists of a collection of named data as well as behaviours coupled to the
+type Builder struct {
+	obj Object
+}
+
+func (b *Builder) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	stack := struct {
+		slice  []*ObjectInstance
+		cursor int
+	}{
+		slice:  make([]*ObjectInstance, 1),
+		cursor: 0,
+	}
+	push := func(o *ObjectInstance) {
+		stack.cursor += 1
+		if stack.cursor == len(stack.slice) {
+			stack.slice = append(stack.slice, o)
+		} else {
+			stack.slice[stack.cursor] = o
+		}
+	}
+	pop := func() *ObjectInstance {
+		o := stack.slice[stack.cursor]
+		stack.cursor -= 1
+		return o
+	}
+	peek := func() *ObjectInstance {
+		return stack.slice[stack.cursor]
+	}
+	element := func(el xml.StartElement) *ObjectInstance {
+		attrs := &ObjectInstance{Properties: make(map[string]Object)}
+		for _, attr := range el.Attr {
+			attrs.Put(attr.Name.Local, String{attr.Value})
+		}
+		o := &ObjectInstance{Properties: make(map[string]Object)}
+		o.Put("_attributes", attrs)
+		return o
+	}
+	stack.slice[0] = element(start)
+
+	for {
+		t, _ := d.Token()
+		switch t := t.(type) {
+		case xml.StartElement:
+			el := element(t)
+			parent := peek()
+			if parent.Get(t.Name.Local) != nil {
+				switch container := parent.Get(t.Name.Local).(type) {
+				case *List:
+					container.slice = append(container.slice, el)
+				default:
+					parent.Put(t.Name.Local, &List{
+						slice: []Object{container, el},
+					})
+				}
+			} else {
+				peek().Put(t.Name.Local, el)
+			}
+			push(el)
+		case xml.CharData:
+			if strings.TrimSpace(string(t)) == "" {
+				continue
+			}
+			peek().Put("_inner", String{string(t)})
+		case xml.EndElement:
+			if t.Name == start.Name {
+				b.obj = pop()
+				return nil
+			} else {
+				pop()
+			}
+		}
+	}
+}
+
+func (b *Builder) UnmarshalJSON(data []byte) error {
+	var raw any
+	err := json.Unmarshal(data, &raw)
+	if err != nil {
+		return err
+	}
+	b.obj, err = b.asObject(raw)
+	return err
+}
+
+func (b *Builder) Object() Object {
+	return b.obj
+}
+
+func (b *Builder) asObject(raw any) (Object, error) {
+	switch v := raw.(type) {
+	case string:
+		return String{v}, nil
+	case int:
+		return Number{float64(v)}, nil
+	case float64:
+		return Number{v}, nil
+	case map[string]any:
+		props := make(map[string]Object)
+		for k, v := range v {
+			prop, err := b.asObject(v)
+			if err != nil {
+				return nil, err
+			}
+			props[k] = prop
+		}
+		return &ObjectInstance{props}, nil
+	default:
+		return nil, fmt.Errorf("cannot convert %T to object", v)
+	}
+}
+
+// ObjectInstance is an asObject instance, which consists of a collection of named data as well as behaviours coupled to the
 // data.
 type ObjectInstance struct {
 	Properties map[string]Object
