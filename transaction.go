@@ -1,6 +1,8 @@
 package pia
 
 import (
+	"bytes"
+	"github.com/crookdc/pia/squeak"
 	"gopkg.in/yaml.v3"
 	"io"
 	"net/http"
@@ -69,6 +71,7 @@ func ParseTransaction(wd string, r io.Reader) (*Transaction, error) {
 		return nil, err
 	}
 	tx := Transaction{
+		WD: wd,
 		URL: struct {
 			Target string
 			Query  map[string]string
@@ -96,6 +99,7 @@ func ParseTransaction(wd string, r io.Reader) (*Transaction, error) {
 }
 
 type Transaction struct {
+	WD  string
 	URL struct {
 		Target string
 		Query  map[string]string
@@ -107,6 +111,61 @@ type Transaction struct {
 		Before io.Reader
 		After  io.Reader
 	}
+}
+
+func (tx *Transaction) Execute(in *squeak.Interpreter) (*http.Response, error) {
+	req, err := tx.Request()
+	if err != nil {
+		return nil, err
+	}
+	if tx.Hooks.Before != nil {
+		if err := tx.before(in, req); err != nil {
+			return nil, err
+		}
+	}
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if tx.Hooks.After != nil {
+		if err := tx.after(in, res); err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (tx *Transaction) before(in *squeak.Interpreter, req *http.Request) error {
+	ast, err := squeak.Parse(tx.Hooks.Before)
+	if err != nil {
+		return err
+	}
+	in.Declare("request", squeak.NewRequestObject(req))
+	if err := in.Execute(ast); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (tx *Transaction) after(in *squeak.Interpreter, res *http.Response) error {
+	ast, err := squeak.Parse(tx.Hooks.After)
+	if err != nil {
+		return err
+	}
+	var body []byte
+	if res.Body != nil {
+		body, err = io.ReadAll(res.Body)
+		if err != nil {
+			return err
+		}
+		// Allow the response body to be re-read by assigning a new io.Reader to it.
+		res.Body = io.NopCloser(bytes.NewBuffer(body))
+	}
+	in.Declare("response", squeak.NewResponseObject(res, body))
+	if err := in.Execute(ast); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Request returns an [http.Request] which mirrors the configuration represented by the Transaction. The ownership of

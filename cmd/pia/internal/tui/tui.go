@@ -2,15 +2,14 @@ package tui
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/crookdc/pia"
+	"github.com/crookdc/pia/squeak"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"golang.design/x/clipboard"
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 )
 
@@ -22,11 +21,6 @@ type App struct {
 	content *content
 	finder  *finder
 	history *history
-}
-
-type SwitchPageCommand struct {
-	Page     string
-	Callback func(*App) error
 }
 
 func (a *App) view(path string) {
@@ -51,46 +45,22 @@ func (a *App) execute(path string) {
 	if err != nil {
 		panic(err)
 	}
-	client := pia.Pia{
-		WorkingDirectory: filepath.Dir(path),
-		Output:           a.console.log,
-		Resolver:         a.resolver,
-	}
-	res, err := client.Execute(tx)
+	res, err := tx.Execute(squeak.NewInterpreter(tx.WD, a.console.log))
 	if err != nil {
 		panic(err)
 	}
-	sb := strings.Builder{}
-	var color string
-	switch res.StatusCode / 100 {
-	case 1, 3:
-		color = "yellow"
-	case 2:
-		color = "green"
-	case 4, 5:
-		color = "red"
-	default:
-		color = "white"
+	buf := bytes.NewBufferString("")
+	if err := ResponseFormatter(buf, res); err != nil {
+		panic(err)
 	}
-	sb.WriteString(fmt.Sprintf("[%s]Status: %s\n", color, res.Status))
-	for k, v := range res.Header {
-		sb.WriteString(fmt.Sprintf("[blue]%s: [white]%s\n", k, strings.Join(v, ", ")))
-	}
-	sb.WriteString("\n\n")
-	if res.Body != nil {
-		raw, err := io.ReadAll(res.Body)
-		if err != nil {
-			panic(err)
-		}
-		sb.WriteString(string(raw))
-	}
+	text := buf.String()
 	a.history.push(entry{
 		method:    tx.Method,
 		endpoint:  tx.URL.Target,
 		timestamp: time.Now(),
-		text:      sb.String(),
+		text:      text,
 	})
-	a.display(sb.String())
+	a.display(text)
 }
 
 func (a *App) display(text string) {

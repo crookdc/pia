@@ -29,11 +29,10 @@ from. For example, `${session:id_token}` would be targeting the `session` proper
 
 Fetches a value from the environment variables of the host machine.
 
-#### Project
-*Context key: `project`*
+#### Property file
+*Context key: `props`*
 
-Fetches a value from the current projects' configuration. If Pia was started from outside a project then trying to 
-resolve any project value will fail.
+Fetches a value from the property file passed to Pia as an argument during startup.
 
 #### Session
 *Context key: `session`*

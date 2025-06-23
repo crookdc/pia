@@ -17,7 +17,7 @@ body:
 hooks:
   after:
     inline: |
-      assert(response.status_code == 200, "expected status code 200");
+      assert(response.status_code == 200, "");
       var xml = response.xml();
       if xml.Body.IsValidISBN10Response.IsValidISBN10Result."_inner" == "true" {
         println("The ISBN ${props:isbn} is valid!");

@@ -2,7 +2,6 @@ package token
 
 import (
 	"errors"
-	"fmt"
 )
 
 var (
@@ -141,9 +140,6 @@ func New(t Type, opts ...Opt) (Token, error) {
 	}
 	for _, opt := range opts {
 		opt(&token)
-	}
-	if token.Lexeme == "" {
-		return Token{}, fmt.Errorf("%w: %d", ErrMissingLexeme, t)
 	}
 	return token, nil
 }
