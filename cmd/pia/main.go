@@ -16,24 +16,33 @@ func main() {
 		log.Fatalln(err)
 	}
 	props := make(map[string]string)
-	if len(os.Args) > 1 {
-		src, err := os.ReadFile(os.Args[1])
+	if flag.NArg() > 0 {
+		props, err = properties(flag.Arg(0))
 		if err != nil {
 			log.Fatalln(err)
-		}
-		scn := bufio.NewScanner(strings.NewReader(string(src)))
-		for scn.Scan() {
-			line := scn.Text()
-			segments := strings.SplitN(line, "=", 2)
-			if len(segments) != 2 {
-				continue
-			}
-			props[segments[0]] = strings.TrimSpace(
-				strings.Trim(segments[1], "\""),
-			)
 		}
 	}
 	if err := tui.Run(wd, props); err != nil {
 		log.Fatalln(err)
 	}
+}
+
+func properties(path string) (map[string]string, error) {
+	props := make(map[string]string)
+	src, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	scn := bufio.NewScanner(strings.NewReader(string(src)))
+	for scn.Scan() {
+		line := scn.Text()
+		segments := strings.SplitN(line, "=", 2)
+		if len(segments) != 2 {
+			continue
+		}
+		props[segments[0]] = strings.TrimSpace(
+			strings.Trim(segments[1], "\""),
+		)
+	}
+	return props, nil
 }

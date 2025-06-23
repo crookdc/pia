@@ -17,8 +17,8 @@ var (
 // and the supplied [io.Reader] as its target.
 func WrapReader(resolver KeyResolver, r io.Reader) *Interpolator {
 	return &Interpolator{
-		prefix:   regexp.MustCompile("\\${"),
-		matcher:  regexp.MustCompile("\\${(.+?)}"),
+		prefix:   regexp.MustCompile(`\${`),
+		matcher:  regexp.MustCompile(`\${(.+?)}`),
 		resolver: resolver,
 		wrapped:  bufio.NewReader(r),
 		carry:    bytes.NewBuffer(make([]byte, 0)),
@@ -144,11 +144,6 @@ func (ip Interpolator) match(str string) [][]string {
 // checking whether there exists a terminating character "}".
 func (ip Interpolator) partials(str string) bool {
 	return ip.prefixes(str) > ip.points(str)
-}
-
-// pristine reports whether the supplied string is devoid of any substitution points
-func (ip Interpolator) pristine(str string) bool {
-	return ip.prefixes(str) == 0
 }
 
 func (ip Interpolator) points(str string) int {

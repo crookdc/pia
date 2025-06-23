@@ -1859,10 +1859,10 @@ func TestParser_Next(t *testing.T) {
 		assert.Nil(t, err)
 
 		ps := NewParser(plx)
-		n, err := ps.Next()
+		_, err = ps.Next()
 		assert.ErrorIs(t, err, SyntaxError{Line: 2})
 
-		n, err = ps.Next()
+		n, err := ps.Next()
 		assert.Nil(t, err)
 		assert.Equal(t, ast.ExpressionStatement{
 			Expression: ast.Infix{

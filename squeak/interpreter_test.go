@@ -2668,6 +2668,7 @@ func TestInterpreter_Execute(t *testing.T) {
 		})
 		assert.Nil(t, err)
 		val, err = ev.scope.Resolve("name", 0)
+		assert.Nil(t, err)
 		assert.Equal(t, val, String{"goodbye"})
 	})
 

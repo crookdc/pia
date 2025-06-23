@@ -349,7 +349,7 @@ type ObjectInstanceMethod struct {
 }
 
 func (m ObjectInstanceMethod) String() string {
-	return fmt.Sprintf("method")
+	return "method"
 }
 
 func (m ObjectInstanceMethod) Clone() Object {

@@ -115,7 +115,6 @@ func (ps *Parser) begin() {
 	ps.stack.sp += 1
 	// Clear the old data, it belongs to an environment that has now gone out of scope.
 	clear(ps.stack.slice[ps.stack.sp])
-	return
 }
 
 func (ps *Parser) end() {
@@ -216,60 +215,9 @@ func (ps *Parser) statement() (ast.StatementNode, error) {
 		ps.lx.Discard()
 		return ast.Noop{}, nil
 	case token.Function:
-		ps.lx.Discard()
-		// The function name must be declared before the new scope is registered since the function name would otherwise
-		// be undefined in the surrounding environment.
-		name, err := ps.expect(token.Identifier)
-		if err != nil {
-			return nil, err
-		}
-		if err := ps.declare(name); err != nil {
-			return nil, err
-		}
-		ps.begin()
-		defer ps.end()
-		params, err := ps.tokens(token.LeftParenthesis, token.RightParenthesis)
-		if err != nil {
-			return nil, err
-		}
-		// The parameters for the function should be declared as part of the scope of the function itself, meaning that
-		// resolving any parameter name leads to a level of 0.
-		for _, param := range params {
-			if err := ps.declare(param); err != nil {
-				return nil, err
-			}
-		}
-		body, err := ps.block()
-		if err != nil {
-			return nil, err
-		}
-		return ast.Function{
-			Name:   name,
-			Params: params,
-			Body:   body,
-		}, nil
+		return ps.function()
 	case token.Return:
-		ps.lx.Discard()
-		pk, err := ps.lx.Peek()
-		if err != nil {
-			return nil, err
-		}
-		switch pk.Type {
-		case token.Semicolon:
-			return ast.Return{}, nil
-		default:
-			expr, err := ps.logical()
-			if err != nil {
-				return nil, err
-			}
-			if _, err := ps.expect(token.Semicolon); err != nil {
-				return nil, err
-			}
-			return ast.Return{
-				Statement:  ast.Statement{},
-				Expression: expr,
-			}, nil
-		}
+		return ps.ret()
 	case token.Break:
 		ps.lx.Discard()
 		if _, err := ps.expect(token.Semicolon); err != nil {
@@ -283,62 +231,137 @@ func (ps *Parser) statement() (ast.StatementNode, error) {
 		}
 		return ast.Continue{}, nil
 	case token.Import:
-		ps.lx.Discard()
-		expr, err := ps.primary()
+		return ps.imp()
+	case token.Export:
+		return ps.exp()
+	default:
+		return ps.expression()
+	}
+}
+
+func (ps *Parser) function() (ast.Function, error) {
+	if _, err := ps.expect(token.Function); err != nil {
+		return ast.Function{}, err
+	}
+	// The function name must be declared before the new scope is registered since the function name would otherwise
+	// be undefined in the surrounding environment.
+	name, err := ps.expect(token.Identifier)
+	if err != nil {
+		return ast.Function{}, err
+	}
+	if err := ps.declare(name); err != nil {
+		return ast.Function{}, err
+	}
+	ps.begin()
+	defer ps.end()
+	params, err := ps.tokens(token.LeftParenthesis, token.RightParenthesis)
+	if err != nil {
+		return ast.Function{}, err
+	}
+	// The parameters for the function should be declared as part of the scope of the function itself, meaning that
+	// resolving any parameter name leads to a level of 0.
+	for _, param := range params {
+		if err := ps.declare(param); err != nil {
+			return ast.Function{}, err
+		}
+	}
+	body, err := ps.block()
+	if err != nil {
+		return ast.Function{}, err
+	}
+	return ast.Function{
+		Name:   name,
+		Params: params,
+		Body:   body,
+	}, nil
+}
+
+func (ps *Parser) ret() (ast.Return, error) {
+	if _, err := ps.expect(token.Return); err != nil {
+		return ast.Return{}, err
+	}
+	pk, err := ps.lx.Peek()
+	if err != nil {
+		return ast.Return{}, err
+	}
+	switch pk.Type {
+	case token.Semicolon:
+		return ast.Return{}, nil
+	default:
+		expr, err := ps.logical()
 		if err != nil {
-			return nil, err
+			return ast.Return{}, err
 		}
 		if _, err := ps.expect(token.Semicolon); err != nil {
-			return nil, err
+			return ast.Return{}, err
 		}
-		switch expr := expr.(type) {
-		case ast.Variable, ast.StringLiteral:
-			return ast.Import{
-				Source: expr,
-			}, nil
-		default:
-			return nil, fmt.Errorf("%w: %T is not a valid import expression", ErrUnrecognizedExpression, expr)
-		}
-	case token.Export:
+		return ast.Return{
+			Statement:  ast.Statement{},
+			Expression: expr,
+		}, nil
+	}
+}
+
+func (ps *Parser) imp() (ast.Import, error) {
+	if _, err := ps.expect(token.Import); err != nil {
+		return ast.Import{}, err
+	}
+	expr, err := ps.primary()
+	if err != nil {
+		return ast.Import{}, err
+	}
+	if _, err := ps.expect(token.Semicolon); err != nil {
+		return ast.Import{}, err
+	}
+	switch expr := expr.(type) {
+	case ast.Variable, ast.StringLiteral:
+		return ast.Import{
+			Source: expr,
+		}, nil
+	default:
+		return ast.Import{}, fmt.Errorf("%w: %T is not a valid import expression", ErrUnrecognizedExpression, expr)
+	}
+}
+
+func (ps *Parser) exp() (ast.Export, error) {
+	if _, err := ps.expect(token.Export); err != nil {
+		return ast.Export{}, err
+	}
+	expr, err := ps.assignment()
+	if err != nil {
+		return ast.Export{}, err
+	}
+	pk, err := ps.lx.Peek()
+	if err != nil {
+		return ast.Export{}, err
+	}
+	switch pk.Type {
+	case token.Semicolon:
 		ps.lx.Discard()
-		expr, err := ps.assignment()
-		if err != nil {
-			return nil, err
-		}
-		pk, err := ps.lx.Peek()
-		if err != nil {
-			return nil, err
-		}
-		switch pk.Type {
-		case token.Semicolon:
-			ps.lx.Discard()
-			switch expr := expr.(type) {
-			case ast.Variable:
-				return ast.Export{
-					Name:  expr.Name,
-					Value: expr,
-				}, nil
-			default:
-				return nil, fmt.Errorf("%w: %T as unnamed export", ErrUnrecognizedExpression, expr)
-			}
-		case token.As:
-			ps.lx.Discard()
-			name, err := ps.expect(token.Identifier)
-			if err != nil {
-				return nil, err
-			}
-			if _, err := ps.expect(token.Semicolon); err != nil {
-				return nil, err
-			}
+		switch expr := expr.(type) {
+		case ast.Variable:
 			return ast.Export{
-				Name:  name,
+				Name:  expr.Name,
 				Value: expr,
 			}, nil
 		default:
-			return nil, fmt.Errorf("%w: unexpected token %s", ErrRuntimeFault, pk.Lexeme)
+			return ast.Export{}, fmt.Errorf("%w: %T as unnamed export", ErrUnrecognizedExpression, expr)
 		}
+	case token.As:
+		ps.lx.Discard()
+		name, err := ps.expect(token.Identifier)
+		if err != nil {
+			return ast.Export{}, err
+		}
+		if _, err := ps.expect(token.Semicolon); err != nil {
+			return ast.Export{}, err
+		}
+		return ast.Export{
+			Name:  name,
+			Value: expr,
+		}, nil
 	default:
-		return ps.expression()
+		return ast.Export{}, fmt.Errorf("%w: unexpected token %s", ErrRuntimeFault, pk.Lexeme)
 	}
 }
 
@@ -719,15 +742,6 @@ func (ps *Parser) call() (ast.ExpressionNode, error) {
 			return nil, err
 		}
 	}
-}
-
-func matches(tk token.Token, types ...token.Type) bool {
-	for _, t := range types {
-		if tk.Type == t {
-			return true
-		}
-	}
-	return false
 }
 
 func (ps *Parser) expressions(start, end token.Type) (exps []ast.ExpressionNode, err error) {

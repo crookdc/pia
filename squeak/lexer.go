@@ -186,22 +186,6 @@ func (lx *Lexer) number() (token.Token, error) {
 	}
 }
 
-func (lx *Lexer) string() (token.Token, error) {
-	if err := lx.skip(amount(1)); err != nil {
-		return token.Null, err
-	}
-	literal, err := lx.next(func(r rune) bool {
-		return r != '"'
-	})
-	if err != nil {
-		return token.Null, err
-	}
-	if err := lx.skip(amount(1)); err != nil {
-		return token.Null, err
-	}
-	return token.New(token.String, token.Lexeme(string(literal)))
-}
-
 func (lx *Lexer) symbol() (token.Token, error) {
 	c, err := lx.read(never)
 	if err != nil {
